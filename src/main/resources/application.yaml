@@ -1,0 +1,96 @@
+server:
+  port: 8080
+  # 请求、响应编码问题
+  servlet:
+    encoding:
+      force: true
+
+spring:
+  application:
+    name: flink-etl-api
+  # 环境
+  profiles:
+    active: dev
+
+  # flyway: 数据库变更版本控制
+  flyway:
+    enabled: true
+    locations: classpath:db/mysql
+    baseline-on-migrate: true
+    baseline-version: 0
+
+  # h2 控制台
+  h2:
+    console:
+      path: /h2
+      enabled: true
+
+  #springboot admin
+  boot:
+    admin:
+      client:
+        url: http://localhost:8080
+  output:
+    ansi:
+      enabled: always #日志颜色
+
+# 可观测性
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*" #暴露监控端点
+  observations:
+    annotations:
+      enabled: true #开启注解支持
+  # 参考：InfoContributorAutoConfiguration
+  info:
+    env:
+      enabled: false
+    git:
+      enabled: true
+      mode: simple
+    build:
+      enabled: true
+    java:
+      enabled: false
+    os:
+      enabled: true
+    process:
+      enabled: false
+    ssl:
+      enabled: false
+
+# spring doc
+springdoc:
+  show-actuator: true #actuator 端点添加到 swagger-ui
+  swagger-ui:
+    doc-expansion: none
+
+# hikari配置
+hikari-config: &hikari-config
+  maxPoolSize: 5 #最大连接数
+  minIdle: 1 #最小空闲连接数
+  connectionTimeout: 5000 #获取连接超时，5秒
+  validationTimeout: 5000 #校验连接时超时，5秒
+  keepaliveTime: 120000 #保活时间，2分钟
+  idleTimeout: 600000 #空闲时间，10分钟
+  maxLifetime: 1200000 #最大存活时间，20分钟
+
+# 多数据源，属性是通过反射设置的，参考：com.mybatisflex.core.datasource.DataSourceBuilder.setDataSourceProperties
+mybatis-flex:
+  datasource:
+    master:
+      <<: *hikari-config
+
+# 日志配置
+logging:
+  level:
+    root: info
+    org.springframework.context.support.PostProcessorRegistrationDelegate: error
+  file:
+    name: ./logs/${spring.application.name}.log
+  pattern:
+    dateformat: yyyy-MM-dd HH:mm:ss
+    # springboot admin 日志颜色
+    file: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID}){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"

@@ -1,0 +1,14 @@
+# 禁用 swagger-ui try it out
+springdoc:
+  swagger-ui:
+    supported-submit-methods:
+
+# 数据源配置
+mybatis-flex:
+  datasource:
+    master:
+      driver-class-name: ${JDBC_DRIVER}
+      url: ${JDBC_URL}
+      username: ${JDBC_USERNAME}
+      password: ${JDBC_PASSWORD}
+      poolName: master

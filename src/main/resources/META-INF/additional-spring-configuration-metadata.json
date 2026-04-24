@@ -1,0 +1,39 @@
+{
+  "properties": [
+    {
+      "name": "hikari-config.maxPoolSize",
+      "type": "java.lang.Integer",
+      "description": "最大连接数."
+    },
+    {
+      "name": "hikari-config.minIdle",
+      "type": "java.lang.Integer",
+      "description": "最小空闲连接数."
+    },
+    {
+      "name": "hikari-config.connectionTimeout",
+      "type": "java.lang.Long",
+      "description": "获取连接超时."
+    },
+    {
+      "name": "hikari-config.validationTimeout",
+      "type": "java.lang.Long",
+      "description": "校验连接时超时."
+    },
+    {
+      "name": "hikari-config.keepaliveTime",
+      "type": "java.lang.Long",
+      "description": "保活时间."
+    },
+    {
+      "name": "hikari-config.idleTimeout",
+      "type": "java.lang.Long",
+      "description": "空闲时间."
+    },
+    {
+      "name": "hikari-config.maxLifetime",
+      "type": "java.lang.Long",
+      "description": "最大存活时间."
+    }
+  ]
+}

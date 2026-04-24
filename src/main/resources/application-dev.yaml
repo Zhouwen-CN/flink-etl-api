@@ -1,0 +1,14 @@
+# 开启 swagger-ui try it out
+springdoc:
+  swagger-ui:
+    supported-submit-methods: get, put, post, delete, options, head, patch, trace
+
+# 数据源配置
+mybatis-flex:
+  datasource:
+    master:
+      driver-class-name: org.h2.Driver
+      url: jdbc:h2:file:./database;MODE=MySQL;DB_CLOSE_DELAY=-1
+      username: sa
+      password: 123
+      poolName: master
