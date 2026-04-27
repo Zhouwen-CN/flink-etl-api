@@ -34,3 +34,4 @@ build/
 .env
 logs
 database.mv.db
+database.trace.db

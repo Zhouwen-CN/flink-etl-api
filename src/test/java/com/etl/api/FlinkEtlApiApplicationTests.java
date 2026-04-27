@@ -1,9 +1,9 @@
 package com.etl.api;
 
 import com.etl.api.domain.base.BaseEntity;
+import com.etl.api.domain.base.InsertListener;
+import com.etl.api.domain.base.UpdateListener;
 import com.etl.api.util.IP2RegionUtil;
-import com.mybatisflex.annotation.InsertListener;
-import com.mybatisflex.annotation.UpdateListener;
 import com.mybatisflex.codegen.Generator;
 import com.mybatisflex.codegen.config.GlobalConfig;
 import com.mybatisflex.codegen.config.TableConfig;
@@ -43,7 +43,7 @@ class FlinkEtlApiApplicationTests {
         // 设置表前缀和只生成哪些表，setGenerateTable 未配置时，生成所有表
         globalConfig.getStrategyConfig()
                 .setTablePrefix("T_")
-                .setGenerateTable("T_USER")
+                .setGenerateTable("T_HTTP_EXCHANGE_HISTORY")
                 .setTableConfig(tableConfig);
 
         // 设置生成 entity 并启用 Lombok
@@ -54,6 +54,9 @@ class FlinkEtlApiApplicationTests {
                 .setLombokNoArgsConstructorEnable(false)
                 .setLombokAllArgsConstructorEnable(false)
                 .setOverwriteEnable(true);
+
+        // 设置生成 entity
+        globalConfig.enableEntity().setOverwriteEnable(true);
 
         // 设置生成 mapper
         globalConfig.enableMapper().setOverwriteEnable(false);
