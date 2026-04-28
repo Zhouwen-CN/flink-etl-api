@@ -9,6 +9,7 @@ import com.etl.api.domain.vo.UserLoginVO;
 import com.etl.api.exception.AccountDisabledException;
 import com.etl.api.exception.LoginFailedException;
 import com.etl.api.service.UserService;
+import com.etl.api.util.AESUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,7 +35,7 @@ public class LoginController {
         val username = form.getUsername();
         val user = userService.queryChain()
                 .eq(User::getUsername, username)
-                .eq(User::getPassword, form.getPassword())
+                .eq(User::getPassword, AESUtil.encrypt(form.getPassword()))
                 .oneOpt()
                 .orElseThrow(LoginFailedException::new);
 

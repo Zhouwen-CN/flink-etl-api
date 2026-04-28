@@ -14,6 +14,6 @@ create table T_USER
 ) comment '用户表';
 
 insert into T_USER(id, username, password, gender, is_enabled)
-values (1, 'admin', 'admin', 1, 1);
+values (1, 'admin', 'SfBYEG4382znywxKbT/mgQ==', 1, 1);
 insert into T_USER(id, username, password, gender, is_enabled)
-values (2, 'zhangsan', '123456', 1, 1);
+values (2, 'zhangsan', 'BZGbCBIhH2AkI0DcLgxnKw==', 1, 1);
