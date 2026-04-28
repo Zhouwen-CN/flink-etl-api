@@ -11,7 +11,6 @@ import org.lionsoul.ip2region.xdb.XdbException;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
-import java.util.Optional;
 
 /**
  * <pre>
@@ -54,12 +53,12 @@ public class IP2RegionUtil {
 
     }
 
-    public static Optional<String> search(String ipv4String) {
+    public static String search(String ipv4String) {
         try {
-            return Optional.ofNullable(ip2Region.search(ipv4String));
+            return ip2Region.search(ipv4String);
         } catch (InetAddressException | IOException | InterruptedException e) {
             log.error("ip2region 查询失败: {}", e.getMessage());
-            return Optional.empty();
+            return null;
         }
     }
 }

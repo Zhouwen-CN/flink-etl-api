@@ -1,0 +1,59 @@
+package com.etl.api.domain.entity;
+
+import com.etl.api.enumeration.LoginOperationEnum;
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
+import lombok.Builder;
+import lombok.Data;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
+/**
+ * 登录日志表 实体类。
+ *
+ * @author chen
+ * @since 2026-04-28
+ */
+@Data
+@Builder
+@Table(value = "T_LOGIN_LOG")
+public class LoginLog implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 自增主键
+     */
+    @Id(keyType = KeyType.Auto)
+    private Long id;
+
+    /**
+     * 用户id
+     */
+    private Long userId;
+
+    /**
+     * 操作类型（0未知，1登入，2登出，3撤销）
+     */
+    private LoginOperationEnum operation;
+
+    /**
+     * ip地址
+     */
+    private String ip;
+
+    /**
+     * 地区
+     */
+    private String region;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
+
+}

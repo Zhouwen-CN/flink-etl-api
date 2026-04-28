@@ -10,6 +10,7 @@ import com.etl.api.exception.AccountDisabledException;
 import com.etl.api.exception.LoginFailedException;
 import com.etl.api.service.UserService;
 import com.etl.api.util.AESUtil;
+import com.etl.api.util.SaSessionUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -53,6 +54,8 @@ public class LoginController {
                 StpUtil.getPermissionList()
         );
 
+        // 使用 sa session 存储用户名称
+        SaSessionUtil.setPrincipal(username);
         return ResponseVO.ok(userLoginVO);
     }
 

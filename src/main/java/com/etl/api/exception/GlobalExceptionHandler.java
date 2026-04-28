@@ -1,6 +1,7 @@
 package com.etl.api.exception;
 
 
+import cn.dev33.satoken.exception.NotLoginException;
 import com.etl.api.domain.vo.ResponseVO;
 import lombok.val;
 import org.springframework.http.HttpStatus;
@@ -69,6 +70,11 @@ public class GlobalExceptionHandler {
             defaultMessage = resolvableErrors.get(0).getDefaultMessage();
         }
         return ResponseVO.error(HttpStatus.UNPROCESSABLE_ENTITY, String.format("%s %s", parameterName, defaultMessage));
+    }
+
+    @ExceptionHandler(NotLoginException.class)
+    public ResponseVO<Void> notLoginExceptionHandler(NotLoginException e) {
+        return ResponseVO.error(HttpStatus.UNAUTHORIZED, e.getMessage());
     }
 
     /**
