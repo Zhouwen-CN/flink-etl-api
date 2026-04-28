@@ -43,15 +43,13 @@ public class EndpointConfiguration {
      */
     @Bean
     public HttpExchangeRepository httpExchangeRepository() {
-        // actuator、instances、applications、h2
-
         return new HttpExchangeRepository() {
             @Override
             public List<HttpExchange> findAll() {
                 try {
                     return httpExchangeHistoryService.getHttpExchangeList(DEFAULT_LIMIT);
                 } catch (URISyntaxException | JsonProcessingException e) {
-                    log.error("find http exchange history failed", e);
+                    log.error("获取 http 请求历史记录失败", e);
                 }
 
                 return List.of();
@@ -62,7 +60,7 @@ public class EndpointConfiguration {
                 try {
                     httpExchangeHistoryService.saveFromHttpExchange(httpExchange, FILTER_URLS);
                 } catch (JsonProcessingException e) {
-                    log.error("save http exchange history failed", e);
+                    log.error("保存 http 请求记录失败", e);
                 }
             }
         };

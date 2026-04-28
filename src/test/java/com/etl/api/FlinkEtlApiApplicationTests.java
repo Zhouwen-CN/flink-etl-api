@@ -43,7 +43,7 @@ class FlinkEtlApiApplicationTests {
         // 设置表前缀和只生成哪些表，setGenerateTable 未配置时，生成所有表
         globalConfig.getStrategyConfig()
                 .setTablePrefix("T_")
-                .setGenerateTable("T_HTTP_EXCHANGE_HISTORY")
+                .setGenerateTable("T_USER")
                 .setTableConfig(tableConfig);
 
         // 设置生成 entity 并启用 Lombok

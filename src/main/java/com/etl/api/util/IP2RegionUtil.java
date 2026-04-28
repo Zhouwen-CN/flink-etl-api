@@ -1,6 +1,7 @@
 package com.etl.api.util;
 
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.lionsoul.ip2region.service.Config;
 import org.lionsoul.ip2region.service.InvalidConfigException;
 import org.lionsoul.ip2region.service.Ip2Region;
@@ -31,10 +32,10 @@ public class IP2RegionUtil {
     private static final Ip2Region ip2Region;
 
     static {
-        ClassPathResource resource = new ClassPathResource("db/ip2region/ip2region_v4.xdb");
+        val resource = new ClassPathResource("db/ip2region/ip2region_v4.xdb");
         try {
             // 创建 v4 的配置：指定缓存策略和 v4 的 xdb 文件路径
-            Config v4Config = Config.custom()
+            val v4Config = Config.custom()
                     .setCachePolicy(Config.BufferCache)               // 指定缓存策略:  NoCache / VIndexCache / BufferCache
                     .setCacheSliceBytes(Searcher.DEFAULT_SLICE_BYTES) // 设置缓存的分片字节数，默认为 50MiB
                     .setXdbInputStream(resource.getInputStream())     // 设置 v4 xdb 文件的 inputstream 对象
@@ -57,7 +58,7 @@ public class IP2RegionUtil {
         try {
             return Optional.ofNullable(ip2Region.search(ipv4String));
         } catch (InetAddressException | IOException | InterruptedException e) {
-            log.error("ip2region search error: {}", e.getMessage());
+            log.error("ip2region 查询失败: {}", e.getMessage());
             return Optional.empty();
         }
     }

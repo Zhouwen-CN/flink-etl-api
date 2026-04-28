@@ -10,6 +10,25 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
+/**
+ * <pre>
+ * 全局异常处理
+ *   200：成功
+ *   201：请求成功，并创建一个新的资源，通常是post、put请求相应
+ *   202：请求已收到，但是未采取行动
+ *   204：删除成功
+ *   400：请求有误
+ *   401：没有权限
+ *   403：禁止访问
+ *   404：资源不存在
+ *   410：记录被删除
+ *   422：参数错误
+ *   500：服务器错误
+ * </pre>
+ *
+ * @author chen
+ * @since 2026-04-28
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -53,11 +72,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * DML操作异常
+     * 记录已存在异常处理
      */
-    @ExceptionHandler(DMLException.class)
-    public ResponseVO<Void> dmlFailureExceptionHandler(DMLException e) {
+    @ExceptionHandler(RecordAlreadyExistsException.class)
+    public ResponseVO<Void> recordAlreadyExistsExceptionHandler(RecordAlreadyExistsException e) {
         return ResponseVO.error(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    /**
+     * 记录未找到异常处理
+     */
+    @ExceptionHandler(RecordNotFoundException.class)
+    public ResponseVO<Void> recordNotFoundExceptionHandler(RecordNotFoundException e) {
+        return ResponseVO.error(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
 }

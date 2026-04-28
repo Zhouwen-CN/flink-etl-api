@@ -12,6 +12,27 @@ spring:
   profiles:
     active: dev
 
+  # 开发工具-热加载
+  devtools:
+    restart:
+      additional-paths: src/main/java
+
+  # 事务配置
+  transaction:
+    default-timeout: 60s #事务超时时间
+    rollback-on-commit-failure: true #提交失败回滚
+
+  # jackson配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: always
+    serialization:
+      write-enums-using-to-string: true
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
   # flyway: 数据库变更版本控制
   flyway:
     enabled: true

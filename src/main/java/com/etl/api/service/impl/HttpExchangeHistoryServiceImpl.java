@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.springframework.boot.actuate.web.exchanges.HttpExchange;
 import org.springframework.stereotype.Service;
 
@@ -32,16 +33,16 @@ public class HttpExchangeHistoryServiceImpl extends ServiceImpl<HttpExchangeHist
 
     @Override
     public void saveFromHttpExchange(HttpExchange httpExchange, List<String> filterUrls) throws JsonProcessingException {
-        HttpExchange.Request request = httpExchange.getRequest();
-        String path = request.getUri().getPath();
+        val request = httpExchange.getRequest();
+        val response = httpExchange.getResponse();
 
-        boolean anyMatch = filterUrls.stream().anyMatch(path::startsWith);
+        val path = request.getUri().getPath();
+        val anyMatch = filterUrls.stream().anyMatch(path::startsWith);
         if (anyMatch) {
             return;
         }
 
-        HttpExchange.Response response = httpExchange.getResponse();
-        HttpExchangeHistory httpExchangeHistory = HttpExchangeHistory.builder()
+        val httpExchangeHistory = HttpExchangeHistory.builder()
                 .timestamp(httpExchange.getTimestamp().toEpochMilli())
                 .requestUrl(request.getUri().toString())
                 .requestIp(request.getRemoteAddress())
@@ -57,29 +58,27 @@ public class HttpExchangeHistoryServiceImpl extends ServiceImpl<HttpExchangeHist
 
     @Override
     public List<HttpExchange> getHttpExchangeList(int limit) throws URISyntaxException, JsonProcessingException {
-        List<HttpExchangeHistory> httpExchangeHistoryList = this.queryChain()
+        val httpExchangeHistoryList = this.queryChain()
                 .orderBy(HttpExchangeHistory::getTimestamp, false)
                 .limit(limit)
                 .list();
 
-        List<HttpExchange> httpExchangeList = new ArrayList<>();
+        val result = new ArrayList<HttpExchange>();
         for (HttpExchangeHistory httpExchangeHistory : httpExchangeHistoryList) {
-            Instant timestamp = Instant.ofEpochMilli(httpExchangeHistory.getTimestamp());
-            HttpExchange.Request request = new HttpExchange.Request(
+            val timestamp = Instant.ofEpochMilli(httpExchangeHistory.getTimestamp());
+            val request = new HttpExchange.Request(
                     new URI(httpExchangeHistory.getRequestUrl()),
                     httpExchangeHistory.getRequestIp(),
                     httpExchangeHistory.getRequestMethod(),
                     objectMapper.readValue(httpExchangeHistory.getRequestHeaders(), new TypeReference<>() {
                     })
             );
-
-            HttpExchange.Response response = new HttpExchange.Response(
+            val response = new HttpExchange.Response(
                     httpExchangeHistory.getResponseStatus(),
                     objectMapper.readValue(httpExchangeHistory.getResponseHeaders(), new TypeReference<>() {
                     })
             );
-
-            HttpExchange httpExchange = new HttpExchange(
+            val httpExchange = new HttpExchange(
                     timestamp,
                     request,
                     response,
@@ -88,9 +87,9 @@ public class HttpExchangeHistoryServiceImpl extends ServiceImpl<HttpExchangeHist
                     Duration.ofMillis(httpExchangeHistory.getTakenTime())
             );
 
-            httpExchangeList.add(httpExchange);
+            result.add(httpExchange);
         }
 
-        return httpExchangeList;
+        return result;
     }
 }
