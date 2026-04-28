@@ -28,5 +28,5 @@ public class UserVO {
     /**
      * 账号状态(1启用 0停用)
      */
-    private Boolean isEnable;
+    private boolean status;
 }

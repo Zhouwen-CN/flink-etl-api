@@ -24,10 +24,11 @@ public interface UserConvert {
 
     UserConvert INSTANCE = Mappers.getMapper(UserConvert.class);
 
-    @Mapping(target = "isEnable", ignore = true)
+
+    @Mapping(target = "status", ignore = true)
     @Mapping(target = "id", ignore = true)
     User convert(UserCreateForm userForm);
 
-    @Mapping(target = "isEnable", ignore = true)
+    @Mapping(target = "status", ignore = true)
     User convert(UserUpdateForm userForm);
 }
