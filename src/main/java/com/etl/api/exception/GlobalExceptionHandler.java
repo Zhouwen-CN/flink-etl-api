@@ -72,19 +72,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 记录已存在异常处理
+     * 全局兜底异常处理
      */
-    @ExceptionHandler(RecordAlreadyExistsException.class)
-    public ResponseVO<Void> recordAlreadyExistsExceptionHandler(RecordAlreadyExistsException e) {
-        return ResponseVO.error(HttpStatus.BAD_REQUEST, e.getMessage());
+    @ExceptionHandler
+    public ResponseVO<Void> handlerException(Exception e) {
+        return ResponseVO.error(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
-
-    /**
-     * 记录未找到异常处理
-     */
-    @ExceptionHandler(RecordNotFoundException.class)
-    public ResponseVO<Void> recordNotFoundExceptionHandler(RecordNotFoundException e) {
-        return ResponseVO.error(HttpStatus.NOT_FOUND, e.getMessage());
-    }
-
 }

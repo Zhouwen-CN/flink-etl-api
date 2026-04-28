@@ -10,13 +10,15 @@ CREATE TABLE T_PERMISSION
 ) COMMENT ='权限表';
 
 insert into T_PERMISSION(id, code)
-values (1, 'user.select');
+values (1, '*');
 insert into T_PERMISSION(id, code)
-values (2, 'user.insert');
+values (2, 'user.select');
 insert into T_PERMISSION(id, code)
-values (3, 'user.update');
+values (3, 'user.insert');
 insert into T_PERMISSION(id, code)
-values (4, 'user.delete');
+values (4, 'user.update');
+insert into T_PERMISSION(id, code)
+values (5, 'user.delete');
 
 
 create table T_ROLE_PERMISSION
@@ -34,10 +36,4 @@ create table T_ROLE_PERMISSION
 insert into T_ROLE_PERMISSION(id, role_id, permission_id)
 values (1, 1, 1);
 insert into T_ROLE_PERMISSION(id, role_id, permission_id)
-values (2, 1, 2);
-insert into T_ROLE_PERMISSION(id, role_id, permission_id)
-values (3, 1, 3);
-insert into T_ROLE_PERMISSION(id, role_id, permission_id)
-values (4, 1, 4);
-insert into T_ROLE_PERMISSION(id, role_id, permission_id)
-values (5, 2, 1);
+values (2, 2, 2);

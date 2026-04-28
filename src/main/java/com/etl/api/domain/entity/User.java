@@ -58,6 +58,6 @@ public class User extends BaseEntity implements Serializable {
     /**
      * 账号状态(1启用 0停用)
      */
-    private boolean status;
+    private boolean isEnabled;
 
 }

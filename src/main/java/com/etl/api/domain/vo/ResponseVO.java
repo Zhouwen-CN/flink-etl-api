@@ -9,14 +9,18 @@ import org.springframework.http.HttpStatus;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "响应视图类")
+@Schema(description = "响应视图")
 public final class ResponseVO<T> {
+
     @Schema(description = "是否成功")
     private boolean success;
+
     @Schema(description = "状态码")
     private int code;
+
     @Schema(description = "响应数据")
     private T data;
+
     @Schema(description = "错误消息")
     private String message;
 

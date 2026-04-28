@@ -31,6 +31,7 @@ public class EndpointConfiguration {
             "/applications",
             "/sba-settings.js",
             "/variables.css",
+            "/assets",
             "/actuator",
             "/h2",
             "/swagger-ui",

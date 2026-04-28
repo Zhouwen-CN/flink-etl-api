@@ -1,32 +1,29 @@
 package com.etl.api.domain.vo;
 
 import com.etl.api.enumeration.GenderEnum;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Schema(description = "用户视图")
 public class UserVO {
-    /**
-     * 用户ID
-     */
+
+    @Schema(description = "用户ID")
     private Long id;
 
-    /**
-     * 用户名
-     */
+    @Schema(description = "用户名")
     private String username;
 
-    /**
-     * 用户性别(0未知 1男 2女)
-     */
+    @Schema(description = "用户性别")
     private GenderEnum gender;
 
-    /**
-     * 用户头像(base64)
-     */
+    @Schema(description = "用户头像")
     private String avatar;
 
-    /**
-     * 账号状态(1启用 0停用)
-     */
-    private boolean status;
+    @Schema(description = "账号状态")
+    private boolean isEnabled;
 }
