@@ -23,8 +23,8 @@ public class UserCreateForm {
     @Schema(description = "用户性别(0未知 1男 2女)")
     private Integer gender;
 
-    @Length(max = 16383)
-    @Schema(description = "用户头像(base64)", maxLength = 16383)
+    @Length(max = 65535)
+    @Schema(description = "用户头像(base64)", maxLength = 65535)
     private String avatar;
 
 }

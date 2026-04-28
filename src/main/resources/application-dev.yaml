@@ -12,3 +12,9 @@ mybatis-flex:
       username: sa
       password: 123
       poolName: master
+
+sa-token:
+  # 是否输出操作日志
+  is-log: true
+  # 日志等级（trace、debug、info、warn、error、fatal）
+  log-level: debug

@@ -12,3 +12,9 @@ mybatis-flex:
       username: ${JDBC_USERNAME}
       password: ${JDBC_PASSWORD}
       poolName: master
+
+sa-token:
+  # 是否输出操作日志
+  is-log: false
+  # 日志等级（trace、debug、info、warn、error、fatal）
+  log-level: info
