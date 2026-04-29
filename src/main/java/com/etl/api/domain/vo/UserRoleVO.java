@@ -10,14 +10,11 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "用户登入视图")
-public class UserLoginVO {
+@Schema(description = "用户角色视图")
+public class UserRoleVO {
 
     @Schema(description = "用户名")
     private String username;
-
-    @Schema(description = "访问令牌")
-    private String token;
 
     @Schema(description = "角色列表")
     private List<String> roles;

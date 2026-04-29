@@ -1,16 +1,19 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.domain.convert.UserConvert;
 import com.etl.api.domain.entity.User;
 import com.etl.api.domain.form.UserCreateForm;
 import com.etl.api.domain.form.UserUpdateForm;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.domain.vo.UserRoleVO;
 import com.etl.api.domain.vo.UserVO;
 import com.etl.api.exception.RecordAlreadyExistsException;
 import com.etl.api.exception.RecordNotFoundException;
 import com.etl.api.service.UserService;
+import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -102,5 +105,17 @@ public class UserController {
     public ResponseVO<Void> delete(@PathVariable @Parameter(description = "ID") Long id) {
         userService.removeById(id);
         return ResponseVO.ok();
+    }
+
+    @Operation(summary = "获取用户权限信息")
+    @GetMapping
+    public ResponseVO<UserRoleVO> getUserPermissionInfo() {
+        val userRoleVO = new UserRoleVO(
+                SaSessionUtil.getPrincipal(),
+                StpUtil.getRoleList(),
+                StpUtil.getPermissionList()
+        );
+
+        return ResponseVO.ok(userRoleVO);
     }
 }
