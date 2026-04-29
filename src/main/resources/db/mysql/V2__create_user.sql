@@ -3,7 +3,7 @@ create table T_USER
     id          bigint primary key auto_increment comment '自增主键',
     username    varchar(30) not null comment '用户名',
     password    varchar(60) not null comment '密码',
-    nickname varchar(30) not null comment '昵称',
+    nickname varchar(30) not null comment '用户昵称',
     gender      tinyint     default 0 comment '用户性别(0未知 1男 2女)',
     avatar      text        default null comment '用户头像(base64)',
     is_enabled  bit(1)      default 0 comment '账号状态(1启用 0停用)',

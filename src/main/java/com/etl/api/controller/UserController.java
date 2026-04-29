@@ -111,11 +111,11 @@ public class UserController {
     @GetMapping
     public ResponseVO<UserRoleVO> getUserPermissionInfo() {
         val userRoleVO = new UserRoleVO(
-                SaSessionUtil.getPrincipal(),
+                SaSessionUtil.getUsername(),
+                SaSessionUtil.getNickname(),
                 StpUtil.getRoleList(),
                 StpUtil.getPermissionList()
         );
-
         return ResponseVO.ok(userRoleVO);
     }
 }

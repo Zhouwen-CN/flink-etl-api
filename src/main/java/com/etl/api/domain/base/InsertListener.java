@@ -9,7 +9,7 @@ public class InsertListener extends AbstractInsertListener<BaseEntity> {
 
     @Override
     public void doInsert(BaseEntity baseEntity) {
-        baseEntity.setCreateUser(SaSessionUtil.getPrincipal());
+        baseEntity.setCreateUser(SaSessionUtil.getUsername());
         baseEntity.setCreateTime(LocalDateTime.now());
     }
 }

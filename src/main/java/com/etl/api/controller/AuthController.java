@@ -42,7 +42,7 @@ public class AuthController {
                 .oneOpt()
                 .orElseThrow(LoginFailedException::new);
 
-        val enabled = user.isEnabled();
+        val enabled = user.getIsEnabled();
         if (!enabled) {
             throw new AccountDisabledException(username);
         }
@@ -52,7 +52,8 @@ public class AuthController {
         TokenVO userLoginVO = new TokenVO(StpUtil.getTokenValue());
 
         // 使用 sa session 存储用户名称
-        SaSessionUtil.setPrincipal(username);
+        SaSessionUtil.setUsername(username);
+        SaSessionUtil.setNickname(user.getNickname());
         return ResponseVO.ok(userLoginVO);
     }
 

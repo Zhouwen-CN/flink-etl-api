@@ -20,6 +20,11 @@ public class UserUpdateForm {
     @Schema(description = "用户名", maxLength = 30)
     private String username;
 
+    @NotBlank
+    @Length(max = 30)
+    @Schema(description = "用户昵称", maxLength = 30)
+    private String nickname;
+
     @NotNull
     @Schema(description = "用户性别(0未知 1男 2女)")
     private Integer gender;

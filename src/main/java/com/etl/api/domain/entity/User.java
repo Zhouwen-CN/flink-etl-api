@@ -18,7 +18,7 @@ import java.io.Serializable;
  * 用户表 实体类。
  *
  * @author chen
- * @since 2026-04-27
+ * @since 2026-04-29
  */
 @Data
 @Builder
@@ -30,7 +30,7 @@ public class User extends BaseEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 用户ID
+     * 自增主键
      */
     @Id(keyType = KeyType.Auto)
     private Long id;
@@ -46,6 +46,11 @@ public class User extends BaseEntity implements Serializable {
     private String password;
 
     /**
+     * 用户昵称
+     */
+    private String nickname;
+
+    /**
      * 用户性别(0未知 1男 2女)
      */
     private GenderEnum gender;
@@ -58,6 +63,6 @@ public class User extends BaseEntity implements Serializable {
     /**
      * 账号状态(1启用 0停用)
      */
-    private boolean isEnabled;
+    private Boolean isEnabled;
 
 }
