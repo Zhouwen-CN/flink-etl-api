@@ -17,7 +17,7 @@ import java.io.Serializable;
  * 角色表 实体类。
  *
  * @author chen
- * @since 2026-04-28
+ * @since 2026-04-29
  */
 @Data
 @Builder
@@ -40,8 +40,8 @@ public class Role extends BaseEntity implements Serializable {
     private String name;
 
     /**
-     * 角色描述
+     * 角色标识符
      */
-    private String remark;
+    private String code;
 
 }

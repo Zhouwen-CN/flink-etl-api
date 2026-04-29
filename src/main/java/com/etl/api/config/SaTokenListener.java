@@ -12,6 +12,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * sa-token 全局侦听器
+ */
 @Component
 @RequiredArgsConstructor
 public class SaTokenListener extends SaTokenListenerForSimple {

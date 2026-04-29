@@ -17,7 +17,7 @@ import java.io.Serializable;
  * 权限表 实体类。
  *
  * @author chen
- * @since 2026-04-28
+ * @since 2026-04-29
  */
 @Data
 @Builder
@@ -35,8 +35,23 @@ public class Permission extends BaseEntity implements Serializable {
     private Long id;
 
     /**
-     * 权限标识
+     * 权限名称
+     */
+    private String name;
+
+    /**
+     * 权限标识符
      */
     private String code;
+
+    /**
+     * 类型(0菜单 1按钮)
+     */
+    private Integer type;
+
+    /**
+     * 父级ID
+     */
+    private Long parentId;
 
 }

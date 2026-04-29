@@ -3,9 +3,11 @@ package com.etl.api.enumeration;
 import com.mybatisflex.annotation.EnumValue;
 import lombok.Getter;
 
+/**
+ * 登入操作枚举
+ */
 @Getter
 public enum LoginOperationEnum {
-    UNKNOW(0, "未知"),
     LOGIN(1, "登入"),
     LOGOUT(2, "登出"),
     REVOKE(3, "撤销");

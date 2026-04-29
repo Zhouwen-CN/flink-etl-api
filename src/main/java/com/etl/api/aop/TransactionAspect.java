@@ -17,12 +17,7 @@ import java.lang.reflect.Method;
 import java.util.regex.Pattern;
 
 /**
- * <p>
  * 使用 aop 控制事务
- * </p>
- *
- * @author chen
- * @since 2025-07-15
  */
 @Aspect
 @Component

@@ -13,12 +13,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 /**
- * <p>
- * actuator 端点配置，生产环境建议自定义 Repository
- * </p>
- *
- * @author chen
- * @since 2025-09-01
+ * actuator 端点配置
  */
 @Configuration
 @RequiredArgsConstructor

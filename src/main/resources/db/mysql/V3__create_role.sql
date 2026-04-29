@@ -2,7 +2,7 @@ create table T_ROLE
 (
     id          bigint primary key auto_increment comment '自增主键',
     name        varchar(20)  not null comment '角色名称',
-    remark      varchar(100) not null comment '角色描述',
+    code varchar(100) not null comment '角色标识符',
     create_user varchar(30) default null comment '创建者',
     create_time datetime    default CURRENT_TIMESTAMP comment '创建时间',
     update_user varchar(30) default null comment '修改者',
@@ -10,12 +10,12 @@ create table T_ROLE
     unique index uk_role_name (name)
 ) comment '角色表';
 
-insert into T_ROLE(id, name, remark)
-values (1, 'admin', '管理员');
-insert into T_ROLE(id, name, remark)
-values (2, 'dev', '开发');
-insert into T_ROLE(id, name, remark)
-values (3, 'test', '测试');
+insert into T_ROLE(id, name, code)
+values (1, '管理员', 'admin');
+insert into T_ROLE(id, name, code)
+values (2, '开发', 'dev');
+insert into T_ROLE(id, name, code)
+values (3, '测试', 'test');
 
 create table T_USER_ROLE
 (
