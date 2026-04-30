@@ -32,6 +32,8 @@ spring:
       write-dates-as-timestamps: false
     deserialization:
       fail-on-unknown-properties: false
+      read-enums-using-to-string: true
+      read-unknown-enum-values-using-default-value: true
 
   # flyway: 数据库变更版本控制
   flyway:

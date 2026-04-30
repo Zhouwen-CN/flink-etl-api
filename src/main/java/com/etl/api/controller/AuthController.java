@@ -42,7 +42,7 @@ public class AuthController {
                 .oneOpt()
                 .orElseThrow(LoginFailedException::new);
 
-        val enabled = user.getIsEnabled();
+        val enabled = user.getStatus();
         if (!enabled) {
             throw new AccountDisabledException(username);
         }

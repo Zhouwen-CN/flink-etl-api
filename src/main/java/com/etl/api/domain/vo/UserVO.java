@@ -24,9 +24,6 @@ public class UserVO {
     @Schema(description = "用户性别")
     private GenderEnum gender;
 
-    @Schema(description = "用户头像")
-    private String avatar;
-
     @Schema(description = "账号状态")
-    private boolean isEnabled;
+    private boolean status;
 }

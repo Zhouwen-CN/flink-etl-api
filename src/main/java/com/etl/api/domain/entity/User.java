@@ -56,13 +56,8 @@ public class User extends BaseEntity implements Serializable {
     private GenderEnum gender;
 
     /**
-     * 用户头像(base64)
-     */
-    private String avatar;
-
-    /**
      * 账号状态(1启用 0停用)
      */
-    private Boolean isEnabled;
+    private Boolean status;
 
 }

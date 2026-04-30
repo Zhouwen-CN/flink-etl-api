@@ -1,6 +1,7 @@
 package com.etl.api.domain.form;
 
 
+import com.etl.api.enumeration.GenderEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,9 +28,10 @@ public class UserUpdateForm {
 
     @NotNull
     @Schema(description = "用户性别(0未知 1男 2女)")
-    private Integer gender;
+    private GenderEnum gender;
 
-    @Length(max = 65535)
-    @Schema(description = "用户头像(base64)", maxLength = 65535)
-    private String avatar;
+    @NotNull
+    @Schema(description = "账号状态(1启用 0停用)")
+    private Boolean status;
+
 }

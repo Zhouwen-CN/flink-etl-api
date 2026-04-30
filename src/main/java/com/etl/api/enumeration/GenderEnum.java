@@ -1,5 +1,6 @@
 package com.etl.api.enumeration;
 
+import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import com.mybatisflex.annotation.EnumValue;
 import lombok.Getter;
 
@@ -8,6 +9,7 @@ import lombok.Getter;
  */
 @Getter
 public enum GenderEnum {
+    @JsonEnumDefaultValue
     UNKNOW(0, "未知"),
     MALE(1, "男"),
     FEMALE(2, "女");

@@ -12,6 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "用户角色视图")
 public class UserRoleVO {
+    private Long id;
 
     @Schema(description = "用户名")
     private String username;

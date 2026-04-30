@@ -4,6 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.domain.convert.UserConvert;
 import com.etl.api.domain.entity.User;
+import com.etl.api.domain.entity.UserRole;
 import com.etl.api.domain.form.UserCreateForm;
 import com.etl.api.domain.form.UserUpdateForm;
 import com.etl.api.domain.vo.PageVO;
@@ -12,14 +13,17 @@ import com.etl.api.domain.vo.UserRoleVO;
 import com.etl.api.domain.vo.UserVO;
 import com.etl.api.exception.RecordAlreadyExistsException;
 import com.etl.api.exception.RecordNotFoundException;
+import com.etl.api.service.UserRoleService;
 import com.etl.api.service.UserService;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.util.StringUtils;
@@ -34,6 +38,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collection;
+
 @RestController
 @RequestMapping("/user")
 @Tag(name = "用户表 控制器")
@@ -41,18 +47,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final UserRoleService userRoleService;
 
     @SaCheckPermission("user.select")
     @Operation(summary = "分页查询")
-    @GetMapping("/{pageSize}/{pageNumber}")
+    @GetMapping
     public ResponseVO<PageVO<UserVO>> getPage(
-            @PathVariable @Parameter(description = "页面大小") @Min(1) @Max(20) Integer pageSize,
-            @PathVariable @Parameter(description = "当前页面") @Min(1) Integer pageNumber,
+            @RequestParam(value = "currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
+            @RequestParam(value = "pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "username", required = false) @Parameter(description = "用户名") String username
     ) {
         val page = userService.queryChain()
                 .like(User::getUsername, username, StringUtils.hasText(username))
-                .pageAs(Page.of(pageNumber, pageSize), UserVO.class);
+                .pageAs(Page.of(currentPage, pageSize), UserVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }
@@ -104,13 +111,28 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseVO<Void> delete(@PathVariable @Parameter(description = "ID") Long id) {
         userService.removeById(id);
+        userRoleService.remove(
+                QueryWrapper.create().eq(UserRole::getUserId, id)
+        );
+        return ResponseVO.ok();
+    }
+
+    @SaCheckPermission("user.delete")
+    @Operation(summary = "批量删除")
+    @DeleteMapping
+    public ResponseVO<Void> batchDelete(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
+        userService.removeByIds(ids);
+        userRoleService.remove(
+                QueryWrapper.create().in(UserRole::getUserId, ids)
+        );
         return ResponseVO.ok();
     }
 
     @Operation(summary = "获取用户权限信息")
-    @GetMapping
+    @GetMapping("/info")
     public ResponseVO<UserRoleVO> getUserPermissionInfo() {
         val userRoleVO = new UserRoleVO(
+                StpUtil.getLoginIdAsLong(),
                 SaSessionUtil.getUsername(),
                 SaSessionUtil.getNickname(),
                 StpUtil.getRoleList(),
