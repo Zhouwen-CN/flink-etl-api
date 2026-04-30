@@ -68,15 +68,15 @@ public class UserController {
     @Operation(summary = "ID查询")
     @GetMapping("/{id}")
     public ResponseVO<UserVO> getById(@PathVariable @Parameter(description = "ID") @Min(1) Long id) {
-        val userVO = userService.queryChain()
+        val vo = userService.queryChain()
                 .eq(User::getId, id)
                 .oneAs(UserVO.class);
 
-        if (userVO == null) {
+        if (vo == null) {
             throw new RecordNotFoundException(id);
         }
 
-        return ResponseVO.ok(userVO);
+        return ResponseVO.ok(vo);
     }
 
     @SaCheckPermission("user.insert")
@@ -92,8 +92,8 @@ public class UserController {
             throw new RecordAlreadyExistsException(username);
         }
 
-        val user = UserConvert.INSTANCE.convert(form);
-        userService.save(user);
+        val entity = UserConvert.INSTANCE.convert(form);
+        userService.save(entity);
         return ResponseVO.ok();
     }
 
@@ -101,8 +101,8 @@ public class UserController {
     @Operation(summary = "更新")
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated UserUpdateForm form) {
-        val user = UserConvert.INSTANCE.convert(form);
-        userService.updateById(user);
+        val entity = UserConvert.INSTANCE.convert(form);
+        userService.updateById(entity);
         return ResponseVO.ok();
     }
 

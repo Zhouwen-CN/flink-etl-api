@@ -16,7 +16,7 @@ public class UserCreateForm {
     private String username;
 
     @NotBlank
-    @Length(max = 60)
+    @Length(max = 30)
     @Schema(description = "密码", maxLength = 60)
     private String password;
 

@@ -13,7 +13,7 @@ import org.hibernate.validator.constraints.Length;
 public class UserUpdateForm {
 
     @NotNull
-    @Schema(description = "用户ID")
+    @Schema(description = "自增主键")
     private Long id;
 
     @NotBlank

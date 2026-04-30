@@ -1,7 +1,7 @@
 CREATE TABLE T_PERMISSION
 (
     id          bigint primary key auto_increment comment '自增主键',
-    name      varchar(50) not null comment '权限名称',
+    name varchar(30) not null comment '权限名称',
     code      varchar(30) default null comment '权限标识符',
     type      TINYINT     not null comment '类型(1菜单 2按钮)',
     parent_id bigint      default 0 comment '父级ID',
