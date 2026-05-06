@@ -1,16 +1,18 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.annotation.SaIgnore;
 import cn.dev33.satoken.stp.StpUtil;
-import com.etl.api.domain.entity.User;
+import cn.hutool.captcha.CaptchaUtil;
+import cn.hutool.captcha.generator.RandomGenerator;
+import cn.hutool.core.util.IdUtil;
+import com.etl.api.domain.entity.LoginCaptcha;
 import com.etl.api.domain.form.UserLoginForm;
+import com.etl.api.domain.vo.LoginCaptchaVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.TokenVO;
-import com.etl.api.exception.AccountDisabledException;
-import com.etl.api.exception.LoginFailedException;
+import com.etl.api.service.LoginCaptchaService;
 import com.etl.api.service.UserService;
-import com.etl.api.util.AESUtil;
-import com.etl.api.util.SaSessionUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,37 +26,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/auth")
 @Tag(name = "认证 控制器")
 @RequiredArgsConstructor
 public class AuthController {
 
-    public final UserService userService;
+    private final UserService userService;
+    private final LoginCaptchaService loginCaptchaService;
 
+    @SaIgnore
     @Operation(summary = "用户登入")
     @PostMapping("/login")
     public ResponseVO<TokenVO> login(@RequestBody @Validated UserLoginForm form) {
-        val username = form.getUsername();
-        val user = userService.queryChain()
-                .eq(User::getUsername, username)
-                .eq(User::getPassword, AESUtil.encrypt(form.getPassword()))
-                .oneOpt()
-                .orElseThrow(LoginFailedException::new);
-
-        val enabled = user.getStatus();
-        if (!enabled) {
-            throw new AccountDisabledException(username);
-        }
-
-        StpUtil.login(user.getId());
-
-        TokenVO userLoginVO = new TokenVO(StpUtil.getTokenValue());
-
-        // 使用 sa session 存储用户名称
-        SaSessionUtil.setUsername(username);
-        SaSessionUtil.setNickname(user.getNickname());
-        return ResponseVO.ok(userLoginVO);
+        return ResponseVO.ok(userService.login(form));
     }
 
     @Operation(summary = "退出登入")
@@ -75,8 +62,23 @@ public class AuthController {
     }
 
 
+    @SaIgnore
     @GetMapping("/captcha")
-    public ResponseVO<String> captcha() {
-        return ResponseVO.ok("V3Admin");
+    public ResponseVO<LoginCaptchaVO> captcha() {
+        val randomGenerator = new RandomGenerator("0123456789", 4);
+        val lineCaptcha = CaptchaUtil.createLineCaptcha(125, 43, randomGenerator, 80);
+        val code = lineCaptcha.getCode();
+        val captchaId = IdUtil.fastSimpleUUID();
+        val loginCaptcha = LoginCaptcha.builder()
+                .id(captchaId)
+                .code(code)
+                .createTime(LocalDateTime.now())
+                .build();
+
+        loginCaptchaService.save(loginCaptcha);
+        val loginCaptchaVO = new LoginCaptchaVO();
+        loginCaptchaVO.setId(captchaId);
+        loginCaptchaVO.setCaptchaBase64(lineCaptcha.getImageBase64Data());
+        return ResponseVO.ok(loginCaptchaVO);
     }
 }

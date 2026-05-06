@@ -17,4 +17,13 @@ public class UserLoginForm {
     @Length(max = 60)
     @Schema(description = "密码", maxLength = 60)
     private String password;
+
+    @NotBlank
+    @Schema(description = "验证码ID")
+    private String captchaId;
+
+    @NotBlank
+    @Length(min = 4, max = 4)
+    @Schema(description = "验证码", minLength = 4, maxLength = 4)
+    private String code;
 }
