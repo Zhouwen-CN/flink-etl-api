@@ -1,17 +1,25 @@
 package com.etl.api.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.etl.api.domain.convert.UserConvert;
 import com.etl.api.domain.entity.User;
+import com.etl.api.domain.entity.UserRole;
+import com.etl.api.domain.form.UserCreateForm;
 import com.etl.api.domain.form.UserLoginForm;
+import com.etl.api.domain.form.UserUpdateForm;
 import com.etl.api.domain.vo.TokenVO;
 import com.etl.api.exception.AccountDisabledException;
+import com.etl.api.exception.AdminModifyDeniedException;
 import com.etl.api.exception.LoginCaptchaException;
 import com.etl.api.exception.LoginFailedException;
+import com.etl.api.exception.RecordAlreadyExistsException;
 import com.etl.api.mapper.UserMapper;
 import com.etl.api.service.LoginCaptchaService;
+import com.etl.api.service.UserRoleService;
 import com.etl.api.service.UserService;
 import com.etl.api.util.AESUtil;
 import com.etl.api.util.SaSessionUtil;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -21,6 +29,8 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * 用户表 服务层实现。
@@ -33,6 +43,7 @@ import java.time.temporal.ChronoUnit;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     private final LoginCaptchaService loginCaptchaService;
+    private final UserRoleService userRoleService;
     @Value("${custom.captcha.expiration}")
     private Duration captchaExpiration;
 
@@ -70,5 +81,82 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 删除验证码
         loginCaptchaService.removeById(captchaId);
         return new TokenVO(StpUtil.getTokenValue());
+    }
+
+    @Override
+    public void addUser(UserCreateForm form) {
+        // 用户名称是否存在
+        val username = form.getUsername();
+        val exists = this.queryChain()
+                .eq(User::getUsername, username)
+                .exists();
+        if (exists) {
+            throw new RecordAlreadyExistsException(username);
+        }
+
+        // 新增用户
+        val entity = UserConvert.INSTANCE.convert(form);
+        this.save(entity);
+
+        this.saveUserRole(entity.getId(), form.getRoleIds(), false);
+    }
+
+    @Override
+    public void modifyUser(UserUpdateForm form) {
+        // admin 不能修改
+        val id = form.getId();
+        if (id == 1L) {
+            throw new AdminModifyDeniedException();
+        }
+
+        // 跟新用户
+        val entity = UserConvert.INSTANCE.convert(form);
+        this.updateById(entity);
+
+        this.saveUserRole(id, form.getRoleIds(), true);
+    }
+
+    @Override
+    public void removeUser(Long id) {
+        if (id == 1L) {
+            throw new AdminModifyDeniedException();
+        }
+
+        this.removeById(id);
+        userRoleService.remove(
+                QueryWrapper.create().eq(UserRole::getUserId, id)
+        );
+    }
+
+    @Override
+    public void removeUserBatch(Collection<Long> ids) {
+        if (ids.contains(1L)) {
+            throw new AdminModifyDeniedException();
+        }
+
+        this.removeByIds(ids);
+        userRoleService.remove(
+                QueryWrapper.create().in(UserRole::getUserId, ids)
+        );
+    }
+
+
+    public void saveUserRole(Long userId, List<Long> roleIds, boolean isUpdate) {
+        // 待新增的角色列表
+        val userRoleList = roleIds
+                .stream()
+                .map(roleId -> UserRole.builder()
+                        .userId(userId)
+                        .roleId(roleId)
+                        .build())
+                .toList();
+
+        // 删除角色
+        if (isUpdate) {
+            userRoleService.remove(QueryWrapper.create().eq(UserRole::getUserId, userId));
+        }
+
+        // 新增角色
+        userRoleService.saveBatch(userRoleList);
     }
 }

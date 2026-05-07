@@ -1,9 +1,10 @@
 package com.etl.api.config;
 
 import cn.dev33.satoken.stp.StpInterface;
-import com.etl.api.enumeration.PermissionTypeEnum;
 import com.etl.api.service.UserRoleService;
+import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -26,15 +27,17 @@ public class StpInterfaceImpl implements StpInterface {
      */
     @Override
     public List<String> getPermissionList(Object loginId, String loginType) {
-        return userRoleService.queryChain()
+        val queryWrapper = QueryWrapper.create()
                 .select(PERMISSION.CODE)
+                .from(USER_ROLE)
                 .join(ROLE_PERMISSION)
                 .on(USER_ROLE.ROLE_ID.eq(ROLE_PERMISSION.ROLE_ID))
                 .join(PERMISSION)
                 .on(ROLE_PERMISSION.PERMISSION_ID.eq(PERMISSION.ID))
-                .where(USER_ROLE.USER_ID.eq(loginId).and(PERMISSION.TYPE.eq(PermissionTypeEnum.BUTTON.getCode())))
-                .groupBy(PERMISSION.CODE)
-                .listAs(String.class);
+                .where(USER_ROLE.USER_ID.eq(loginId))
+                .groupBy(PERMISSION.CODE);
+
+        return userRoleService.listAs(queryWrapper, String.class);
     }
 
     /**
@@ -42,11 +45,13 @@ public class StpInterfaceImpl implements StpInterface {
      */
     @Override
     public List<String> getRoleList(Object loginId, String loginType) {
-        return userRoleService.queryChain()
+        val queryWrapper = QueryWrapper.create()
                 .select(ROLE.CODE)
+                .from(USER_ROLE)
                 .join(ROLE)
                 .on(USER_ROLE.ROLE_ID.eq(ROLE.ID))
-                .where(USER_ROLE.USER_ID.eq(loginId))
-                .listAs(String.class);
+                .where(USER_ROLE.USER_ID.eq(loginId));
+
+        return userRoleService.listAs(queryWrapper, String.class);
     }
 }

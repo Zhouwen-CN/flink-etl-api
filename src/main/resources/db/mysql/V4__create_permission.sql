@@ -1,10 +1,10 @@
 CREATE TABLE T_PERMISSION
 (
     id          bigint primary key auto_increment comment '自增主键',
-    name varchar(30) not null comment '权限名称',
-    code      varchar(30) default null comment '权限标识符',
-    type      TINYINT     not null comment '类型(1菜单 2按钮)',
-    parent_id bigint      default 0 comment '父级ID',
+    name       varchar(30) not null comment '权限名称',
+    code       varchar(30) default null comment '权限标识符',
+    type TINYINT default 0 comment '类型(0按钮 1管理员)',
+    sort_order int         default 0 comment '排序，值越小优先级越高',
     create_user varchar(30) default null comment '创建者',
     create_time datetime    default CURRENT_TIMESTAMP comment '创建时间',
     update_user varchar(30) default null comment '修改者',
@@ -13,23 +13,32 @@ CREATE TABLE T_PERMISSION
 ) COMMENT ='权限表';
 
 /**
-  1.sa-token 只获取按钮权限
-  2.菜单权限是给前端用的，比如动态加载菜单、权限编辑
+  表只保存按钮权限，菜单权限由前端控制
  */
-insert into T_PERMISSION(id, name, code, type, parent_id)
-values (1, '所有权限(管理员)', '*', 2, 0);
 
-insert into T_PERMISSION(id, name, code, type, parent_id)
-values (2, '用户菜单', null, 1, 0);
+-- admin
+insert into T_PERMISSION(id, name, code, type)
+values (1, '所有权限(管理员)', '*', 0);
 
-insert into T_PERMISSION(id, name, code, type, parent_id)
-values (3, '查询', 'user.select', 2, 2);
-insert into T_PERMISSION(id, name, code, type, parent_id)
-values (4, '新增', 'user.insert', 2, 2);
-insert into T_PERMISSION(id, name, code, type, parent_id)
-values (5, '更新', 'user.update', 2, 2);
-insert into T_PERMISSION(id, name, code, type, parent_id)
-values (6, '删除', 'user.delete', 2, 2);
+-- user
+insert into T_PERMISSION(id, name, code, type)
+values (2, '查询', 'user.select', 1);
+insert into T_PERMISSION(id, name, code, type)
+values (3, '新增', 'user.insert', 1);
+insert into T_PERMISSION(id, name, code, type)
+values (4, '更新', 'user.update', 1);
+insert into T_PERMISSION(id, name, code, type)
+values (5, '删除', 'user.delete', 1);
+
+-- role
+insert into T_PERMISSION(id, name, code, type)
+values (6, '查询', 'role.select', 1);
+insert into T_PERMISSION(id, name, code, type)
+values (7, '新增', 'role.insert', 1);
+insert into T_PERMISSION(id, name, code, type)
+values (8, '更新', 'role.update', 1);
+insert into T_PERMISSION(id, name, code, type)
+values (9, '删除', 'role.delete', 1);
 
 
 create table T_ROLE_PERMISSION
@@ -54,5 +63,3 @@ insert into T_ROLE_PERMISSION(id, role_id, permission_id)
 values (4, 2, 4);
 insert into T_ROLE_PERMISSION(id, role_id, permission_id)
 values (5, 2, 5);
-insert into T_ROLE_PERMISSION(id, role_id, permission_id)
-values (6, 2, 6);

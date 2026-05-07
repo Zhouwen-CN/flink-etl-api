@@ -7,8 +7,8 @@ import lombok.Getter;
  */
 @Getter
 public enum PermissionTypeEnum {
-    MENU(1, "菜单"),
-    BUTTON(2, "按钮");
+    BUTTON(0, "按钮"),
+    ADMIN(1, "管理员");
 
     private final Integer code;
     private final String desc;

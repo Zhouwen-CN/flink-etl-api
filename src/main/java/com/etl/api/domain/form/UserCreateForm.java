@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
+import java.util.List;
+
 @Data
 @Schema(description = "新增用户表单")
 public class UserCreateForm {
@@ -32,5 +34,9 @@ public class UserCreateForm {
     @NotNull
     @Schema(description = "账号状态(1启用 0停用)")
     private Boolean status;
+
+    @NotNull
+    @Schema(description = "用户角色ID列表")
+    private List<Long> roleIds;
 
 }

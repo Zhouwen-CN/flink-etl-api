@@ -5,6 +5,7 @@ import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.service.LoginLogService;
 import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,8 +35,7 @@ public class LogController {
             @PathVariable @Parameter(description = "页面大小") @Min(1) @Max(20) Integer pageSize,
             @PathVariable @Parameter(description = "当前页面") @Min(1) Integer pageNumber
     ) {
-
-        val page = loginLogService.queryChain()
+        val queryWrapper = QueryWrapper.create()
                 .select(
                         LOGIN_LOG.ID,
                         USER.USERNAME,
@@ -44,11 +44,12 @@ public class LogController {
                         LOGIN_LOG.REGION,
                         LOGIN_LOG.CREATE_TIME
                 )
+                .from(LOGIN_LOG)
                 .join(USER)
                 .on(LOGIN_LOG.USER_ID.eq(USER.ID))
-                .orderBy(LOGIN_LOG.CREATE_TIME, false)
-                .pageAs(Page.of(pageNumber, pageSize), LoginLogVO.class);
+                .orderBy(LOGIN_LOG.CREATE_TIME, false);
 
+        val page = loginLogService.pageAs(Page.of(pageNumber, pageSize), queryWrapper, LoginLogVO.class);
         return ResponseVO.ok(PageVO.from(page));
     }
 }

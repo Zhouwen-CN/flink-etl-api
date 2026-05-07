@@ -66,7 +66,7 @@ public class AuthController {
     @GetMapping("/captcha")
     public ResponseVO<LoginCaptchaVO> captcha() {
         val randomGenerator = new RandomGenerator("0123456789", 4);
-        val lineCaptcha = CaptchaUtil.createLineCaptcha(125, 43, randomGenerator, 80);
+        val lineCaptcha = CaptchaUtil.createLineCaptcha(100, 40, randomGenerator, 80);
         val code = lineCaptcha.getCode();
         val captchaId = IdUtil.fastSimpleUUID();
         val loginCaptcha = LoginCaptcha.builder()

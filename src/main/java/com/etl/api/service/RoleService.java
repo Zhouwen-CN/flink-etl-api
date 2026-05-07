@@ -1,6 +1,7 @@
 package com.etl.api.service;
 
 import com.etl.api.domain.entity.Role;
+import com.etl.api.domain.form.RoleCreateForm;
 import com.mybatisflex.core.service.IService;
 
 /**
@@ -11,4 +12,5 @@ import com.mybatisflex.core.service.IService;
  */
 public interface RoleService extends IService<Role> {
 
+    void addRole(RoleCreateForm form);
 }

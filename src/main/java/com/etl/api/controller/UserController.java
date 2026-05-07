@@ -2,18 +2,16 @@ package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
-import com.etl.api.domain.convert.UserConvert;
+import com.etl.api.domain.convert.RoleConvert;
 import com.etl.api.domain.entity.User;
-import com.etl.api.domain.entity.UserRole;
 import com.etl.api.domain.form.UserCreateForm;
 import com.etl.api.domain.form.UserUpdateForm;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.domain.vo.RoleSelectorVO;
 import com.etl.api.domain.vo.UserRoleVO;
 import com.etl.api.domain.vo.UserVO;
-import com.etl.api.exception.RecordAlreadyExistsException;
-import com.etl.api.exception.RecordNotFoundException;
-import com.etl.api.service.UserRoleService;
+import com.etl.api.service.RoleService;
 import com.etl.api.service.UserService;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.paginate.Page;
@@ -39,6 +37,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
+import java.util.List;
+
+import static com.etl.api.domain.entity.table.UserRoleTableDef.USER_ROLE;
+import static com.etl.api.domain.entity.table.UserTableDef.USER;
 
 @RestController
 @RequestMapping("/user")
@@ -47,7 +49,7 @@ import java.util.Collection;
 public class UserController {
 
     private final UserService userService;
-    private final UserRoleService userRoleService;
+    private final RoleService roleService;
 
     @SaCheckPermission("user.select")
     @Operation(summary = "分页查询")
@@ -64,36 +66,11 @@ public class UserController {
         return ResponseVO.ok(PageVO.from(page));
     }
 
-    @SaCheckPermission("user.select")
-    @Operation(summary = "ID查询")
-    @GetMapping("/{id}")
-    public ResponseVO<UserVO> getById(@PathVariable @Parameter(description = "ID") @Min(1) Long id) {
-        val vo = userService.queryChain()
-                .eq(User::getId, id)
-                .oneAs(UserVO.class);
-
-        if (vo == null) {
-            throw new RecordNotFoundException(id);
-        }
-
-        return ResponseVO.ok(vo);
-    }
-
     @SaCheckPermission("user.insert")
     @Operation(summary = "新增")
     @PostMapping
     public ResponseVO<Void> add(@RequestBody @Validated UserCreateForm form) {
-        val username = form.getUsername();
-        val exists = userService.queryChain()
-                .eq(User::getUsername, username)
-                .exists();
-
-        if (exists) {
-            throw new RecordAlreadyExistsException(username);
-        }
-
-        val entity = UserConvert.INSTANCE.convert(form);
-        userService.save(entity);
+        userService.addUser(form);
         return ResponseVO.ok();
     }
 
@@ -101,36 +78,29 @@ public class UserController {
     @Operation(summary = "更新")
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated UserUpdateForm form) {
-        val entity = UserConvert.INSTANCE.convert(form);
-        userService.updateById(entity);
+        userService.modifyUser(form);
         return ResponseVO.ok();
     }
 
     @SaCheckPermission("user.delete")
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
-    public ResponseVO<Void> delete(@PathVariable @Parameter(description = "ID") Long id) {
-        userService.removeById(id);
-        userRoleService.remove(
-                QueryWrapper.create().eq(UserRole::getUserId, id)
-        );
+    public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
+        userService.removeUser(id);
         return ResponseVO.ok();
     }
 
     @SaCheckPermission("user.delete")
     @Operation(summary = "批量删除")
     @DeleteMapping
-    public ResponseVO<Void> batchDelete(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
-        userService.removeByIds(ids);
-        userRoleService.remove(
-                QueryWrapper.create().in(UserRole::getUserId, ids)
-        );
+    public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
+        userService.removeUserBatch(ids);
         return ResponseVO.ok();
     }
 
-    @Operation(summary = "获取用户权限信息")
+    @Operation(summary = "获取用户信息")
     @GetMapping("/info")
-    public ResponseVO<UserRoleVO> getUserPermissionInfo() {
+    public ResponseVO<UserRoleVO> getUserInfo() {
         val userRoleVO = new UserRoleVO(
                 StpUtil.getLoginIdAsLong(),
                 SaSessionUtil.getUsername(),
@@ -139,5 +109,31 @@ public class UserController {
                 StpUtil.getPermissionList()
         );
         return ResponseVO.ok(userRoleVO);
+    }
+
+    @SaCheckPermission("user.select")
+    @Operation(summary = "用户角色信息")
+    @GetMapping("/role/{id}")
+    public ResponseVO<List<Long>> getRoleIds(@PathVariable Long id) {
+        val queryWrapper = QueryWrapper.create()
+                .select(USER_ROLE.ROLE_ID)
+                .from(USER)
+                .join(USER_ROLE)
+                .on(USER.ID.eq(USER_ROLE.USER_ID))
+                .where(USER.ID.eq(id));
+
+        val roleIds = userService.listAs(queryWrapper, Long.class);
+        return ResponseVO.ok(roleIds);
+    }
+
+    @SaCheckPermission("user.select")
+    @Operation(summary = "角色选择器")
+    @GetMapping("/role/selector")
+    public ResponseVO<List<RoleSelectorVO>> selector() {
+        val vos = roleService.list()
+                .stream()
+                .map(RoleConvert.INSTANCE::convert)
+                .toList();
+        return ResponseVO.ok(vos);
     }
 }

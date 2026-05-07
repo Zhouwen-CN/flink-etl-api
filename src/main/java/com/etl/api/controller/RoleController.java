@@ -2,15 +2,13 @@ package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.domain.convert.RoleConvert;
-import com.etl.api.domain.entity.Role;
 import com.etl.api.domain.entity.RolePermission;
 import com.etl.api.domain.form.RoleCreateForm;
 import com.etl.api.domain.form.RoleUpdateForm;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.RoleVO;
-import com.etl.api.exception.RecordAlreadyExistsException;
-import com.etl.api.exception.RecordNotFoundException;
+import com.etl.api.exception.AdminModifyDeniedException;
 import com.etl.api.service.RolePermissionService;
 import com.etl.api.service.RoleService;
 import com.mybatisflex.core.paginate.Page;
@@ -62,36 +60,11 @@ public class RoleController {
         return ResponseVO.ok(PageVO.from(page));
     }
 
-    @SaCheckPermission("role.select")
-    @Operation(summary = "ID查询")
-    @GetMapping("/{id}")
-    public ResponseVO<RoleVO> getById(@PathVariable @Parameter(description = "ID") @Min(1) Long id) {
-        val vo = roleService.queryChain()
-                .eq(Role::getId, id)
-                .oneAs(RoleVO.class);
-
-        if (vo == null) {
-            throw new RecordNotFoundException(id);
-        }
-
-        return ResponseVO.ok(vo);
-    }
-
     @SaCheckPermission("role.insert")
     @Operation(summary = "新增")
     @PostMapping
     public ResponseVO<Void> add(@RequestBody @Validated RoleCreateForm form) {
-        val code = form.getCode();
-        val exists = roleService.queryChain()
-                .eq(Role::getCode, code)
-                .exists();
-
-        if (exists) {
-            throw new RecordAlreadyExistsException(code);
-        }
-
-        val entity = RoleConvert.INSTANCE.convert(form);
-        roleService.save(entity);
+        roleService.addRole(form);
         return ResponseVO.ok();
     }
 
@@ -99,6 +72,10 @@ public class RoleController {
     @Operation(summary = "更新")
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated RoleUpdateForm form) {
+        val id = form.getId();
+        if (id == 1L) {
+            throw new AdminModifyDeniedException();
+        }
         val entity = RoleConvert.INSTANCE.convert(form);
         roleService.updateById(entity);
         return ResponseVO.ok();
@@ -107,7 +84,7 @@ public class RoleController {
     @SaCheckPermission("role.delete")
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
-    public ResponseVO<Void> delete(@PathVariable @Parameter(description = "ID") Long id) {
+    public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
         roleService.removeById(id);
         rolePermissionService.remove(
                 QueryWrapper.create().eq(RolePermission::getRoleId, id)
@@ -118,7 +95,7 @@ public class RoleController {
     @SaCheckPermission("role.delete")
     @Operation(summary = "批量删除")
     @DeleteMapping
-    public ResponseVO<Void> batchDelete(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
+    public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
         roleService.removeByIds(ids);
         rolePermissionService.remove(
                 QueryWrapper.create().in(RolePermission::getRoleId, ids)

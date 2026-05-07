@@ -3,12 +3,14 @@ package com.etl.api.config;
 import com.mybatisflex.core.audit.AuditManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 /**
  * mysql flex sql日志
  */
 @Slf4j
 @Configuration
+@Profile("dev")
 public class MyBatisFlexConfiguration {
 
     public MyBatisFlexConfiguration() {
