@@ -1,18 +1,17 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.etl.api.domain.convert.RoleConvert;
 import com.etl.api.domain.entity.RolePermission;
 import com.etl.api.domain.form.RoleCreateForm;
 import com.etl.api.domain.form.RoleUpdateForm;
 import com.etl.api.domain.vo.PageVO;
+import com.etl.api.domain.vo.PermissionSelectorVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.RoleVO;
-import com.etl.api.exception.AdminModifyDeniedException;
+import com.etl.api.service.PermissionService;
 import com.etl.api.service.RolePermissionService;
 import com.etl.api.service.RoleService;
 import com.mybatisflex.core.paginate.Page;
-import com.mybatisflex.core.query.QueryWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +32,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 import static com.etl.api.domain.entity.table.RoleTableDef.ROLE;
 
@@ -44,6 +45,7 @@ public class RoleController {
 
     private final RoleService roleService;
     private final RolePermissionService rolePermissionService;
+    private final PermissionService permissionService;
 
     @SaCheckPermission("role.select")
     @Operation(summary = "分页查询")
@@ -72,12 +74,7 @@ public class RoleController {
     @Operation(summary = "更新")
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated RoleUpdateForm form) {
-        val id = form.getId();
-        if (id == 1L) {
-            throw new AdminModifyDeniedException();
-        }
-        val entity = RoleConvert.INSTANCE.convert(form);
-        roleService.updateById(entity);
+        roleService.modifyRole(form);
         return ResponseVO.ok();
     }
 
@@ -85,10 +82,7 @@ public class RoleController {
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        roleService.removeById(id);
-        rolePermissionService.remove(
-                QueryWrapper.create().eq(RolePermission::getRoleId, id)
-        );
+        roleService.removeRole(id);
         return ResponseVO.ok();
     }
 
@@ -96,10 +90,42 @@ public class RoleController {
     @Operation(summary = "批量删除")
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
-        roleService.removeByIds(ids);
-        rolePermissionService.remove(
-                QueryWrapper.create().in(RolePermission::getRoleId, ids)
-        );
+        roleService.removeRoleBatch(ids);
         return ResponseVO.ok();
+    }
+
+    @SaCheckPermission("role.select")
+    @Operation(summary = "权限选择器查询")
+    @GetMapping("/permission/selector")
+    public ResponseVO<List<PermissionSelectorVO>> selector() {
+        val vos = permissionService.list()
+                .stream()
+                .map(item -> {
+                    val code = item.getCode();
+                    val split = code.split("\\.");
+                    if (split.length == 2) {
+                        return PermissionSelectorVO.builder()
+                                .id(item.getId())
+                                .name(item.getName())
+                                .routeName(split[0])
+                                .operationType(split[1])
+                                .build();
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .toList();
+        return ResponseVO.ok(vos);
+    }
+
+    @SaCheckPermission("role.select")
+    @Operation(summary = "角色权限信息查询")
+    @GetMapping("/permission/{id}")
+    public ResponseVO<List<Long>> getPermissionByRoleId(@PathVariable @Parameter(description = "角色ID") Long id) {
+        val permissionIds = rolePermissionService.queryChain()
+                .select(RolePermission::getPermissionId)
+                .eq(RolePermission::getRoleId, id)
+                .listAs(Long.class);
+        return ResponseVO.ok(permissionIds);
     }
 }

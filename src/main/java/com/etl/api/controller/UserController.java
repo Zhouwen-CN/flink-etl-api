@@ -4,6 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.domain.convert.RoleConvert;
 import com.etl.api.domain.entity.User;
+import com.etl.api.domain.entity.UserRole;
 import com.etl.api.domain.form.UserCreateForm;
 import com.etl.api.domain.form.UserUpdateForm;
 import com.etl.api.domain.vo.PageVO;
@@ -12,10 +13,10 @@ import com.etl.api.domain.vo.RoleSelectorVO;
 import com.etl.api.domain.vo.UserRoleVO;
 import com.etl.api.domain.vo.UserVO;
 import com.etl.api.service.RoleService;
+import com.etl.api.service.UserRoleService;
 import com.etl.api.service.UserService;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.paginate.Page;
-import com.mybatisflex.core.query.QueryWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,9 +40,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Collection;
 import java.util.List;
 
-import static com.etl.api.domain.entity.table.UserRoleTableDef.USER_ROLE;
-import static com.etl.api.domain.entity.table.UserTableDef.USER;
-
 @RestController
 @RequestMapping("/user")
 @Tag(name = "用户表 控制器")
@@ -50,6 +48,7 @@ public class UserController {
 
     private final UserService userService;
     private final RoleService roleService;
+    private final UserRoleService userRoleService;
 
     @SaCheckPermission("user.select")
     @Operation(summary = "分页查询")
@@ -114,15 +113,11 @@ public class UserController {
     @SaCheckPermission("user.select")
     @Operation(summary = "用户角色信息")
     @GetMapping("/role/{id}")
-    public ResponseVO<List<Long>> getRoleIds(@PathVariable Long id) {
-        val queryWrapper = QueryWrapper.create()
-                .select(USER_ROLE.ROLE_ID)
-                .from(USER)
-                .join(USER_ROLE)
-                .on(USER.ID.eq(USER_ROLE.USER_ID))
-                .where(USER.ID.eq(id));
-
-        val roleIds = userService.listAs(queryWrapper, Long.class);
+    public ResponseVO<List<Long>> getRoleByUserId(@PathVariable @Parameter(description = "用户ID") Long id) {
+        val roleIds = userRoleService.queryChain()
+                .select(UserRole::getRoleId)
+                .eq(UserRole::getUserId, id)
+                .listAs(Long.class);
         return ResponseVO.ok(roleIds);
     }
 

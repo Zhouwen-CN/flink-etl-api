@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
+import java.util.List;
+
 @Data
 @Schema(description = "新增角色表单")
 public class RoleCreateForm {
@@ -18,4 +20,8 @@ public class RoleCreateForm {
     @Length(max = 30)
     @Schema(description = "角色标识符")
     private String code;
+
+    @NotNull
+    @Schema(description = "权限ID列表")
+    private List<Long> permissionIds;
 }

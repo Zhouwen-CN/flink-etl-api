@@ -12,7 +12,8 @@ CREATE TABLE T_PERMISSION
 ) COMMENT ='权限表';
 
 /**
-  表只保存按钮权限，菜单权限由前端控制
+  权限编码约定：routeName.operationType，由前端写入
+  菜单、按钮权限，由前端自己控制
  */
 
 -- admin
