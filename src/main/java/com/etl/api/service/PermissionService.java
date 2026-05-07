@@ -1,6 +1,7 @@
 package com.etl.api.service;
 
 import com.etl.api.domain.entity.Permission;
+import com.etl.api.domain.form.PermissionCreateForm;
 import com.mybatisflex.core.service.IService;
 
 /**
@@ -11,4 +12,5 @@ import com.mybatisflex.core.service.IService;
  */
 public interface PermissionService extends IService<Permission> {
 
+    void addPermission(PermissionCreateForm form);
 }
