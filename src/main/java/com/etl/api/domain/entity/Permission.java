@@ -17,7 +17,7 @@ import java.io.Serializable;
  * 权限表 实体类。
  *
  * @author chen
- * @since 2026-05-06
+ * @since 2026-05-07
  */
 @Data
 @Builder
@@ -45,23 +45,8 @@ public class Permission extends BaseEntity implements Serializable {
     private String code;
 
     /**
-     * 类型(0管理员 1菜单 2按钮)
+     * 类型(0按钮 1管理员)
      */
     private Integer type;
-
-    /**
-     * 父级ID
-     */
-    private Long parentId;
-
-    /**
-     * 路由名称，菜单类型使用
-     */
-    private String routeName;
-
-    /**
-     * 排序，值越小优先级越高
-     */
-    private Integer sortOrder;
 
 }
