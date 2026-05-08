@@ -1,10 +1,12 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.domain.convert.RoleConvert;
 import com.etl.api.domain.entity.User;
 import com.etl.api.domain.entity.UserRole;
+import com.etl.api.domain.form.ChangePwdForm;
 import com.etl.api.domain.form.UserCreateForm;
 import com.etl.api.domain.form.UserUpdateForm;
 import com.etl.api.domain.vo.PageVO;
@@ -12,9 +14,11 @@ import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.RoleSelectorVO;
 import com.etl.api.domain.vo.UserRoleVO;
 import com.etl.api.domain.vo.UserVO;
+import com.etl.api.exception.AdminModifyDeniedException;
 import com.etl.api.service.RoleService;
 import com.etl.api.service.UserRoleService;
 import com.etl.api.service.UserService;
+import com.etl.api.util.AESUtil;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,10 +29,12 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -49,6 +55,8 @@ public class UserController {
     private final UserService userService;
     private final RoleService roleService;
     private final UserRoleService userRoleService;
+    @Value("${custom.default-pwd}")
+    private String defaultPwd;
 
     @SaCheckPermission("user.select")
     @Operation(summary = "分页查询")
@@ -113,7 +121,7 @@ public class UserController {
     @SaCheckPermission("user.select")
     @Operation(summary = "用户角色信息")
     @GetMapping("/role/{id}")
-    public ResponseVO<List<Long>> getRoleByUserId(@PathVariable @Parameter(description = "用户ID") Long id) {
+    public ResponseVO<List<Long>> getRoleByUserId(@PathVariable @Parameter(description = "ID") Long id) {
         val roleIds = userRoleService.queryChain()
                 .select(UserRole::getRoleId)
                 .eq(UserRole::getUserId, id)
@@ -130,5 +138,24 @@ public class UserController {
                 .map(RoleConvert.INSTANCE::convert)
                 .toList();
         return ResponseVO.ok(vos);
+    }
+
+    @PatchMapping("/pwd/change")
+    public ResponseVO<Void> changePwd(@RequestBody @Validated ChangePwdForm form) {
+        return userService.changePwd(form);
+    }
+
+    @SaCheckRole("admin")
+    @PatchMapping("/pwd/reset/{id}")
+    public ResponseVO<Void> resetPwd(@PathVariable @Parameter(description = "ID") Long id) {
+        if (id == 1L) {
+            throw new AdminModifyDeniedException();
+        }
+        userService.updateChain()
+                .eq(User::getId, id)
+                .set(User::getPassword, AESUtil.encrypt(defaultPwd))
+                .update();
+        StpUtil.logout(id);
+        return ResponseVO.ok();
     }
 }

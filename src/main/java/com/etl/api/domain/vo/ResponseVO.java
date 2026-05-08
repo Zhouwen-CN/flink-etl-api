@@ -28,11 +28,11 @@ public final class ResponseVO<T> {
         return new ResponseVO<>(true, HttpStatus.OK.value(), data, null);
     }
 
-    public static ResponseVO<Void> ok() {
+    public static <T> ResponseVO<T> ok() {
         return new ResponseVO<>(true, HttpStatus.OK.value(), null, null);
     }
 
-    public static ResponseVO<Void> error(HttpStatus code, String message) {
+    public static <T> ResponseVO<T> error(HttpStatus code, String message) {
         return new ResponseVO<>(false, code.value(), null, message);
     }
 }

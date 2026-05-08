@@ -2,7 +2,6 @@ package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.annotation.SaIgnore;
-import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.generator.RandomGenerator;
 import cn.hutool.core.util.IdUtil;
@@ -16,6 +15,7 @@ import com.etl.api.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.validation.annotation.Validated;
@@ -40,24 +40,22 @@ public class AuthController {
     @SaIgnore
     @Operation(summary = "用户登入")
     @PostMapping("/login")
-    public ResponseVO<TokenVO> login(@RequestBody @Validated UserLoginForm form) {
-        return ResponseVO.ok(userService.login(form));
+    public ResponseVO<TokenVO> login(@RequestBody @Validated UserLoginForm form, HttpServletRequest request) {
+        return userService.login(form, request);
     }
 
     @Operation(summary = "退出登入")
     @GetMapping("/logout/{id}")
-    public ResponseVO<Void> logout(@PathVariable @Parameter(description = "ID") Long id) {
-        StpUtil.logout(id);
-
+    public ResponseVO<Void> logout(@PathVariable @Parameter(description = "ID") Long id, HttpServletRequest request) {
+        userService.logout(id, request);
         return ResponseVO.ok();
     }
 
     @SaCheckRole("admin")
     @Operation(summary = "撤销令牌/踢人下线")
     @GetMapping("/revoke/{id}")
-    public ResponseVO<Void> revoke(@PathVariable @Parameter(description = "ID") Long id) {
-        StpUtil.kickout(id);
-
+    public ResponseVO<Void> revoke(@PathVariable @Parameter(description = "ID") Long id, HttpServletRequest request) {
+        userService.revoke(id, request);
         return ResponseVO.ok();
     }
 

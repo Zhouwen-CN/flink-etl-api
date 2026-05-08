@@ -13,7 +13,7 @@ public class LoginLogVO {
     @Schema(description = "自增主键")
     private Long id;
 
-    @Schema(description = "用户名称")
+    @Schema(description = "用户名")
     private String username;
 
     @Schema(description = "操作类型")
@@ -24,6 +24,12 @@ public class LoginLogVO {
 
     @Schema(description = "地区")
     private String region;
+
+    @Schema(description = "是否成功")
+    private Boolean status;
+
+    @Schema(description = "备注")
+    private String remark;
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;

@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
  * 登录日志表 实体类。
  *
  * @author chen
- * @since 2026-04-28
+ * @since 2026-05-08
  */
 @Data
 @Builder
@@ -32,12 +32,12 @@ public class LoginLog implements Serializable {
     private Long id;
 
     /**
-     * 用户id
+     * 用户名
      */
-    private Long userId;
+    private String username;
 
     /**
-     * 操作类型（0未知，1登入，2登出，3撤销）
+     * 操作类型（1登入 2登出 3撤销）
      */
     private LoginOperationEnum operation;
 
@@ -52,8 +52,17 @@ public class LoginLog implements Serializable {
     private String region;
 
     /**
+     * 0失败 1成功
+     */
+    private Boolean status;
+
+    /**
+     * 备注
+     */
+    private String remark;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;
-
 }

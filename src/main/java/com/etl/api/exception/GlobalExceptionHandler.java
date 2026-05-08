@@ -72,6 +72,9 @@ public class GlobalExceptionHandler {
         return ResponseVO.error(HttpStatus.UNPROCESSABLE_ENTITY, String.format("%s %s", parameterName, defaultMessage));
     }
 
+    /**
+     * 未登入，返回401
+     */
     @ExceptionHandler(NotLoginException.class)
     public ResponseVO<Void> notLoginExceptionHandler(NotLoginException e) {
         return ResponseVO.error(HttpStatus.UNAUTHORIZED, e.getMessage());
