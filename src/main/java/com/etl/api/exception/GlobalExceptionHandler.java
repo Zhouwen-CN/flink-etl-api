@@ -4,6 +4,8 @@ package com.etl.api.exception;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.service.ErrorLogService;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.CollectionUtils;
@@ -32,7 +34,9 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
  * @since 2026-04-28
  */
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+    private final ErrorLogService errorLogService;
 
     /**
      * 请求体参数校验异常
@@ -94,6 +98,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler
     public ResponseVO<Void> handlerException(Exception e) {
+        errorLogService.saveErrorLog(e);
         return ResponseVO.error(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
 }

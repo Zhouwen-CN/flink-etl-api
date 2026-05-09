@@ -10,12 +10,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Java 17** - JDK 版本
 - **Spring Boot 3.5.13** - 基础框架
-- **MyBatis-Flex 1.11.6** - ORM 框架，替代 MyBatis-Plus
+- **Sa-Token 1.45.0** - 认证授权框架
+- **MyBatis-Flex 1.11.6** - ORM 框架
 - **Flyway** - 数据库版本控制和迁移
 - **H2 Database** - 开发环境数据库（支持 MySQL 模式）
 - **Spring Doc (OpenAPI)** - API 文档生成
 - **Spring Boot Admin** - 应用监控和管理
 - **Lombok + MapStruct** - 代码生成和简化
+- **Hutool 5.8.44** - Java 工具库
 - **IP2Region** - IP 地址解析库
 
 ## 常用命令
@@ -26,8 +28,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # 编译项目
 mvn clean compile
 
-# 运行测试
+# 运行所有测试
 mvn test
+
+# 运行单个测试类
+mvn test -Dtest=FlinkEtlApiApplicationTests
+
+# 运行单个测试方法
+mvn test -Dtest=FlinkEtlApiApplicationTests#contextLoads
 
 # 打包项目（生成可执行 JAR）
 mvn clean package
@@ -65,14 +73,20 @@ MyBatis-Flex 提供了代码生成器，可以基于数据库表生成 Entity、
 
 ```
 com.etl.api
-├── config/          # 配置类（MyBatis、Endpoint、数据源等）
+├── aop/             # AOP 切面（事务控制）
+├── config/          # 配置类（MyBatis、Sa-Token、Endpoint、数据源等）
 ├── controller/      # REST API 控制器
 ├── domain/          # 领域对象
 │   ├── base/        # 基础实体和监听器
+│   ├── convert/     # MapStruct 对象转换器
 │   ├── entity/      # 实体类（对应数据库表）
+│   ├── form/        # 表单对象（请求参数）
+│   ├── validator/   # 自定义验证器
 │   └── vo/          # 视图对象（ResponseVO、PageVO）
+├── enumeration/     # 枚举类
 ├── exception/       # 异常处理
 ├── mapper/          # MyBatis Mapper 接口
+├── scheduler/       # 定时任务
 ├── service/         # 业务服务接口
 │   └ impl/          # 服务实现
 └── util/            # 工具类
@@ -89,6 +103,16 @@ com.etl.api
 4. **实体监听器**：通过 `InsertListener` 和 `UpdateListener` 自动填充实体的创建时间和更新时间字段（继承 `BaseEntity` 的实体）。
 
 5. **HTTP Exchange 监控**：自定义 `HttpExchangeRepository` 实现将 HTTP 请求历史记录存储到数据库，并过滤特定 URL（如 `/actuator`、`/h2`、`/swagger-ui`）。
+
+6. **Sa-Token 认证授权**：使用 JWT Token 模式，通过 `StpInterfaceImpl` 扩展获取用户权限信息。登录接口返回 Token，客户端通过
+   `Authorization: Bearer <token>` 头携带。
+
+7. **AOP 事务控制**：使用 `@Transactional` 控制事务，特殊场景可通过 `@NonTransaction` 注解跳过事务（配合
+   `TransactionAspect`）。
+
+8. **对象转换**：使用 MapStruct 进行 Entity/VO/Form 之间的转换，转换器位于 `domain/convert/` 目录。
+
+9. **表单验证**：使用 Bean Validation 注解进行参数校验，支持自定义验证器（如 `FieldMatch` 用于字段匹配验证）。
 
 ## 配置要点
 
@@ -115,6 +139,14 @@ API 文档通过 Spring Doc 自动生成：
 
 开发环境允许在 Swagger UI 中执行 "Try it out"，生产环境禁用。
 
+### Sa-Token 配置
+
+认证使用 JWT Token 模式：
+
+- Token 通过 `Authorization: Bearer <token>` 头传递
+- 用户权限通过 `StpInterfaceImpl` 从数据库动态获取
+- 登录日志记录通过 `LoginLog` 表存储
+
 ### 数据源配置
 
 使用 HikariCP 连接池，关键配置参数：
@@ -123,6 +155,10 @@ API 文档通过 Spring Doc 自动生成：
 - `connectionTimeout`: 5000ms
 - `idleTimeout`: 600000ms (10分钟)
 - `maxLifetime`: 1200000ms (20分钟)
+
+### 定时任务
+
+项目使用 `@Scheduled` 注解定义定时任务，位于 `scheduler/` 包。现有任务包括定期清理过期记录。
 
 ## 可观测性集成
 

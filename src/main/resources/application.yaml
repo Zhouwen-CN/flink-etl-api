@@ -51,6 +51,8 @@ spring:
   #springboot admin
   boot:
     admin:
+      monitor:
+        status-interval: 30s
       client:
         url: http://localhost:8080
   output:
