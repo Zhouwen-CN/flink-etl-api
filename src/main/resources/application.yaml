@@ -114,6 +114,7 @@ springdoc:
   show-actuator: true #actuator 端点添加到 swagger-ui
   swagger-ui:
     doc-expansion: none
+    tags-sorter: alpha
 
 # hikari配置
 hikari-config: &hikari-config
