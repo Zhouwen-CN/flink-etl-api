@@ -5,8 +5,7 @@ import com.etl.api.domain.entity.Role;
 import com.etl.api.domain.entity.RolePermission;
 import com.etl.api.domain.form.RoleCreateForm;
 import com.etl.api.domain.form.RoleUpdateForm;
-import com.etl.api.exception.AdminModifyDeniedException;
-import com.etl.api.exception.RecordAlreadyExistsException;
+import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.RoleMapper;
 import com.etl.api.service.RolePermissionService;
 import com.etl.api.service.RoleService;
@@ -32,32 +31,34 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     private final RolePermissionService rolePermissionService;
 
     @Override
-    public void addRole(RoleCreateForm form) {
+    public ResponseVO<Void> addRole(RoleCreateForm form) {
         val code = form.getCode();
         val exists = this.queryChain()
                 .eq(Role::getCode, code)
                 .exists();
 
         if (exists) {
-            throw new RecordAlreadyExistsException(code);
+            return ResponseVO.error("记录已存在: " + code);
         }
 
         val entity = RoleConvert.INSTANCE.convert(form);
         this.save(entity);
 
         this.saveRolePermission(entity.getId(), form.getPermissionIds(), false);
+        return ResponseVO.ok();
     }
 
     @Override
-    public void modifyRole(RoleUpdateForm form) {
+    public ResponseVO<Void> modifyRole(RoleUpdateForm form) {
         val id = form.getId();
         if (id == 1L) {
-            throw new AdminModifyDeniedException();
+            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
         }
         val entity = RoleConvert.INSTANCE.convert(form);
         this.updateById(entity);
 
         this.saveRolePermission(id, form.getPermissionIds(), true);
+        return ResponseVO.ok();
     }
 
     @Override

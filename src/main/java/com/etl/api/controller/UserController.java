@@ -14,7 +14,6 @@ import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.RoleSelectorVO;
 import com.etl.api.domain.vo.UserRoleVO;
 import com.etl.api.domain.vo.UserVO;
-import com.etl.api.exception.AdminModifyDeniedException;
 import com.etl.api.service.RoleService;
 import com.etl.api.service.UserRoleService;
 import com.etl.api.service.UserService;
@@ -77,32 +76,28 @@ public class UserController {
     @Operation(summary = "新增")
     @PostMapping
     public ResponseVO<Void> add(@RequestBody @Validated UserCreateForm form) {
-        userService.addUser(form);
-        return ResponseVO.ok();
+        return userService.addUser(form);
     }
 
     @SaCheckPermission("user.update")
     @Operation(summary = "更新")
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated UserUpdateForm form) {
-        userService.modifyUser(form);
-        return ResponseVO.ok();
+        return userService.modifyUser(form);
     }
 
     @SaCheckPermission("user.delete")
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        userService.removeUser(id);
-        return ResponseVO.ok();
+        return userService.removeUser(id);
     }
 
     @SaCheckPermission("user.delete")
     @Operation(summary = "批量删除")
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
-        userService.removeUserBatch(ids);
-        return ResponseVO.ok();
+        return userService.removeUserBatch(ids);
     }
 
     @Operation(summary = "获取用户信息")
@@ -149,7 +144,7 @@ public class UserController {
     @PatchMapping("/pwd/reset/{id}")
     public ResponseVO<Void> resetPwd(@PathVariable @Parameter(description = "ID") Long id) {
         if (id == 1L) {
-            throw new AdminModifyDeniedException();
+            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
         }
         userService.updateChain()
                 .eq(User::getId, id)

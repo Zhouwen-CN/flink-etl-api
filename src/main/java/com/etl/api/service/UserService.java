@@ -22,13 +22,13 @@ public interface UserService extends IService<User> {
 
     ResponseVO<TokenVO> login(UserLoginForm form, HttpServletRequest request);
 
-    void addUser(UserCreateForm form);
+    ResponseVO<Void> addUser(UserCreateForm form);
 
-    void modifyUser(UserUpdateForm form);
+    ResponseVO<Void> modifyUser(UserUpdateForm form);
 
-    void removeUser(Long id);
+    ResponseVO<Void> removeUser(Long id);
 
-    void removeUserBatch(Collection<Long> ids);
+    ResponseVO<Void> removeUserBatch(Collection<Long> ids);
 
     void logout(Long id, HttpServletRequest request);
 

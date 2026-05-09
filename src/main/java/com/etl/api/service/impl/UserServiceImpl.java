@@ -11,8 +11,6 @@ import com.etl.api.domain.form.UserUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.TokenVO;
 import com.etl.api.enumeration.LoginOperationEnum;
-import com.etl.api.exception.AdminModifyDeniedException;
-import com.etl.api.exception.RecordAlreadyExistsException;
 import com.etl.api.mapper.UserMapper;
 import com.etl.api.service.LoginCaptchaService;
 import com.etl.api.service.LoginLogService;
@@ -97,14 +95,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public void addUser(UserCreateForm form) {
+    public ResponseVO<Void> addUser(UserCreateForm form) {
         // 用户名称是否存在
         val username = form.getUsername();
         val exists = this.queryChain()
                 .eq(User::getUsername, username)
                 .exists();
         if (exists) {
-            throw new RecordAlreadyExistsException(username);
+            return ResponseVO.error("记录已存在: " + username);
         }
 
         // 新增用户
@@ -112,45 +110,49 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         this.save(entity);
 
         this.saveUserRole(entity.getId(), form.getRoleIds(), false);
+        return ResponseVO.ok();
     }
 
     @Override
-    public void modifyUser(UserUpdateForm form) {
+    public ResponseVO<Void> modifyUser(UserUpdateForm form) {
         // admin 不能修改
         val id = form.getId();
         if (id == 1L) {
-            throw new AdminModifyDeniedException();
+            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
         }
 
-        // 跟新用户
+        // 更新用户
         val entity = UserConvert.INSTANCE.convert(form);
         this.updateById(entity);
 
         this.saveUserRole(id, form.getRoleIds(), true);
+        return ResponseVO.ok();
     }
 
     @Override
-    public void removeUser(Long id) {
+    public ResponseVO<Void> removeUser(Long id) {
         if (id == 1L) {
-            throw new AdminModifyDeniedException();
+            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
         }
 
         this.removeById(id);
         userRoleService.remove(
                 QueryWrapper.create().eq(UserRole::getUserId, id)
         );
+        return ResponseVO.ok();
     }
 
     @Override
-    public void removeUserBatch(Collection<Long> ids) {
+    public ResponseVO<Void> removeUserBatch(Collection<Long> ids) {
         if (ids.contains(1L)) {
-            throw new AdminModifyDeniedException();
+            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
         }
 
         this.removeByIds(ids);
         userRoleService.remove(
                 QueryWrapper.create().in(UserRole::getUserId, ids)
         );
+        return ResponseVO.ok();
     }
 
     @Override

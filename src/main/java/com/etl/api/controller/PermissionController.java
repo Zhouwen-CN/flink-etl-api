@@ -9,7 +9,6 @@ import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.PermissionVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.enumeration.PermissionTypeEnum;
-import com.etl.api.exception.AdminModifyDeniedException;
 import com.etl.api.service.PermissionService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,8 +67,7 @@ public class PermissionController {
     @Operation(summary = "新增")
     @PostMapping
     public ResponseVO<Void> add(@RequestBody @Validated PermissionCreateForm form) {
-        permissionService.addPermission(form);
-        return ResponseVO.ok();
+        return permissionService.addPermission(form);
     }
 
     @SaCheckPermission("permission.update")
@@ -78,7 +76,7 @@ public class PermissionController {
     public ResponseVO<Void> modify(@RequestBody @Validated PermissionUpdateForm form) {
         val id = form.getId();
         if (id == 1L) {
-            throw new AdminModifyDeniedException();
+            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
         }
         val entity = PermissionConvert.INSTANCE.convert(form);
         permissionService.updateById(entity);
@@ -90,7 +88,7 @@ public class PermissionController {
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
         if (id == 1L) {
-            throw new AdminModifyDeniedException();
+            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
         }
         permissionService.removeById(id);
         return ResponseVO.ok();
@@ -101,7 +99,7 @@ public class PermissionController {
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
         if (ids.contains(1L)) {
-            throw new AdminModifyDeniedException();
+            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
         }
         permissionService.removeByIds(ids);
         return ResponseVO.ok();

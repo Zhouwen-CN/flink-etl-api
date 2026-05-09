@@ -66,16 +66,14 @@ public class RoleController {
     @Operation(summary = "新增")
     @PostMapping
     public ResponseVO<Void> add(@RequestBody @Validated RoleCreateForm form) {
-        roleService.addRole(form);
-        return ResponseVO.ok();
+        return roleService.addRole(form);
     }
 
     @SaCheckPermission("role.update")
     @Operation(summary = "更新")
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated RoleUpdateForm form) {
-        roleService.modifyRole(form);
-        return ResponseVO.ok();
+        return roleService.modifyRole(form);
     }
 
     @SaCheckPermission("role.delete")

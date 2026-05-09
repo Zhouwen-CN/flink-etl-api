@@ -35,4 +35,8 @@ public final class ResponseVO<T> {
     public static <T> ResponseVO<T> error(HttpStatus code, String message) {
         return new ResponseVO<>(false, code.value(), null, message);
     }
+
+    public static <T> ResponseVO<T> error(String message) {
+        return new ResponseVO<>(false, HttpStatus.BAD_REQUEST.value(), null, message);
+    }
 }

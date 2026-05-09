@@ -2,6 +2,7 @@ package com.etl.api.exception;
 
 
 import cn.dev33.satoken.exception.NotLoginException;
+import cn.dev33.satoken.exception.NotPermissionException;
 import com.etl.api.domain.vo.ResponseVO;
 import lombok.val;
 import org.springframework.http.HttpStatus;
@@ -73,11 +74,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 未登入，返回401
+     * 未认证，返回401
      */
     @ExceptionHandler(NotLoginException.class)
-    public ResponseVO<Void> notLoginExceptionHandler(NotLoginException e) {
-        return ResponseVO.error(HttpStatus.UNAUTHORIZED, e.getMessage());
+    public ResponseVO<Void> notLoginExceptionHandler() {
+        return ResponseVO.error(HttpStatus.UNAUTHORIZED, "未认证");
+    }
+
+    /**
+     * 未授权，返回403
+     */
+    @ExceptionHandler(NotPermissionException.class)
+    public ResponseVO<Void> notPermissionExceptionHandler() {
+        return ResponseVO.error(HttpStatus.FORBIDDEN, "未授权");
     }
 
     /**
