@@ -21,7 +21,8 @@ public class SaTokenConfiguration implements WebMvcConfigurer {
                         "/instances",
                         "/applications/**",
                         "/assets/**",
-                        "/favicon.ico"
+                        "/favicon.ico",
+                        "/error"
                 );
     }
 }
