@@ -25,6 +25,8 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
 
+        <flink-clients.version>1.15.2</flink-clients.version>
+
         <!-- maven plugin -->
         <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
         <spring-boot-maven-plugin.version>3.5.13</spring-boot-maven-plugin.version>
@@ -189,6 +191,12 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-clients</artifactId>
+            <version>${flink-clients.version}</version>
         </dependency>
 
         <!-- flyway -->
