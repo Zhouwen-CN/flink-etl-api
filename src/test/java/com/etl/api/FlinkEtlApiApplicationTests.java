@@ -21,7 +21,7 @@ class FlinkEtlApiApplicationTests {
     DataSource dataSource;
 
     @Test
-    void ip2regionTest(){
+    void ip2regionTest() {
         val search = IP2RegionUtil.search("113.92.157.29");
         System.out.println("search = " + search);
 
@@ -52,7 +52,7 @@ class FlinkEtlApiApplicationTests {
         // 设置表前缀和只生成哪些表，setGenerateTable 未配置时，生成所有表
         globalConfig.getStrategyConfig()
                 .setTablePrefix("T_")
-                .setGenerateTable("T_ETL_JOB")
+                .setGenerateTable("T_DICT_TYPE")
                 .setTableConfig(tableConfig);
 
         // 设置生成 entity 并启用 Lombok

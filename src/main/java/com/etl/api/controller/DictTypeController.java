@@ -1,14 +1,14 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.etl.api.domain.convert.FlinkClusterConvert;
-import com.etl.api.domain.entity.FlinkCluster;
-import com.etl.api.domain.form.FlinkClusterCreateForm;
-import com.etl.api.domain.form.FlinkClusterUpdateForm;
-import com.etl.api.domain.vo.FlinkClusterVO;
+import com.etl.api.domain.convert.DictTypeConvert;
+import com.etl.api.domain.entity.DictType;
+import com.etl.api.domain.form.DictTypeCreateForm;
+import com.etl.api.domain.form.DictTypeUpdateForm;
+import com.etl.api.domain.vo.DictTypeVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.service.FlinkClusterService;
+import com.etl.api.service.DictTypeService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,59 +32,55 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
 
-@Validated
 @RestController
-@RequestMapping("/flink/cluster")
-@Tag(name = "Flink集群 控制器")
+@RequestMapping("/dict/type")
+@Tag(name = "字典类型 控制器")
 @RequiredArgsConstructor
-public class FlinkClusterController {
+public class DictTypeController {
+    private final DictTypeService dictTypeService;
 
-    private final FlinkClusterService flinkClusterService;
-
-    @SaCheckPermission("cluster.select")
+    @SaCheckPermission("dict.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<FlinkClusterVO>> getPage(
+    public ResponseVO<PageVO<DictTypeVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
-            @RequestParam(value = "name", required = false) @Parameter(description = "集群名称") String name
+            @RequestParam(value = "searchName", required = false) @Parameter(description = "字典名称") String searchName
     ) {
-        val page = flinkClusterService.queryChain()
-                .like(FlinkCluster::getName, name, StringUtils.hasText(name))
-                .pageAs(Page.of(currentPage, pageSize), FlinkClusterVO.class);
+        val page = dictTypeService.queryChain()
+                .like(DictType::getName, searchName, StringUtils.hasText(searchName))
+                .pageAs(Page.of(currentPage, pageSize), DictTypeVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }
 
-    @SaCheckPermission("cluster.insert")
+    @SaCheckPermission("dict.insert")
     @Operation(summary = "新增")
     @PostMapping
-    public ResponseVO<Void> add(@RequestBody @Validated FlinkClusterCreateForm form) {
-        return flinkClusterService.addCluster(form);
+    public ResponseVO<Void> add(@RequestBody @Validated DictTypeCreateForm form) {
+        return dictTypeService.addDictType(form);
     }
 
-    @SaCheckPermission("cluster.update")
+    @SaCheckPermission("dict.update")
     @Operation(summary = "更新")
     @PutMapping
-    public ResponseVO<Void> modify(@RequestBody @Validated FlinkClusterUpdateForm form) {
-        val entity = FlinkClusterConvert.INSTANCE.convert(form);
-        flinkClusterService.updateById(entity);
+    public ResponseVO<Void> modify(@RequestBody @Validated DictTypeUpdateForm form) {
+        val entity = DictTypeConvert.INSTANCE.convert(form);
+        dictTypeService.updateById(entity);
         return ResponseVO.ok();
     }
 
-    @SaCheckPermission("cluster.delete")
+    @SaCheckPermission("dict.delete")
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        flinkClusterService.removeById(id);
-        return ResponseVO.ok();
+        return dictTypeService.removeDictType(id);
     }
 
-    @SaCheckPermission("cluster.delete")
+    @SaCheckPermission("dict.delete")
     @Operation(summary = "批量删除")
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
-        flinkClusterService.removeByIds(ids);
-        return ResponseVO.ok();
+        return dictTypeService.removeBatchDictType(ids);
     }
 }

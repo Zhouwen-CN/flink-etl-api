@@ -51,8 +51,8 @@ public class RoleController {
     @Operation(summary = "分页查询")
     @GetMapping
     public ResponseVO<PageVO<RoleVO>> getPage(
-            @RequestParam(value = "currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
-            @RequestParam(value = "pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
+            @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
+            @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "searchName", required = false) @Parameter(description = "角色名|角色编码") String searchName
     ) {
         val page = roleService.queryChain()

@@ -10,5 +10,6 @@ create table T_ETL_JOB
     create_user varchar(30) default null comment '创建者',
     create_time datetime    default CURRENT_TIMESTAMP comment '创建时间',
     update_user varchar(30) default null comment '修改者',
-    update_time datetime    default CURRENT_TIMESTAMP comment '更新时间'
+    update_time datetime default CURRENT_TIMESTAMP comment '更新时间',
+    unique index uk_etl_job_name (name)
 ) comment 'ETL任务表'

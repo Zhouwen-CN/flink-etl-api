@@ -14,16 +14,16 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * 用户表 实体类。
+ * 字典数据表 实体类。
  *
  * @author chen
- * @since 2026-04-29
+ * @since 2026-05-12
  */
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(value = "T_USER", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
-public class User extends BaseEntity implements Serializable {
+@Table(value = "T_DICT_DATA", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
+public class DictData extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -35,28 +35,23 @@ public class User extends BaseEntity implements Serializable {
     private Long id;
 
     /**
-     * 用户名
+     * 字典类型id
      */
-    private String username;
+    private Long typeId;
 
     /**
-     * 密码
+     * 字典键
      */
-    private String password;
+    private String label;
 
     /**
-     * 用户昵称
+     * 字典值
      */
-    private String nickname;
+    private Long value;
 
     /**
-     * 用户性别(0未知 1男 2女)
+     * 字典排序
      */
-    private Integer gender;
-
-    /**
-     * 账号状态(1启用 0停用)
-     */
-    private Boolean status;
+    private Integer sortId;
 
 }

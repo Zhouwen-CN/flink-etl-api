@@ -1,6 +1,5 @@
 package com.etl.api.domain.vo;
 
-import com.etl.api.enumeration.GenderEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,7 +23,7 @@ public class UserVO {
     private String nickname;
 
     @Schema(description = "用户性别")
-    private GenderEnum gender;
+    private Integer gender;
 
     @Schema(description = "账号状态")
     private boolean status;

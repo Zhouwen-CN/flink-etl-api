@@ -7,9 +7,8 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@Schema(description = "更新ETL任务表单")
-public class EtlJobUpdateForm extends EtlJobCreateForm {
-
+@Schema(description = "更新字典数据表单")
+public class DictDataUpdateForm extends DictDataCreateForm {
     @NotNull
     @Schema(description = "自增主键")
     private Long id;

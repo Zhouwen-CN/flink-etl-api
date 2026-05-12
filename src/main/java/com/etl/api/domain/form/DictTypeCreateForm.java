@@ -5,21 +5,22 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
-import org.springframework.web.multipart.MultipartFile;
 
 @Data
-@Schema(description = "上传jar包表单")
-public class UploadJarForm {
+@Schema(description = "新增字典类型表单")
+public class DictTypeCreateForm {
 
     @NotBlank
     @Length(max = 30)
-    @Schema(description = "jar包名称")
+    @Schema(description = "字典名称")
     private String name;
 
-    /**
-     * 文件校验放在这里
-     */
+    @NotBlank
+    @Length(max = 30)
+    @Schema(description = "字典描述")
+    private String remark;
+
     @NotNull
-    @Schema(description = "jar包文件")
-    private MultipartFile file;
+    @Schema(description = "字典是否启用")
+    private Boolean status;
 }

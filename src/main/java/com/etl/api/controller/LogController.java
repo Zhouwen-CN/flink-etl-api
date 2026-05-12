@@ -34,8 +34,8 @@ public class LogController {
     @Operation(summary = "登入日志分页查询")
     @GetMapping("/login")
     public ResponseVO<PageVO<LoginLogVO>> getLoginLogPage(
-            @RequestParam(value = "currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
-            @RequestParam(value = "pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
+            @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
+            @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "username", required = false) @Parameter(description = "用户名") String username
     ) {
         val page = loginLogService.queryChain()
@@ -49,8 +49,8 @@ public class LogController {
     @Operation(summary = "异常日志分页查询")
     @GetMapping("/error")
     public ResponseVO<PageVO<ErrorLogVO>> getErrorLogPage(
-            @RequestParam(value = "currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
-            @RequestParam(value = "pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
+            @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
+            @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "username", required = false) @Parameter(description = "用户名") String username
     ) {
         val page = errorLogService.queryChain()

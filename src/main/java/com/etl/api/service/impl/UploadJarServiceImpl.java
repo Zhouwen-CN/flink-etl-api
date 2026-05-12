@@ -1,7 +1,6 @@
 package com.etl.api.service.impl;
 
 import com.etl.api.domain.entity.UploadJar;
-import com.etl.api.domain.form.UploadJarForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.UploadJarMapper;
 import com.etl.api.service.UploadJarService;
@@ -10,6 +9,7 @@ import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,11 +29,17 @@ public class UploadJarServiceImpl extends ServiceImpl<UploadJarMapper, UploadJar
     private String uploadJarLocation;
 
     @Override
-    public ResponseVO<Void> addJar(UploadJarForm form) {
-        val uploadFile = form.getFile();
-        val dist = new File(uploadJarLocation, uploadFile.getOriginalFilename());
+    public ResponseVO<Void> addJar(String name, MultipartFile uploadFile) {
+        if (uploadFile == null) {
+            return ResponseVO.error("未发现文件，请上传文件");
+        }
 
-        val name = form.getName();
+        val originalFilename = uploadFile.getOriginalFilename();
+        if (originalFilename == null || !originalFilename.endsWith(".jar")) {
+            return ResponseVO.error("文件格式错误，请上传jar包文件");
+        }
+
+        val dist = new File(uploadJarLocation, uploadFile.getOriginalFilename());
         val path = dist.getPath();
         val exists = this.queryChain()
                 .where(UPLOAD_JAR.NAME.eq(name).or(UPLOAD_JAR.PATH.eq(path)))
@@ -44,7 +50,7 @@ public class UploadJarServiceImpl extends ServiceImpl<UploadJarMapper, UploadJar
         }
 
         try {
-            form.getFile().transferTo(dist);
+            uploadFile.transferTo(dist);
         } catch (Exception e) {
             return ResponseVO.error("文件上传失败");
         }

@@ -45,6 +45,11 @@ public final class ResponseVO<T> {
         return error("记录已存在: " + identify);
     }
 
+    // 记录未找到错误
+    public static <T> ResponseVO<T> recordNotFoundError(Object identify) {
+        return error("记录未找到: " + identify);
+    }
+
     // admin用户相关不能修改
     public static <T> ResponseVO<T> modifyAdminError() {
         return error("超级管理员 账号/角色/权限 禁止修改和删除");

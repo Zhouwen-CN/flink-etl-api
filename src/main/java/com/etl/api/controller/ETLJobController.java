@@ -48,12 +48,12 @@ public class ETLJobController {
     private final UploadJarService uploadJarService;
     private final FlinkClusterService flinkClusterService;
 
-    @SaCheckPermission("etl.select")
+    @SaCheckPermission("job.select")
     @Operation(summary = "分页查询")
     @GetMapping
     public ResponseVO<PageVO<ETLJobVO>> getPage(
-            @RequestParam(value = "currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
-            @RequestParam(value = "pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
+            @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
+            @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "searchName", required = false) @Parameter(description = "任务名称") String searchName
     ) {
         val page = etlJobService.queryChain()
@@ -63,14 +63,14 @@ public class ETLJobController {
         return ResponseVO.ok(PageVO.from(page));
     }
 
-    @SaCheckPermission("etl.insert")
+    @SaCheckPermission("job.insert")
     @Operation(summary = "新增")
     @PostMapping
     public ResponseVO<Void> add(@RequestBody @Validated EtlJobCreateForm form) {
         return etlJobService.addEtlJob(form);
     }
 
-    @SaCheckPermission("etl.update")
+    @SaCheckPermission("job.update")
     @Operation(summary = "更新")
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated EtlJobUpdateForm form) {
@@ -79,7 +79,7 @@ public class ETLJobController {
         return ResponseVO.ok();
     }
 
-    @SaCheckPermission("etl.delete")
+    @SaCheckPermission("job.delete")
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
@@ -87,7 +87,7 @@ public class ETLJobController {
         return ResponseVO.ok();
     }
 
-    @SaCheckPermission("etl.delete")
+    @SaCheckPermission("job.delete")
     @Operation(summary = "批量删除")
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
@@ -95,7 +95,7 @@ public class ETLJobController {
         return ResponseVO.ok();
     }
 
-    @SaCheckPermission("etl.select")
+    @SaCheckPermission("job.select")
     @Operation(summary = "jar包选择器")
     @GetMapping("/jar/selector")
     public ResponseVO<List<DictionaryVO>> jarSelector() {
@@ -105,7 +105,7 @@ public class ETLJobController {
         return ResponseVO.ok(vos);
     }
 
-    @SaCheckPermission("etl.select")
+    @SaCheckPermission("job.select")
     @Operation(summary = "集群选择器")
     @GetMapping("/cluster/selector")
     public ResponseVO<List<DictionaryVO>> clusterSelector() {

@@ -6,8 +6,7 @@ import lombok.Getter;
 @Getter
 public enum ETLJobTypeEnum {
     BATCH(1, "BATCH"),
-    STREAMING(2, "STREAMING"),
-    ;
+    STREAMING(2, "STREAMING");
 
     @EnumValue
     private final Integer code;

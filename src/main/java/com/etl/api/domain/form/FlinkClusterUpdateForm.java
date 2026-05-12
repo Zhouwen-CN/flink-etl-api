@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@Schema(description = "修改Flink集群表单")
+@Schema(description = "更新Flink集群表单")
 public class FlinkClusterUpdateForm extends FlinkClusterCreateForm {
 
     @NotNull

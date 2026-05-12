@@ -4,7 +4,6 @@ package com.etl.api.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.annotation.SaIgnore;
 import com.etl.api.domain.entity.UploadJar;
-import com.etl.api.domain.form.UploadJarForm;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.UploadJarVO;
@@ -20,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -45,8 +44,8 @@ public class UploadJarController {
     @Operation(summary = "分页查询")
     @GetMapping
     public ResponseVO<PageVO<UploadJarVO>> getPage(
-            @RequestParam(value = "currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
-            @RequestParam(value = "pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
+            @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
+            @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "searchName", required = false) @Parameter(description = "jar包名称") String searchName
     ) {
         val page = uploadJarService.queryChain()
@@ -60,8 +59,11 @@ public class UploadJarController {
     @SaCheckPermission("jar.insert")
     @Operation(summary = "新增")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseVO<Void> add(@Validated UploadJarForm form) throws IOException {
-        return uploadJarService.addJar(form);
+    public ResponseVO<Void> add(
+            @RequestParam("name") @Parameter(description = "jar包名称") String name,
+            @RequestParam(value = "file", required = false) @Parameter(description = "jar包文件") MultipartFile file
+    ) throws IOException {
+        return uploadJarService.addJar(name, file);
     }
 
     @SaCheckPermission("jar.delete")

@@ -45,8 +45,8 @@ public class PermissionController {
     @Operation(summary = "分页查询")
     @GetMapping
     public ResponseVO<PageVO<PermissionVO>> getPage(
-            @RequestParam(value = "currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
-            @RequestParam(value = "pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
+            @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
+            @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "routeName", required = false) @Parameter(description = "路由名称") String routeName,
             @RequestParam(value = "code", required = false) @Parameter(description = "权限标识符") String code
     ) {
