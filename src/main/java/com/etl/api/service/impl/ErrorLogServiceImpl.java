@@ -23,13 +23,7 @@ public class ErrorLogServiceImpl extends ServiceImpl<ErrorLogMapper, ErrorLog> i
 
     @Override
     public void saveErrorLog(Exception e) {
-        String username = null;
-        try {
-            username = SaSessionUtil.getUsername();
-        } catch (Exception ex) {
-            // do nothing
-        }
-
+        val username = SaSessionUtil.getUsername();
         val request = RequestUtil.getHttpServletRequest();
         val ip = IPUtil.getClientIP(request);
         val region = IP2RegionUtil.search(ip);

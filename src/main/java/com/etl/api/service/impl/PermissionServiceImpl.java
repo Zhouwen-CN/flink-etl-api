@@ -26,7 +26,7 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
                 .eq(Permission::getCode, code)
                 .exists();
         if (exists) {
-            return ResponseVO.error("记录已存在: " + code);
+            return ResponseVO.recordExistsError(code);
         }
 
         val entity = PermissionConvert.INSTANCE.convert(form);

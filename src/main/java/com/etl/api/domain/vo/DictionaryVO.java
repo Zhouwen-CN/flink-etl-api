@@ -4,12 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
-@Schema(description = "角色选择器视图")
-public class RoleSelectorVO {
+@Schema(description = "字典选择器视图")
+public class DictionaryVO {
 
-    @Schema(description = "角色名称")
+    @Schema(description = "标签")
     private String label;
 
-    @Schema(description = "自增主键")
+    @Schema(description = "值")
     private Long value;
 }

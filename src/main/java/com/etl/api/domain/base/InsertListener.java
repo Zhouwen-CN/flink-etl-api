@@ -11,5 +11,7 @@ public class InsertListener extends AbstractInsertListener<BaseEntity> {
     public void doInsert(BaseEntity baseEntity) {
         baseEntity.setCreateUser(SaSessionUtil.getUsername());
         baseEntity.setCreateTime(LocalDateTime.now());
+        baseEntity.setUpdateUser(SaSessionUtil.getUsername());
+        baseEntity.setUpdateTime(LocalDateTime.now());
     }
 }

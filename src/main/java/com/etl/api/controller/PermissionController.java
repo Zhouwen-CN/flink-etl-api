@@ -76,7 +76,7 @@ public class PermissionController {
     public ResponseVO<Void> modify(@RequestBody @Validated PermissionUpdateForm form) {
         val id = form.getId();
         if (id == 1L) {
-            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
+            return ResponseVO.modifyAdminError();
         }
         val entity = PermissionConvert.INSTANCE.convert(form);
         permissionService.updateById(entity);
@@ -88,7 +88,7 @@ public class PermissionController {
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
         if (id == 1L) {
-            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
+            return ResponseVO.modifyAdminError();
         }
         permissionService.removeById(id);
         return ResponseVO.ok();
@@ -99,7 +99,7 @@ public class PermissionController {
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
         if (ids.contains(1L)) {
-            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
+            return ResponseVO.modifyAdminError();
         }
         permissionService.removeByIds(ids);
         return ResponseVO.ok();

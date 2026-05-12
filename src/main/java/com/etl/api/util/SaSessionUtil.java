@@ -11,7 +11,12 @@ public final class SaSessionUtil {
     }
 
     public static String getUsername() {
-        return StpUtil.getSession().getString(USERNAME);
+        try {
+            return StpUtil.getSession().getString(USERNAME);
+        } catch (Exception ex) {
+            // do nothing
+        }
+        return null;
     }
 
     public static void setUsername(String username) {

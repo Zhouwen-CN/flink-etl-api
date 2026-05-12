@@ -31,7 +31,7 @@ public class FlinkClusterServiceImpl extends ServiceImpl<FlinkClusterMapper, Fli
                 .exists();
 
         if (exists) {
-            return ResponseVO.error("记录已存在:" + name);
+            return ResponseVO.recordExistsError(name);
         }
 
         val entity = FlinkClusterConvert.INSTANCE.convert(form);

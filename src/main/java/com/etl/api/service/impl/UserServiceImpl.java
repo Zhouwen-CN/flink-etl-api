@@ -102,7 +102,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .eq(User::getUsername, username)
                 .exists();
         if (exists) {
-            return ResponseVO.error("记录已存在: " + username);
+            return ResponseVO.recordExistsError(username);
         }
 
         // 新增用户
@@ -118,7 +118,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // admin 不能修改
         val id = form.getId();
         if (id == 1L) {
-            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
+            return ResponseVO.modifyAdminError();
         }
 
         // 更新用户
@@ -132,7 +132,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public ResponseVO<Void> removeUser(Long id) {
         if (id == 1L) {
-            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
+            return ResponseVO.modifyAdminError();
         }
 
         this.removeById(id);
@@ -145,7 +145,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public ResponseVO<Void> removeUserBatch(Collection<Long> ids) {
         if (ids.contains(1L)) {
-            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
+            return ResponseVO.modifyAdminError();
         }
 
         this.removeByIds(ids);

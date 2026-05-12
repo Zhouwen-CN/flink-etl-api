@@ -9,9 +9,9 @@ import com.etl.api.domain.entity.UserRole;
 import com.etl.api.domain.form.ChangePwdForm;
 import com.etl.api.domain.form.UserCreateForm;
 import com.etl.api.domain.form.UserUpdateForm;
+import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.domain.vo.RoleSelectorVO;
 import com.etl.api.domain.vo.UserRoleVO;
 import com.etl.api.domain.vo.UserVO;
 import com.etl.api.service.RoleService;
@@ -127,7 +127,7 @@ public class UserController {
     @SaCheckPermission("user.select")
     @Operation(summary = "角色选择器")
     @GetMapping("/role/selector")
-    public ResponseVO<List<RoleSelectorVO>> selector() {
+    public ResponseVO<List<DictionaryVO>> selector() {
         val vos = roleService.list()
                 .stream()
                 .map(RoleConvert.INSTANCE::convert)
@@ -144,7 +144,7 @@ public class UserController {
     @PatchMapping("/pwd/reset/{id}")
     public ResponseVO<Void> resetPwd(@PathVariable @Parameter(description = "ID") Long id) {
         if (id == 1L) {
-            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
+            return ResponseVO.modifyAdminError();
         }
         userService.updateChain()
                 .eq(User::getId, id)

@@ -3,6 +3,7 @@ package com.etl.api.domain.convert;
 import com.etl.api.domain.entity.FlinkCluster;
 import com.etl.api.domain.form.FlinkClusterCreateForm;
 import com.etl.api.domain.form.FlinkClusterUpdateForm;
+import com.etl.api.domain.vo.DictionaryVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -18,4 +19,8 @@ public interface FlinkClusterConvert {
 
     @Mapping(target = "version", ignore = true)
     FlinkCluster convert(FlinkClusterUpdateForm form);
+
+    @Mapping(target = "value", source = "id")
+    @Mapping(target = "label", source = "name")
+    DictionaryVO convert(FlinkCluster flinkCluster);
 }

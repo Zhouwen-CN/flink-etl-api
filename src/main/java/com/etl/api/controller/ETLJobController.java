@@ -1,14 +1,19 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.convert.FlinkClusterConvert;
-import com.etl.api.domain.entity.FlinkCluster;
-import com.etl.api.domain.form.FlinkClusterCreateForm;
-import com.etl.api.domain.form.FlinkClusterUpdateForm;
-import com.etl.api.domain.vo.FlinkClusterVO;
+import com.etl.api.domain.convert.UploadJarConvert;
+import com.etl.api.domain.entity.EtlJob;
+import com.etl.api.domain.form.EtlJobCreateForm;
+import com.etl.api.domain.form.EtlJobUpdateForm;
+import com.etl.api.domain.vo.DictionaryVO;
+import com.etl.api.domain.vo.ETLJobVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.service.EtlJobService;
 import com.etl.api.service.FlinkClusterService;
+import com.etl.api.service.UploadJarService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,60 +36,82 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
+import java.util.List;
 
-@Validated
 @RestController
-@RequestMapping("/flink/cluster")
-@Tag(name = "Flink 集群 控制器")
+@RequestMapping("/etl/job")
+@Tag(name = "ETL任务 控制器")
 @RequiredArgsConstructor
-public class FlinkClusterController {
+public class ETLJobController {
 
+    private final EtlJobService etlJobService;
+    private final UploadJarService uploadJarService;
     private final FlinkClusterService flinkClusterService;
 
-    @SaCheckPermission("flink-cluster.select")
+    @SaCheckPermission("etl.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<FlinkClusterVO>> getPage(
+    public ResponseVO<PageVO<ETLJobVO>> getPage(
             @RequestParam(value = "currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam(value = "pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
-            @RequestParam(value = "name", required = false) @Parameter(description = "集群名称") String name
+            @RequestParam(value = "searchName", required = false) @Parameter(description = "任务名称") String searchName
     ) {
-        val page = flinkClusterService.queryChain()
-                .like(FlinkCluster::getName, name, StringUtils.hasText(name))
-                .pageAs(Page.of(currentPage, pageSize), FlinkClusterVO.class);
+        val page = etlJobService.queryChain()
+                .like(EtlJob::getName, searchName, StringUtils.hasText(searchName))
+                .pageAs(Page.of(currentPage, pageSize), ETLJobVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }
 
-    @SaCheckPermission("flink-cluster.insert")
+    @SaCheckPermission("etl.insert")
     @Operation(summary = "新增")
     @PostMapping
-    public ResponseVO<Void> add(@RequestBody @Validated FlinkClusterCreateForm form) {
-        return flinkClusterService.addCluster(form);
+    public ResponseVO<Void> add(@RequestBody @Validated EtlJobCreateForm form) {
+        return etlJobService.addEtlJob(form);
     }
 
-    @SaCheckPermission("flink-cluster.update")
+    @SaCheckPermission("etl.update")
     @Operation(summary = "更新")
     @PutMapping
-    public ResponseVO<Void> modify(@RequestBody @Validated FlinkClusterUpdateForm form) {
-        val entity = FlinkClusterConvert.INSTANCE.convert(form);
-        flinkClusterService.updateById(entity);
+    public ResponseVO<Void> modify(@RequestBody @Validated EtlJobUpdateForm form) {
+        val entity = EtlJobConvert.INSTANCE.convert(form);
+        etlJobService.updateById(entity);
         return ResponseVO.ok();
     }
 
-    @SaCheckPermission("flink-cluster.delete")
+    @SaCheckPermission("etl.delete")
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        flinkClusterService.removeById(id);
+        etlJobService.removeById(id);
         return ResponseVO.ok();
     }
 
-    @SaCheckPermission("flink-cluster.delete")
+    @SaCheckPermission("etl.delete")
     @Operation(summary = "批量删除")
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
-        flinkClusterService.removeByIds(ids);
+        etlJobService.removeByIds(ids);
         return ResponseVO.ok();
+    }
+
+    @SaCheckPermission("etl.select")
+    @Operation(summary = "jar包选择器")
+    @GetMapping("/jar/selector")
+    public ResponseVO<List<DictionaryVO>> jarSelector() {
+        val vos = uploadJarService.list()
+                .stream().map(UploadJarConvert.INSTANCE::convert)
+                .toList();
+        return ResponseVO.ok(vos);
+    }
+
+    @SaCheckPermission("etl.select")
+    @Operation(summary = "集群选择器")
+    @GetMapping("/cluster/selector")
+    public ResponseVO<List<DictionaryVO>> clusterSelector() {
+        val vos = flinkClusterService.list()
+                .stream().map(FlinkClusterConvert.INSTANCE::convert)
+                .toList();
+        return ResponseVO.ok(vos);
     }
 }

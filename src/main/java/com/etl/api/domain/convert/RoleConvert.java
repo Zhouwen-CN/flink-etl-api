@@ -4,7 +4,7 @@ package com.etl.api.domain.convert;
 import com.etl.api.domain.entity.Role;
 import com.etl.api.domain.form.RoleCreateForm;
 import com.etl.api.domain.form.RoleUpdateForm;
-import com.etl.api.domain.vo.RoleSelectorVO;
+import com.etl.api.domain.vo.DictionaryVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -22,5 +22,5 @@ public interface RoleConvert {
 
     @Mapping(target = "value", source = "id")
     @Mapping(target = "label", source = "name")
-    RoleSelectorVO convert(Role role);
+    DictionaryVO convert(Role role);
 }

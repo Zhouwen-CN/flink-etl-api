@@ -38,7 +38,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
                 .exists();
 
         if (exists) {
-            return ResponseVO.error("记录已存在: " + code);
+            return ResponseVO.recordExistsError(code);
         }
 
         val entity = RoleConvert.INSTANCE.convert(form);
@@ -52,7 +52,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     public ResponseVO<Void> modifyRole(RoleUpdateForm form) {
         val id = form.getId();
         if (id == 1L) {
-            return ResponseVO.error("超级管理员 账号/角色/权限 禁止修改和删除");
+            return ResponseVO.modifyAdminError();
         }
         val entity = RoleConvert.INSTANCE.convert(form);
         this.updateById(entity);

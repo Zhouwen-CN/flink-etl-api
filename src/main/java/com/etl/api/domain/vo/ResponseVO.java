@@ -39,4 +39,14 @@ public final class ResponseVO<T> {
     public static <T> ResponseVO<T> error(String message) {
         return new ResponseVO<>(false, HttpStatus.BAD_REQUEST.value(), null, message);
     }
+
+    // 记录已存在错误
+    public static <T> ResponseVO<T> recordExistsError(Object identify) {
+        return error("记录已存在: " + identify);
+    }
+
+    // admin用户相关不能修改
+    public static <T> ResponseVO<T> modifyAdminError() {
+        return error("超级管理员 账号/角色/权限 禁止修改和删除");
+    }
 }

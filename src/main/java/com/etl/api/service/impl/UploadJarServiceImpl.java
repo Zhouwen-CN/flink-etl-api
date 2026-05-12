@@ -40,7 +40,7 @@ public class UploadJarServiceImpl extends ServiceImpl<UploadJarMapper, UploadJar
                 .exists();
 
         if (exists) {
-            return ResponseVO.error("jar包已存在");
+            return ResponseVO.recordExistsError(name + "-" + path);
         }
 
         try {
