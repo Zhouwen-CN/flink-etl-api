@@ -76,15 +76,13 @@ public class FlinkClusterController {
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        flinkClusterService.removeById(id);
-        return ResponseVO.ok();
+        return flinkClusterService.removeCluster(id);
     }
 
     @SaCheckPermission("cluster.delete")
     @Operation(summary = "批量删除")
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
-        flinkClusterService.removeByIds(ids);
-        return ResponseVO.ok();
+        return flinkClusterService.removeClusterBatch(ids);
     }
 }

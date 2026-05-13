@@ -5,6 +5,8 @@ import com.etl.api.domain.form.FlinkClusterCreateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
+import java.util.Collection;
+
 /**
  * Flink 集群表 服务层。
  *
@@ -13,9 +15,10 @@ import com.mybatisflex.core.service.IService;
  */
 public interface FlinkClusterService extends IService<FlinkCluster> {
 
-    /**
-     * 新增集群
-     */
     ResponseVO<Void> addCluster(FlinkClusterCreateForm form);
+
+    ResponseVO<Void> removeCluster(Long id);
+
+    ResponseVO<Void> removeClusterBatch(Collection<Long> ids);
 }
 

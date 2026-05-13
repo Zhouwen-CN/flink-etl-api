@@ -5,6 +5,8 @@ import com.etl.api.domain.form.EtlJobCreateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
+import java.util.Collection;
+
 /**
  * ETL任务表 服务层。
  *
@@ -16,4 +18,8 @@ public interface EtlJobService extends IService<EtlJob> {
     ResponseVO<Void> addEtlJob(EtlJobCreateForm form);
 
     ResponseVO<Void> runJob(Long id);
+
+    ResponseVO<Void> removeJob(Long id);
+
+    ResponseVO<Void> removeJobBatch(Collection<Long> ids);
 }

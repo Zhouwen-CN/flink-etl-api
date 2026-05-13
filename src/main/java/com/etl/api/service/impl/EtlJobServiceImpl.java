@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+
 /**
  * ETL任务表 服务层实现。
  *
@@ -112,6 +114,32 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
                 SaSessionUtil.getUsername()
         );
         etlJobInstanceService.save(etlJobInstance);
+        return ResponseVO.ok();
+    }
+
+    @Override
+    public ResponseVO<Void> removeJob(Long id) {
+        val exists = etlJobInstanceService.queryChain()
+                .eq(EtlJobInstance::getJobId, id)
+                .exists();
+
+        if (exists) {
+            return ResponseVO.error("删除失败，尚有任务实例依赖");
+        }
+        this.removeById(id);
+        return ResponseVO.ok();
+    }
+
+    @Override
+    public ResponseVO<Void> removeJobBatch(Collection<Long> ids) {
+        val exists = etlJobInstanceService.queryChain()
+                .in(EtlJobInstance::getJobId, ids)
+                .exists();
+
+        if (exists) {
+            return ResponseVO.error("删除失败，尚有任务实例依赖");
+        }
+        this.removeByIds(ids);
         return ResponseVO.ok();
     }
 }
