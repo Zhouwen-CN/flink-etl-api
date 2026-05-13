@@ -114,4 +114,11 @@ public class ETLJobController {
                 .toList();
         return ResponseVO.ok(vos);
     }
+
+    @SaCheckPermission("job.update")
+    @Operation(summary = "运行任务")
+    @GetMapping("/{id}")
+    public ResponseVO<Void> runJob(@PathVariable @Parameter(description = "ID") Long id) {
+        return etlJobService.runJob(id);
+    }
 }

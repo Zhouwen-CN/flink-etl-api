@@ -94,6 +94,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Flink API 请求异常
+     */
+    @ExceptionHandler(FlinkApiRequestException.class)
+    public ResponseVO<Void> flinkApiRequestExceptionHandler(FlinkApiRequestException e) {
+        return ResponseVO.error(e.getMessage());
+    }
+
+    /**
      * 全局兜底异常处理
      */
     @ExceptionHandler

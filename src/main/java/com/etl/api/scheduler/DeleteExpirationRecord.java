@@ -4,7 +4,6 @@ import com.etl.api.domain.entity.HttpExchangeHistory;
 import com.etl.api.domain.entity.LoginCaptcha;
 import com.etl.api.service.HttpExchangeHistoryService;
 import com.etl.api.service.LoginCaptchaService;
-import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,11 +32,15 @@ public class DeleteExpirationRecord {
      * */
     @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
     public void run() {
-        loginCaptchaService.remove(QueryWrapper.create().lt(LoginCaptcha::getCreateTime, LocalDateTime.now().minus(captchaExpiration.toMillis(), ChronoUnit.MILLIS)));
-        httpExchangeHistoryService.remove(
-                QueryWrapper.create()
-                        .lt(HttpExchangeHistory::getTimestamp, System.currentTimeMillis() - httpExchangeExpiration.toMillis())
-        );
+        log.info("删除 验证码、请求历史 过期数据");
+
+        loginCaptchaService.updateChain()
+                .lt(LoginCaptcha::getCreateTime, LocalDateTime.now().minus(captchaExpiration.toMillis(), ChronoUnit.MILLIS))
+                .remove();
+
+        httpExchangeHistoryService.updateChain()
+                .lt(HttpExchangeHistory::getTimestamp, System.currentTimeMillis() - httpExchangeExpiration.toMillis())
+                .remove();
     }
 
 }

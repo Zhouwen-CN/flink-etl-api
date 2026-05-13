@@ -43,7 +43,7 @@ public class JarPackageServiceImpl extends ServiceImpl<JarPackageMapper, JarPack
         val dist = new File(jarPackageLocation, uploadFile.getOriginalFilename());
         val path = dist.getPath();
         val exists = this.queryChain()
-                .where(JAR_PACKAGE.NAME.eq(name).or(JAR_PACKAGE.PATH.eq(path)))
+                .where(JAR_PACKAGE.NAME.eq(name))
                 .exists();
 
         if (exists) {
@@ -63,7 +63,8 @@ public class JarPackageServiceImpl extends ServiceImpl<JarPackageMapper, JarPack
             if (StringUtils.hasText(mainClass)) {
                 val jarPackage = JarPackage.builder()
                         .name(name)
-                        .path(path)
+                        .fileName(originalFilename)
+                        .filePath(path)
                         .mainClass(mainClass)
                         .build();
 

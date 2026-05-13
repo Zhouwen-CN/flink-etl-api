@@ -40,9 +40,14 @@ public class JarPackage extends BaseEntity implements Serializable {
     private String name;
 
     /**
+     * 文件名
+     */
+    private String fileName;
+
+    /**
      * jar包地址
      */
-    private String path;
+    private String filePath;
 
     /**
      * 入口类

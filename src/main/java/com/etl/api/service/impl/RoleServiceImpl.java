@@ -9,7 +9,6 @@ import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.RoleMapper;
 import com.etl.api.service.RolePermissionService;
 import com.etl.api.service.RoleService;
-import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -64,17 +63,17 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     @Override
     public void removeRole(Long id) {
         this.removeById(id);
-        rolePermissionService.remove(
-                QueryWrapper.create().eq(RolePermission::getRoleId, id)
-        );
+        rolePermissionService.updateChain()
+                .eq(RolePermission::getRoleId, id)
+                .remove();
     }
 
     @Override
     public void removeRoleBatch(Collection<Long> ids) {
         this.removeByIds(ids);
-        rolePermissionService.remove(
-                QueryWrapper.create().in(RolePermission::getRoleId, ids)
-        );
+        rolePermissionService.updateChain()
+                .in(RolePermission::getRoleId, ids)
+                .remove();
     }
 
     private void saveRolePermission(Long roleId, List<Long> permissionIds, boolean isUpdate) {
@@ -86,7 +85,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
                 .toList();
 
         if (isUpdate) {
-            rolePermissionService.remove(QueryWrapper.create().eq(RolePermission::getRoleId, roleId));
+            rolePermissionService.updateChain()
+                    .eq(RolePermission::getRoleId, roleId)
+                    .remove();
         }
 
         rolePermissionService.saveBatch(rolePermissionList);

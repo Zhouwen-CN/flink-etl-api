@@ -14,4 +14,6 @@ import com.mybatisflex.core.service.IService;
 public interface EtlJobService extends IService<EtlJob> {
 
     ResponseVO<Void> addEtlJob(EtlJobCreateForm form);
+
+    ResponseVO<Void> runJob(Long id);
 }

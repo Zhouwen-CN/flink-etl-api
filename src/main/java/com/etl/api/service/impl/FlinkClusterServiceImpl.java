@@ -35,8 +35,7 @@ public class FlinkClusterServiceImpl extends ServiceImpl<FlinkClusterMapper, Fli
         }
 
         val entity = FlinkClusterConvert.INSTANCE.convert(form);
-        String version = version = flinkApiProvider.getVersion(form.getJobManagerUrl())
-                .orElseThrow(() -> new RuntimeException("获取 flink version 失败"));
+        val version = flinkApiProvider.getVersion(form.getJobManagerUrl());
         entity.setVersion(version);
         this.save(entity);
         return ResponseVO.ok();

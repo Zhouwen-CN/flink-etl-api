@@ -18,7 +18,6 @@ import com.etl.api.service.UserRoleService;
 import com.etl.api.service.UserService;
 import com.etl.api.util.AESUtil;
 import com.etl.api.util.SaSessionUtil;
-import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -136,9 +135,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         this.removeById(id);
-        userRoleService.remove(
-                QueryWrapper.create().eq(UserRole::getUserId, id)
-        );
+        userRoleService.updateChain()
+                .eq(UserRole::getUserId, id)
+                .remove();
         return ResponseVO.ok();
     }
 
@@ -149,9 +148,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         this.removeByIds(ids);
-        userRoleService.remove(
-                QueryWrapper.create().in(UserRole::getUserId, ids)
-        );
+        userRoleService.updateChain()
+                .in(UserRole::getUserId, ids)
+                .remove();
         return ResponseVO.ok();
     }
 
@@ -206,7 +205,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 删除角色
         if (isUpdate) {
-            userRoleService.remove(QueryWrapper.create().eq(UserRole::getUserId, userId));
+            userRoleService.updateChain()
+                    .eq(UserRole::getUserId, userId)
+                    .remove();
         }
 
         // 新增角色

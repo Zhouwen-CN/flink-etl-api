@@ -21,8 +21,8 @@ public class JarPackageVO {
     @Schema(description = "jar包名称")
     private String name;
 
-    @Schema(description = "jar包地址")
-    private String path;
+    @Schema(description = "文件名")
+    private String fileName;
 
     @Schema(description = "入口类")
     private String mainClass;
