@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -20,12 +19,18 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Table(value = "T_CLUSTER_UPLOADED_JAR_SYNC")
 public class ClusterUploadedJarSync implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    public ClusterUploadedJarSync(Long clusterId, String jarId, String jarName, Long uploaded) {
+        this.clusterId = clusterId;
+        this.jarId = jarId;
+        this.jarName = jarName;
+        this.uploaded = uploaded;
+    }
 
     /**
      * 自增主键

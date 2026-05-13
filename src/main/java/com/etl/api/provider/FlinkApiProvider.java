@@ -2,7 +2,9 @@ package com.etl.api.provider;
 
 import cn.hutool.core.codec.Base64;
 import com.etl.api.exception.FlinkApiRequestException;
+import com.etl.api.scheduler.SyncJobInstanceStatus;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -20,6 +22,7 @@ import java.util.Optional;
 public class FlinkApiProvider {
 
     private final RestClient restClient;
+    private final ObjectMapper objectMapper;
 
     public String getVersion(String jobManagerUrl) {
         JsonNode jsonNode;
@@ -91,5 +94,23 @@ public class FlinkApiProvider {
                 .map(item -> item.get("jobid"))
                 .map(JsonNode::asText)
                 .orElseThrow(() -> new FlinkApiRequestException("Flink API [启动任务] 解析jobId错误: " + jsonNode));
+    }
+
+    public SyncJobInstanceStatus.FlinkJobStatusDTO getJobStatus(String jobManagerUrl, String jobId) {
+        JsonNode jsonNode;
+        try {
+            jsonNode = restClient.get()
+                    .uri(jobManagerUrl + "/jobs/" + jobId)
+                    .retrieve()
+                    .body(JsonNode.class);
+        } catch (Exception e) {
+            throw new FlinkApiRequestException("Flink API [获取任务状态] 请求失败", e);
+        }
+
+
+        return Optional.ofNullable(jsonNode)
+                .filter(item -> item.get("jid") != null)
+                .map(item -> objectMapper.convertValue(item, SyncJobInstanceStatus.FlinkJobStatusDTO.class))
+                .orElseThrow(() -> new FlinkApiRequestException("Flink API [获取任务状态] 解析数据错误: " + jsonNode));
     }
 }
