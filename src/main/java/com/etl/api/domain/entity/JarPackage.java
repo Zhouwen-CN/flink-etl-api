@@ -14,16 +14,16 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * 上传jar包表 实体类。
+ * jar包管理表 实体类。
  *
  * @author chen
- * @since 2026-05-11
+ * @since 2026-05-13
  */
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(value = "T_UPLOAD_JAR", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
-public class UploadJar extends BaseEntity implements Serializable {
+@Table(value = "T_JAR_PACKAGE", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
+public class JarPackage extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

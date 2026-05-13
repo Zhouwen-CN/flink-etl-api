@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @Schema(description = "jar包视图")
-public class UploadJarVO {
+public class JarPackageVO {
 
     @Schema(description = "自增主键")
     private Long id;

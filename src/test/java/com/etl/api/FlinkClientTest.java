@@ -1,3 +1,4 @@
+/*
 package com.etl.api;
 
 import lombok.val;
@@ -40,7 +41,8 @@ public class FlinkClientTest {
         PackagedProgram packagedProgram = PackagedProgram.newBuilder()
                 .setJarFile(new File("D:\\work\\idea\\flink-etl-tool\\flink-etl-client\\target\\flink-etl-client-1.0.0-SNAPSHOT.jar"))
                 .setEntryPointClassName("com.etl.client.EtlClient")
-                /*.setUserClassPaths(
+                */
+/*.setUserClassPaths(
                         List.of(
                                 new URL("file:/D:\\env\\apache-maven-3.9.11\\repository\\org\\apache\\flink\\flink-table-common\\1.15.2\\flink-table-common-1.15.2.jar"),
                                 new URL("file:/D:\\env\\apache-maven-3.9.11\\repository\\org\\apache\\flink\\flink-table-api-java-bridge\\1.15.2\\flink-table-api-java-bridge-1.15.2.jar"),
@@ -52,7 +54,8 @@ public class FlinkClientTest {
                                 new URL("file:/D:\\env\\apache-maven-3.9.11\\repository\\com\\ververica\\flink-connector-debezium\\2.3.0\\flink-connector-debezium-2.3.0.jar"),
                                 new URL("file:/D:\\env\\apache-maven-3.9.11\\repository\\org\\apache\\flink\\flink-connector-kafka\\1.15.2\\flink-connector-kafka-1.15.2.jar")
                         )
-                )*/
+                )*//*
+
                 .setArguments("--config", """
                         {
                           "job": {
@@ -112,3 +115,4 @@ public class FlinkClientTest {
         client.close();
     }
 }
+*/

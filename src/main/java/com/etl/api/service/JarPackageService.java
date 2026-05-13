@@ -1,17 +1,17 @@
 package com.etl.api.service;
 
-import com.etl.api.domain.entity.UploadJar;
+import com.etl.api.domain.entity.JarPackage;
 import com.etl.api.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 上传jar包表 服务层。
+ * jar包管理表 服务层。
  *
  * @author chen
- * @since 2026-05-11
+ * @since 2026-05-13
  */
-public interface UploadJarService extends IService<UploadJar> {
+public interface JarPackageService extends IService<JarPackage> {
 
     ResponseVO<Void> addJar(String name, MultipartFile file);
 }

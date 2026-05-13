@@ -160,5 +160,5 @@ custom:
     expiration: 1m #验证码数据过期时间
   http-exchange:
     expiration: 1h #http请求数据过期时间
-  upload-jar:
+  jar-package:
     location: D:\tmp\upload-jar

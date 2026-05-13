@@ -1,4 +1,4 @@
-create table T_UPLOAD_JAR
+create table T_JAR_PACKAGE
 (
     id          bigint primary key auto_increment comment '自增主键',
     name        varchar(30)  not null comment 'jar包名称',
@@ -9,4 +9,4 @@ create table T_UPLOAD_JAR
     update_user varchar(30) default null comment '修改者',
     update_time datetime default CURRENT_TIMESTAMP comment '更新时间',
     unique index uk_upload_jar_name_path (name, path)
-) comment '上传jar包表';
+) comment 'jar包管理表';

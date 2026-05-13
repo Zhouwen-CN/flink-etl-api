@@ -1,9 +1,9 @@
 package com.etl.api.service.impl;
 
-import com.etl.api.domain.entity.UploadJar;
+import com.etl.api.domain.entity.JarPackage;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.mapper.UploadJarMapper;
-import com.etl.api.service.UploadJarService;
+import com.etl.api.mapper.JarPackageMapper;
+import com.etl.api.service.JarPackageService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,18 +15,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.jar.JarFile;
 
-import static com.etl.api.domain.entity.table.UploadJarTableDef.UPLOAD_JAR;
+import static com.etl.api.domain.entity.table.JarPackageTableDef.JAR_PACKAGE;
 
 /**
- * 上传jar包表 服务层实现。
+ * jar包管理表 服务层实现。
  *
  * @author chen
- * @since 2026-05-11
+ * @since 2026-05-13
  */
 @Service
-public class UploadJarServiceImpl extends ServiceImpl<UploadJarMapper, UploadJar> implements UploadJarService {
-    @Value("${custom.upload-jar.location}")
-    private String uploadJarLocation;
+public class JarPackageServiceImpl extends ServiceImpl<JarPackageMapper, JarPackage> implements JarPackageService {
+
+    @Value("${custom.jar-package.location}")
+    private String jarPackageLocation;
 
     @Override
     public ResponseVO<Void> addJar(String name, MultipartFile uploadFile) {
@@ -39,10 +40,10 @@ public class UploadJarServiceImpl extends ServiceImpl<UploadJarMapper, UploadJar
             return ResponseVO.error("文件格式错误，请上传jar包文件");
         }
 
-        val dist = new File(uploadJarLocation, uploadFile.getOriginalFilename());
+        val dist = new File(jarPackageLocation, uploadFile.getOriginalFilename());
         val path = dist.getPath();
         val exists = this.queryChain()
-                .where(UPLOAD_JAR.NAME.eq(name).or(UPLOAD_JAR.PATH.eq(path)))
+                .where(JAR_PACKAGE.NAME.eq(name).or(JAR_PACKAGE.PATH.eq(path)))
                 .exists();
 
         if (exists) {
@@ -60,13 +61,13 @@ public class UploadJarServiceImpl extends ServiceImpl<UploadJarMapper, UploadJar
                     .getValue("Main-Class");
 
             if (StringUtils.hasText(mainClass)) {
-                val uploadJar = UploadJar.builder()
+                val jarPackage = JarPackage.builder()
                         .name(name)
                         .path(path)
                         .mainClass(mainClass)
                         .build();
 
-                this.save(uploadJar);
+                this.save(jarPackage);
                 return ResponseVO.ok();
             }
         } catch (IOException e) {

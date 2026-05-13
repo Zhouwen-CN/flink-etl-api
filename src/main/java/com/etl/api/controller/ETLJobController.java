@@ -3,7 +3,7 @@ package com.etl.api.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.convert.FlinkClusterConvert;
-import com.etl.api.domain.convert.UploadJarConvert;
+import com.etl.api.domain.convert.JarPackageConvert;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.form.EtlJobCreateForm;
 import com.etl.api.domain.form.EtlJobUpdateForm;
@@ -13,7 +13,7 @@ import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.FlinkClusterService;
-import com.etl.api.service.UploadJarService;
+import com.etl.api.service.JarPackageService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,7 +45,7 @@ import java.util.List;
 public class ETLJobController {
 
     private final EtlJobService etlJobService;
-    private final UploadJarService uploadJarService;
+    private final JarPackageService jarPackageService;
     private final FlinkClusterService flinkClusterService;
 
     @SaCheckPermission("job.select")
@@ -99,8 +99,8 @@ public class ETLJobController {
     @Operation(summary = "jar包选择器")
     @GetMapping("/jar/selector")
     public ResponseVO<List<DictionaryVO>> jarSelector() {
-        val vos = uploadJarService.list()
-                .stream().map(UploadJarConvert.INSTANCE::convert)
+        val vos = jarPackageService.list()
+                .stream().map(JarPackageConvert.INSTANCE::convert)
                 .toList();
         return ResponseVO.ok(vos);
     }
