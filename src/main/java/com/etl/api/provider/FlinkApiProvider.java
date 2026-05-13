@@ -11,14 +11,14 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FlinkClientProvider {
+public class FlinkApiProvider {
 
     private final RestClient restClient;
 
-    public Optional<String> getVersion(String ip, Integer port) {
+    public Optional<String> getVersion(String jobManagerUrl) {
         try {
             return restClient.get()
-                    .uri(uriBuilder -> uriBuilder.scheme("http").host(ip).port(port).path("/config").build())
+                    .uri(jobManagerUrl + "/config")
                     .exchangeForRequiredValue((request, response) -> Optional.ofNullable(response.bodyTo(JsonNode.class))
                             .map(jsonNode -> jsonNode.get("flink-version"))
                             .map(JsonNode::asText)

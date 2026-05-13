@@ -19,11 +19,8 @@ public class FlinkClusterVO {
     @Schema(description = "集群名称")
     private String name;
 
-    @Schema(description = "集群ip地址")
-    private String ip;
-
-    @Schema(description = "集群端口")
-    private Integer port;
+    @Schema(description = "集群地址")
+    private String jobManagerUrl;
 
     @Schema(description = "Flink 版本")
     private String version;

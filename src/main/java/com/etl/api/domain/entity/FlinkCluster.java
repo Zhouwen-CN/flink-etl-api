@@ -17,7 +17,7 @@ import java.io.Serializable;
  * Flink 集群表 实体类。
  *
  * @author chen
- * @since 2026-05-11
+ * @since 2026-05-13
  */
 @Data
 @Builder
@@ -40,14 +40,9 @@ public class FlinkCluster extends BaseEntity implements Serializable {
     private String name;
 
     /**
-     * 集群ip地址
+     * 集群地址
      */
-    private String ip;
-
-    /**
-     * 集群端口
-     */
-    private Integer port;
+    private String jobManagerUrl;
 
     /**
      * Flink 版本

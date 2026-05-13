@@ -2,8 +2,7 @@ create table T_FLINK_CLUSTER
 (
     id          bigint primary key auto_increment comment '自增主键',
     name        varchar(30) not null comment '集群名称',
-    ip          varchar(20) not null comment '集群ip地址',
-    port        int         not null comment '集群端口',
+    job_manager_url varchar(100) not null comment '集群地址',
     version     varchar(30) default null comment 'Flink 版本',
     status      bit(1)      default 0 comment '集群状态(1启用 0停用)',
     create_user varchar(30) default null comment '创建者',

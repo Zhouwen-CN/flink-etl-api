@@ -5,7 +5,7 @@ import com.etl.api.domain.entity.FlinkCluster;
 import com.etl.api.domain.form.FlinkClusterCreateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.FlinkClusterMapper;
-import com.etl.api.provider.FlinkClientProvider;
+import com.etl.api.provider.FlinkApiProvider;
 import com.etl.api.service.FlinkClusterService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class FlinkClusterServiceImpl extends ServiceImpl<FlinkClusterMapper, FlinkCluster> implements FlinkClusterService {
-    private final FlinkClientProvider flinkClientProvider;
+    private final FlinkApiProvider flinkApiProvider;
 
     @Override
     public ResponseVO<Void> addCluster(FlinkClusterCreateForm form) {
@@ -35,7 +35,7 @@ public class FlinkClusterServiceImpl extends ServiceImpl<FlinkClusterMapper, Fli
         }
 
         val entity = FlinkClusterConvert.INSTANCE.convert(form);
-        String version = version = flinkClientProvider.getVersion(form.getIp(), form.getPort())
+        String version = version = flinkApiProvider.getVersion(form.getJobManagerUrl())
                 .orElseThrow(() -> new RuntimeException("获取 flink version 失败"));
         entity.setVersion(version);
         this.save(entity);
