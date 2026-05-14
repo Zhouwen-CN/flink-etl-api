@@ -61,6 +61,7 @@ public class AuthController {
 
 
     @SaIgnore
+    @Operation(summary = "获取验证码")
     @GetMapping("/captcha")
     public ResponseVO<LoginCaptchaVO> captcha() {
         val randomGenerator = new RandomGenerator("0123456789", 4);

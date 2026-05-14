@@ -12,11 +12,6 @@ spring:
   profiles:
     active: dev
 
-  # 开发工具-热加载
-  devtools:
-    restart:
-      additional-paths: src/main/java
-
   # 事务配置
   transaction:
     default-timeout: 60s #事务超时时间
