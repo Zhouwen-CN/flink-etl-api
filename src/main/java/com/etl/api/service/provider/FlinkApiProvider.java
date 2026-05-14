@@ -1,4 +1,4 @@
-package com.etl.api.provider;
+package com.etl.api.service.provider;
 
 import cn.hutool.core.codec.Base64;
 import com.etl.api.exception.FlinkApiRequestException;

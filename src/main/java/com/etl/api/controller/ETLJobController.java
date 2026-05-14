@@ -14,6 +14,7 @@ import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
+import com.etl.api.service.manager.JobManager;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,7 +40,7 @@ import java.util.Collection;
 import java.util.List;
 
 @RestController
-@RequestMapping("/etl/job")
+@RequestMapping("/job")
 @Tag(name = "ETL任务 控制器")
 @RequiredArgsConstructor
 public class ETLJobController {
@@ -47,6 +48,7 @@ public class ETLJobController {
     private final EtlJobService etlJobService;
     private final JarPackageService jarPackageService;
     private final FlinkClusterService flinkClusterService;
+    private final JobManager jobManager;
 
     @SaCheckPermission("job.select")
     @Operation(summary = "分页查询")
@@ -117,6 +119,6 @@ public class ETLJobController {
     @Operation(summary = "运行任务")
     @GetMapping("/{id}")
     public ResponseVO<Void> runJob(@PathVariable @Parameter(description = "ID") Long id) {
-        return etlJobService.runJob(id);
+        return jobManager.runJob(id);
     }
 }

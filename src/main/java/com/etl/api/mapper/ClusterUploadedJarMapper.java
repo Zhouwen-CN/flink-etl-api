@@ -1,6 +1,6 @@
 package com.etl.api.mapper;
 
-import com.etl.api.domain.entity.ClusterUploadedJarSync;
+import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.mybatisflex.core.BaseMapper;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.BaseMapper;
  * @author chen
  * @since 2026-05-13
  */
-public interface ClusterUploadedJarSyncMapper extends BaseMapper<ClusterUploadedJarSync> {
+public interface ClusterUploadedJarMapper extends BaseMapper<ClusterUploadedJar> {
 
 }

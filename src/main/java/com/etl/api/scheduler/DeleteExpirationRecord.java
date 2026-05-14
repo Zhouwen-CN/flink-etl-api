@@ -32,7 +32,7 @@ public class DeleteExpirationRecord {
      * */
     @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
     public void run() {
-        log.info("删除 验证码、请求历史 过期数据");
+        log.debug("删除 验证码、请求历史 过期数据");
 
         loginCaptchaService.updateChain()
                 .lt(LoginCaptcha::getCreateTime, LocalDateTime.now().minus(captchaExpiration.toMillis(), ChronoUnit.MILLIS))

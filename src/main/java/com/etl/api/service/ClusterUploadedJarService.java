@@ -1,6 +1,6 @@
 package com.etl.api.service;
 
-import com.etl.api.domain.entity.ClusterUploadedJarSync;
+import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.mybatisflex.core.service.IService;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.service.IService;
  * @author chen
  * @since 2026-05-13
  */
-public interface ClusterUploadedJarSyncService extends IService<ClusterUploadedJarSync> {
+public interface ClusterUploadedJarService extends IService<ClusterUploadedJar> {
 
 }

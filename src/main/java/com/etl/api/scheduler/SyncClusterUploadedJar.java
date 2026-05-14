@@ -1,8 +1,8 @@
 package com.etl.api.scheduler;
 
-import com.etl.api.domain.entity.ClusterUploadedJarSync;
+import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.etl.api.domain.entity.FlinkCluster;
-import com.etl.api.service.ClusterUploadedJarSyncService;
+import com.etl.api.service.ClusterUploadedJarService;
 import com.etl.api.service.FlinkClusterService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,39 +25,38 @@ public class SyncClusterUploadedJar {
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
     private final FlinkClusterService flinkClusterService;
-    private final ClusterUploadedJarSyncService clusterUploadedJarSyncService;
+    private final ClusterUploadedJarService clusterUploadedJarService;
 
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
     private void run() {
-        log.info("同步 flink集群 已上传的 jar 包列表");
-        flinkClusterService.list().forEach(this::syncClusterUploadedJar);
-    }
+        log.debug("同步 Flink 集群 已上传的 jar 包列表");
 
+        val flinkClusterList = flinkClusterService.list();
+        for (FlinkCluster flinkCluster : flinkClusterList) {
+            val clusterId = flinkCluster.getId();
 
-    public void syncClusterUploadedJar(FlinkCluster flinkCluster) {
-        val clusterId = flinkCluster.getId();
+            JsonNode jsonNode = null;
+            try {
+                jsonNode = restClient.get()
+                        .uri(flinkCluster.getJobManagerUrl() + "/jars")
+                        .retrieve()
+                        .body(JsonNode.class);
+            } catch (Exception e) {
+                log.error("Flink API [获取已上传jar包列表] 请求失败: {}", e.getMessage());
+            }
 
-        JsonNode jsonNode = null;
-        try {
-            jsonNode = restClient.get()
-                    .uri(flinkCluster.getJobManagerUrl() + "/jars")
-                    .retrieve()
-                    .body(JsonNode.class);
-        } catch (Exception e) {
-            log.error("Flink API [已上传jar包列表] 请求失败: {}", e.getMessage());
+            Optional.ofNullable(jsonNode)
+                    .map(item -> item.get("files"))
+                    .map(files -> objectMapper.convertValue(files, new TypeReference<List<ClusterUploadedJar>>() {
+                    }))
+                    .map(list -> list.stream().peek(item -> item.setClusterId(clusterId)).toList())
+                    .ifPresent(entities -> {
+                        clusterUploadedJarService.updateChain()
+                                .eq(ClusterUploadedJar::getClusterId, clusterId)
+                                .remove();
+
+                        clusterUploadedJarService.saveBatch(entities);
+                    });
         }
-
-        Optional.ofNullable(jsonNode)
-                .map(item -> item.get("files"))
-                .map(files -> objectMapper.convertValue(files, new TypeReference<List<ClusterUploadedJarSync>>() {
-                }))
-                .map(list -> list.stream().peek(item -> item.setClusterId(clusterId)).toList())
-                .ifPresent(entities -> {
-                    clusterUploadedJarSyncService.updateChain()
-                            .eq(ClusterUploadedJarSync::getClusterId, clusterId)
-                            .remove();
-
-                    clusterUploadedJarSyncService.saveBatch(entities);
-                });
     }
 }

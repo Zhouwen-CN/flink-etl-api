@@ -19,13 +19,13 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-@Table(value = "T_CLUSTER_UPLOADED_JAR_SYNC")
-public class ClusterUploadedJarSync implements Serializable {
+@Table(value = "T_CLUSTER_UPLOADED_JAR")
+public class ClusterUploadedJar implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ClusterUploadedJarSync(Long clusterId, String jarId, String jarName, Long uploaded) {
+    public ClusterUploadedJar(Long clusterId, String jarId, String jarName, Long uploaded) {
         this.clusterId = clusterId;
         this.jarId = jarId;
         this.jarName = jarName;

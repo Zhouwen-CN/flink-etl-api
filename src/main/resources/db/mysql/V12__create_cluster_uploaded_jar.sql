@@ -1,4 +1,4 @@
-create table T_CLUSTER_UPLOADED_JAR_SYNC
+create table T_CLUSTER_UPLOADED_JAR
 (
     id         bigint primary key auto_increment comment '自增主键',
     cluster_id bigint       not null comment '集群id',

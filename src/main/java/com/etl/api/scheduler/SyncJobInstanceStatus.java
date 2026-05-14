@@ -2,9 +2,9 @@ package com.etl.api.scheduler;
 
 import com.etl.api.domain.entity.FlinkCluster;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
-import com.etl.api.provider.FlinkApiProvider;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.FlinkClusterService;
+import com.etl.api.service.provider.FlinkApiProvider;
 import com.etl.api.util.LocalDateTimeUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
@@ -28,8 +28,9 @@ public class SyncJobInstanceStatus {
     private final EtlJobInstanceService etlJobInstanceService;
     private final FlinkApiProvider flinkApiProvider;
 
-    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     private void run() {
+        log.debug("同步 Flink 作业信息");
         val flinkClusterMap = flinkClusterService.list()
                 .stream()
                 .collect(Collectors.toMap(FlinkCluster::getId, item -> item));
@@ -49,7 +50,7 @@ public class SyncJobInstanceStatus {
 
                         // 请求状态数据并更新实体
                         val flinkJobStatusDTO = flinkApiProvider.getJobStatus(jobManagerUrl, flinkJobId);
-                        etlJobInstance.setStatus(flinkJobStatusDTO.getState());
+                        etlJobInstance.setStatus(FlinkJobStatusEnum.formName(flinkJobStatusDTO.getState()));
                         etlJobInstance.setStartTime(LocalDateTimeUtil.fromMs(flinkJobStatusDTO.getStartTime()));
                         val endTime = flinkJobStatusDTO.getEndTime();
                         if (endTime > 0) {

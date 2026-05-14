@@ -17,8 +17,6 @@ public interface EtlJobService extends IService<EtlJob> {
 
     ResponseVO<Void> addEtlJob(EtlJobCreateForm form);
 
-    ResponseVO<Void> runJob(Long id);
-
     ResponseVO<Void> removeJob(Long id);
 
     ResponseVO<Void> removeJobBatch(Collection<Long> ids);

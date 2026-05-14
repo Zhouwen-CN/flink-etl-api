@@ -1,16 +1,16 @@
 package com.etl.api.service.impl;
 
 import com.etl.api.domain.convert.FlinkClusterConvert;
-import com.etl.api.domain.entity.ClusterUploadedJarSync;
+import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.entity.FlinkCluster;
 import com.etl.api.domain.form.FlinkClusterCreateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.FlinkClusterMapper;
-import com.etl.api.provider.FlinkApiProvider;
-import com.etl.api.service.ClusterUploadedJarSyncService;
+import com.etl.api.service.ClusterUploadedJarService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.FlinkClusterService;
+import com.etl.api.service.provider.FlinkApiProvider;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -29,7 +29,7 @@ import java.util.Collection;
 public class FlinkClusterServiceImpl extends ServiceImpl<FlinkClusterMapper, FlinkCluster> implements FlinkClusterService {
     private final FlinkApiProvider flinkApiProvider;
     private final EtlJobService etlJobService;
-    private final ClusterUploadedJarSyncService clusterUploadedJarSyncService;
+    private final ClusterUploadedJarService clusterUploadedJarService;
 
     @Override
     public ResponseVO<Void> addCluster(FlinkClusterCreateForm form) {
@@ -59,8 +59,8 @@ public class FlinkClusterServiceImpl extends ServiceImpl<FlinkClusterMapper, Fli
         }
 
         this.removeById(id);
-        clusterUploadedJarSyncService.updateChain()
-                .eq(ClusterUploadedJarSync::getClusterId, id)
+        clusterUploadedJarService.updateChain()
+                .eq(ClusterUploadedJar::getClusterId, id)
                 .remove();
         return ResponseVO.ok();
     }
@@ -75,8 +75,8 @@ public class FlinkClusterServiceImpl extends ServiceImpl<FlinkClusterMapper, Fli
         }
 
         this.removeByIds(ids);
-        clusterUploadedJarSyncService.updateChain()
-                .in(ClusterUploadedJarSync::getClusterId, ids)
+        clusterUploadedJarService.updateChain()
+                .in(ClusterUploadedJar::getClusterId, ids)
                 .remove();
         return ResponseVO.ok();
     }
