@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.jar.JarFile;
 
-import static com.etl.api.domain.entity.table.JarPackageTableDef.JAR_PACKAGE;
-
 /**
  * jar包管理表 服务层实现。
  *
@@ -35,8 +33,7 @@ public class JarPackageServiceImpl extends ServiceImpl<JarPackageMapper, JarPack
     @Value("${custom.jar-package.location}")
     private String jarPackageLocation;
 
-    @Override
-    public ResponseVO<Void> addJar(String name, MultipartFile uploadFile) {
+    private ResponseVO<Void> saveJar(Long id, String name, MultipartFile uploadFile) {
         if (uploadFile == null) {
             return ResponseVO.error("未发现文件，请上传文件");
         }
@@ -47,15 +44,6 @@ public class JarPackageServiceImpl extends ServiceImpl<JarPackageMapper, JarPack
         }
 
         val dist = new File(jarPackageLocation, uploadFile.getOriginalFilename());
-        val path = dist.getPath();
-        val exists = this.queryChain()
-                .where(JAR_PACKAGE.NAME.eq(name))
-                .exists();
-
-        if (exists) {
-            return ResponseVO.recordExistsError(name + "-" + path);
-        }
-
         try {
             uploadFile.transferTo(dist);
         } catch (Exception e) {
@@ -68,19 +56,30 @@ public class JarPackageServiceImpl extends ServiceImpl<JarPackageMapper, JarPack
 
             if (StringUtils.hasText(mainClass)) {
                 val jarPackage = JarPackage.builder()
+                        .id(id)
                         .name(name)
                         .fileName(originalFilename)
-                        .filePath(path)
+                        .filePath(dist.getPath())
                         .mainClass(mainClass)
                         .build();
 
-                this.save(jarPackage);
+                this.saveOrUpdate(jarPackage);
                 return ResponseVO.ok();
             }
         } catch (IOException e) {
             // do nothing
         }
         return ResponseVO.error("未获取到jar包入口类");
+    }
+
+    @Override
+    public ResponseVO<Void> addJar(String name, MultipartFile uploadFile) {
+        return this.saveJar(null, name, uploadFile);
+    }
+
+    @Override
+    public ResponseVO<Void> modifyJar(Long id, String name, MultipartFile file) {
+        return this.saveJar(id, name, file);
     }
 
     @Override

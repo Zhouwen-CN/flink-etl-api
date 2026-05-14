@@ -1,6 +1,7 @@
 package com.etl.api.service;
 
 import com.etl.api.domain.entity.EtlJobInstance;
+import com.etl.api.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
 /**
@@ -11,4 +12,5 @@ import com.mybatisflex.core.service.IService;
  */
 public interface EtlJobInstanceService extends IService<EtlJobInstance> {
 
+    ResponseVO<Void> removeInstance(String id);
 }

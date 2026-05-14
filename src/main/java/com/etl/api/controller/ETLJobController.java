@@ -5,12 +5,15 @@ import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.convert.FlinkClusterConvert;
 import com.etl.api.domain.convert.JarPackageConvert;
 import com.etl.api.domain.entity.EtlJob;
+import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.form.EtlJobCreateForm;
+import com.etl.api.domain.form.EtlJobSubmitForm;
 import com.etl.api.domain.form.EtlJobUpdateForm;
 import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.ETLJobVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
@@ -48,6 +51,7 @@ public class ETLJobController {
     private final EtlJobService etlJobService;
     private final JarPackageService jarPackageService;
     private final FlinkClusterService flinkClusterService;
+    private final EtlJobInstanceService etlJobInstanceService;
     private final JobManager jobManager;
 
     @SaCheckPermission("job.select")
@@ -117,8 +121,36 @@ public class ETLJobController {
 
     @SaCheckPermission("job.update")
     @Operation(summary = "运行任务")
-    @GetMapping("/{id}")
-    public ResponseVO<Void> runJob(@PathVariable @Parameter(description = "ID") Long id) {
-        return jobManager.runJob(id);
+    @PostMapping("/run")
+    public ResponseVO<Void> runJob(@RequestBody @Validated EtlJobSubmitForm form) {
+        return jobManager.runJob(form);
+    }
+
+    @SaCheckPermission("job.select")
+    @Operation(summary = "任务实例选择器")
+    @GetMapping("/instance/selector/{id}")
+    public ResponseVO<List<DictionaryVO>> instanceSelector(@PathVariable @Parameter(description = "ID") Long id) {
+        val vos = etlJobInstanceService.queryChain()
+                .eq(EtlJobInstance::getJobId, id)
+                .orderBy(EtlJobInstance::getCreateTime, false)
+                .limit(5)
+                .list()
+                .stream().map(etlJobInstance -> {
+                    val flinkJobId = etlJobInstance.getId();
+                    return new DictionaryVO(flinkJobId, flinkJobId);
+                })
+                .toList();
+
+        return ResponseVO.ok(vos);
+    }
+
+    @SaCheckPermission("job.select")
+    @Operation(summary = "任务实例选择器")
+    @GetMapping("/checkpoint/selector")
+    public ResponseVO<List<DictionaryVO>> checkpointSelector(
+            @RequestParam("jobId") @Parameter(description = "任务id") Long jobId,
+            @RequestParam("instanceId") @Parameter(description = "实例id") String instanceId
+    ) {
+        return jobManager.getCheckpointHistory(jobId, instanceId);
     }
 }

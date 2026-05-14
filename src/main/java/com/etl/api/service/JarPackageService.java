@@ -20,4 +20,6 @@ public interface JarPackageService extends IService<JarPackage> {
     ResponseVO<Void> removeJar(Long id);
 
     ResponseVO<Void> removeJarBatch(Collection<Long> ids);
+
+    ResponseVO<Void> modifyJar(Long id, String name, MultipartFile file);
 }

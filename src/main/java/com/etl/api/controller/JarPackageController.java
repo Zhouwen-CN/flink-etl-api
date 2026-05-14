@@ -2,7 +2,6 @@ package com.etl.api.controller;
 
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import cn.dev33.satoken.annotation.SaIgnore;
 import com.etl.api.domain.entity.JarPackage;
 import com.etl.api.domain.vo.JarPackageVO;
 import com.etl.api.domain.vo.PageVO;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -55,7 +55,6 @@ public class JarPackageController {
         return ResponseVO.ok(PageVO.from(page));
     }
 
-    @SaIgnore
     @SaCheckPermission("jar.insert")
     @Operation(summary = "新增")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -64,6 +63,17 @@ public class JarPackageController {
             @RequestParam(value = "file", required = false) @Parameter(description = "jar包文件") MultipartFile file
     ) throws IOException {
         return jarPackageService.addJar(name, file);
+    }
+
+    @SaCheckPermission("jar.update")
+    @Operation(summary = "更新")
+    @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseVO<Void> modify(
+            @RequestParam("id") @Parameter(description = "ID") Long id,
+            @RequestParam("name") @Parameter(description = "jar包名称") String name,
+            @RequestParam(value = "file", required = false) @Parameter(description = "jar包文件") MultipartFile file
+    ) {
+        return jarPackageService.modifyJar(id, name, file);
     }
 
     @SaCheckPermission("jar.delete")

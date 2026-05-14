@@ -37,7 +37,7 @@ public class SyncJobInstanceStatus {
 
         // 获取还在运行的任务
         val etlJobInstanceList = etlJobInstanceService.queryChain()
-                .where(ETL_JOB_INSTANCE.STATUS.isNull().or(ETL_JOB_INSTANCE.STATUS.in(FlinkJobStatusEnum.getMonitorStatus())))
+                .where(ETL_JOB_INSTANCE.STATUS.isNull().or(ETL_JOB_INSTANCE.STATUS.in(FlinkJobStatusEnum.getProcessingStatus())))
                 .list()
                 .stream()
                 .peek(etlJobInstance -> {

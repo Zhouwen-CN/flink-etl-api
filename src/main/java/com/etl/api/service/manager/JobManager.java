@@ -2,6 +2,9 @@ package com.etl.api.service.manager;
 
 import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.etl.api.domain.entity.EtlJobInstance;
+import com.etl.api.domain.entity.FlinkCluster;
+import com.etl.api.domain.form.EtlJobSubmitForm;
+import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.service.ClusterUploadedJarService;
@@ -15,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class JobManager {
@@ -26,10 +31,20 @@ public class JobManager {
     private final FlinkApiProvider flinkApiProvider;
     private final EtlJobInstanceService etlJobInstanceService;
 
-    public ResponseVO<Void> runJob(Long jobId) {
+    public ResponseVO<Void> runJob(EtlJobSubmitForm form) {
+        val jobId = form.getId();
         val etlJob = etlJobService.getById(jobId);
         if (etlJob == null) {
             return ResponseVO.recordNotFoundError("jobId:" + jobId);
+        }
+
+        // 是否有正在运行的任务
+        val exists = etlJobInstanceService.queryChain()
+                .eq(EtlJobInstance::getJobId, jobId)
+                .in(EtlJobInstance::getStatus, FlinkJobStatusEnum.getProcessingStatus())
+                .exists();
+        if (exists) {
+            return ResponseVO.error("运行失败，尚有正在运行的任务");
         }
 
         // flink集群信息
@@ -37,6 +52,11 @@ public class JobManager {
         val flinkCluster = flinkClusterService.getById(clusterId);
         if (flinkCluster == null) {
             return ResponseVO.recordNotFoundError("flinkClusterId:" + clusterId);
+        }
+        // 检查集群状态
+        val status = flinkCluster.getStatus();
+        if (!status) {
+            return ResponseVO.error("运行失败，集群已禁用: " + flinkCluster.getName());
         }
         val jobManagerUrl = flinkCluster.getJobManagerUrl();
 
@@ -73,7 +93,7 @@ public class JobManager {
         }
 
         val flinkJarId = clusterUploadedJar.getJarId();
-        val flinkJobId = flinkApiProvider.runJob(jobManagerUrl, flinkJarId, jarPackage.getMainClass(), etlJob.getConfig());
+        val flinkJobId = flinkApiProvider.runJob(jobManagerUrl, flinkJarId, jarPackage.getMainClass(), etlJob.getConfig(), form.getSavepointPath());
 
         // 插入任务实例表
         val etlJobInstance = new EtlJobInstance(
@@ -86,5 +106,54 @@ public class JobManager {
         );
         etlJobInstanceService.save(etlJobInstance);
         return ResponseVO.ok();
+    }
+
+
+    public ResponseVO<Void> cancelJob(String jobInstanceId) {
+        val etlJobInstance = etlJobInstanceService.queryChain()
+                .eq(EtlJobInstance::getId, jobInstanceId)
+                .eq(EtlJobInstance::getStatus, FlinkJobStatusEnum.RUNNING)
+                .one();
+
+        if (etlJobInstance == null) {
+            return ResponseVO.recordNotFoundError("jobInstanceId:" + jobInstanceId);
+        }
+
+        val clusterId = etlJobInstance.getClusterId();
+        val flinkCluster = flinkClusterService.queryChain()
+                .eq(FlinkCluster::getId, clusterId)
+                .one();
+
+        if (flinkCluster == null) {
+            return ResponseVO.recordNotFoundError("flinkClusterId:" + clusterId);
+        }
+
+        flinkApiProvider.cancelJob(flinkCluster.getJobManagerUrl(), jobInstanceId);
+        return ResponseVO.ok();
+    }
+
+    public ResponseVO<List<DictionaryVO>> getCheckpointHistory(Long jobId, String instanceId) {
+        val etlJob = etlJobService.getById(jobId);
+        if (etlJob == null) {
+            return ResponseVO.recordNotFoundError("jobId:" + jobId);
+        }
+        val clusterId = etlJob.getClusterId();
+        val flinkCluster = flinkClusterService.getById(clusterId);
+        if (flinkCluster == null) {
+            return ResponseVO.recordNotFoundError("clusterId:" + clusterId);
+        }
+
+        val vos = flinkApiProvider.getCheckpointHistory(flinkCluster.getJobManagerUrl(), instanceId)
+                .stream()
+                .filter(item -> "COMPLETED".equals(item.getStatus()))
+                .map(item -> {
+                    val prefix = item.getSavepoint() ? "SP - " : "CP - ";
+                    val label = prefix + LocalDateTimeUtil.format(LocalDateTimeUtil.fromMs(item.getTriggerTimestamp()));
+                    val value = item.getExternalPath();
+                    return new DictionaryVO(label, value);
+                })
+                .toList();
+
+        return ResponseVO.ok(vos);
     }
 }

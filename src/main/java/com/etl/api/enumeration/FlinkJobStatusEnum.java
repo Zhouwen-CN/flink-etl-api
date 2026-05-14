@@ -44,7 +44,10 @@ public enum FlinkJobStatusEnum {
         return UNKNOWN;
     }
 
-    public static List<Integer> getMonitorStatus() {
+    /**
+     * 正在处理的状态
+     */
+    public static List<Integer> getProcessingStatus() {
         return List.of(
                 FlinkJobStatusEnum.UNKNOWN.code,
                 FlinkJobStatusEnum.INITIALIZING.code,
@@ -56,6 +59,9 @@ public enum FlinkJobStatusEnum {
         );
     }
 
+    /**
+     * 状态选择器
+     */
     public static List<DictionaryVO> toDictionaryVO() {
         return Stream.of(
                 RUNNING,

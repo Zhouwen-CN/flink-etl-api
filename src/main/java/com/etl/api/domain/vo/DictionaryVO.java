@@ -15,5 +15,5 @@ public class DictionaryVO {
     private String label;
 
     @Schema(description = "值")
-    private Long value;
+    private Object value;
 }

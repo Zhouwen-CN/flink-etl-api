@@ -14,6 +14,7 @@ import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
+import com.etl.api.service.manager.JobManager;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,7 +23,11 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,6 +44,7 @@ public class ETLJobInstanceController {
     private final FlinkClusterService flinkClusterService;
     private final EtlJobService etlJobService;
     private final JarPackageService jarPackageService;
+    private final JobManager jobManager;
 
     @SaCheckPermission("instance.select")
     @Operation(summary = "分页查询")
@@ -46,12 +52,14 @@ public class ETLJobInstanceController {
     public ResponseVO<PageVO<ETLJobInstanceVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
+            @RequestParam(value = "instanceId", required = false) @Parameter(description = "任务实例id") String instanceId,
             @RequestParam(value = "clusterId", required = false) @Parameter(description = "集群id") Long clusterId,
             @RequestParam(value = "jobId", required = false) @Parameter(description = "任务id") Long jobId,
             @RequestParam(value = "jobType", required = false) @Parameter(description = "集群id") Integer jobType,
             @RequestParam(value = "status", required = false) @Parameter(description = "任务状态") Integer status
     ) {
         val page = etlJobInstanceService.queryChain()
+                .like(EtlJobInstance::getId, instanceId, StringUtils.hasText(instanceId))
                 .eq(EtlJobInstance::getClusterId, clusterId, Objects.nonNull(clusterId))
                 .eq(EtlJobInstance::getJobId, jobId, Objects.nonNull(jobId))
                 .eq(EtlJobInstance::getJobType, jobType, Objects.nonNull(jobType))
@@ -61,6 +69,13 @@ public class ETLJobInstanceController {
                 .pageAs(Page.of(currentPage, pageSize), ETLJobInstanceVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
+    }
+
+    @SaCheckPermission("instance.delete")
+    @DeleteMapping("/{id}")
+    @Operation(summary = "删除")
+    public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") String id) {
+        return etlJobInstanceService.removeInstance(id);
     }
 
     @SaCheckPermission("instance.select")
@@ -99,5 +114,12 @@ public class ETLJobInstanceController {
                 .stream().map(JarPackageConvert.INSTANCE::convert)
                 .toList();
         return ResponseVO.ok(vos);
+    }
+
+    @SaCheckPermission("instance.update")
+    @PostMapping("/job/cancel/{id}")
+    @Operation(summary = "停止任务实例")
+    public ResponseVO<Void> cancelJob(@PathVariable @Parameter(description = "任务实例ID") String id) {
+        return jobManager.cancelJob(id);
     }
 }
