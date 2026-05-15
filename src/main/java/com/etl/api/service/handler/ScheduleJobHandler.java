@@ -21,8 +21,8 @@ public class ScheduleJobHandler extends QuartzJobBean {
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
         val mergedJobDataMap = context.getMergedJobDataMap();
-        val scheduleName = mergedJobDataMap.getString(ScheduleJobManager.SCHEDULE_NAME);
         val etlJobId = mergedJobDataMap.getLong(ScheduleJobManager.ETL_ID);
+        val scheduleName = context.getTrigger().getDescription();
 
         // 执行任务
         try {

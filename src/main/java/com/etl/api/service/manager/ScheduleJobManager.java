@@ -25,7 +25,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Service
 public class ScheduleJobManager {
-    public static final String SCHEDULE_NAME = "scheduleName";
     public static final String ETL_ID = "etlId";
 
     private final Scheduler scheduler;
@@ -50,6 +49,7 @@ public class ScheduleJobManager {
         val identity = String.valueOf(scheduleId);
         val jobDetail = JobBuilder.newJob(ScheduleJobHandler.class)
                 .withIdentity(identity)
+                .withDescription(scheduleName)
                 .build();
 
         // 当前时间 - 开火时间 > misfireThreshold，则判定为失火；参考: CronTriggerImpl.updateAfterMisfire
@@ -63,8 +63,8 @@ public class ScheduleJobManager {
 
         val trigger = TriggerBuilder.newTrigger()
                 .withIdentity(identity)
+                .withDescription(scheduleName)
                 .withSchedule(cronScheduleBuilder)
-                .usingJobData(SCHEDULE_NAME, scheduleName)
                 .usingJobData(ETL_ID, etlId)
                 .build();
 
@@ -96,8 +96,8 @@ public class ScheduleJobManager {
         val identity = String.valueOf(scheduleId);
         val trigger = TriggerBuilder.newTrigger()
                 .withIdentity(identity)
+                .withDescription(scheduleName)
                 .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
-                .usingJobData(SCHEDULE_NAME, scheduleName)
                 .usingJobData(ETL_ID, etlId)
                 .build();
 

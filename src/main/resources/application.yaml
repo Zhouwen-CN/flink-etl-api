@@ -33,7 +33,9 @@ spring:
   # flyway: 数据库变更版本控制
   flyway:
     enabled: true
-    locations: classpath:db/mysql
+    locations:
+      - classpath:db/migration/base
+      - classpath:db/migration/{vendor}
     baseline-on-migrate: true
     baseline-version: 0
 

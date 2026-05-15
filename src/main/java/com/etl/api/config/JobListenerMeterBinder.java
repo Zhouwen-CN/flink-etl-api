@@ -1,6 +1,5 @@
 package com.etl.api.config;
 
-import com.etl.api.service.manager.ScheduleJobManager;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -44,8 +43,7 @@ public class JobListenerMeterBinder implements JobListener, MeterBinder {
 
     private String[] getTags(JobExecutionContext context) {
         val key = context.getJobDetail().getKey();
-        val mergedJobDataMap = context.getMergedJobDataMap();
-        val scheduleName = mergedJobDataMap.getString(ScheduleJobManager.SCHEDULE_NAME);
+        val scheduleName = context.getTrigger().getDescription();
         return new String[]{
                 "group",
                 key.getGroup(),
