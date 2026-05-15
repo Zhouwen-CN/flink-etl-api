@@ -23,8 +23,7 @@ public enum FlinkJobStatusEnum {
     FINISHED(8, "Finished"),
     RESTARTING(9, "Restarting"),
     SUSPENDED(10, "Suspended"),
-    RECONCILING(11, "Reconciling"),
-    ;
+    RECONCILING(11, "Reconciling");
 
     @EnumValue
     private final int code;

@@ -3,10 +3,10 @@ package com.etl.api.service.manager;
 import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.FlinkCluster;
-import com.etl.api.domain.form.EtlJobSubmitForm;
 import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
+import com.etl.api.exception.EtlJobException;
 import com.etl.api.service.ClusterUploadedJarService;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
@@ -14,15 +14,17 @@ import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.etl.api.util.LocalDateTimeUtil;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class JobManager {
+public class EtlJobManager {
 
     private final EtlJobService etlJobService;
     private final FlinkClusterService flinkClusterService;
@@ -31,11 +33,13 @@ public class JobManager {
     private final FlinkApiProvider flinkApiProvider;
     private final EtlJobInstanceService etlJobInstanceService;
 
-    public ResponseVO<Void> runJob(EtlJobSubmitForm form) {
-        val jobId = form.getId();
+    // 服务器时间容忍5分钟误差
+    private static final Duration UPLOADED_OFFSET = Duration.ofMinutes(5);
+
+    public void runJob(Long jobId, @Nullable String savepointPath) {
         val etlJob = etlJobService.getById(jobId);
         if (etlJob == null) {
-            return ResponseVO.recordNotFoundError("jobId:" + jobId);
+            throw new EtlJobException("Etl 任务未找到: " + jobId);
         }
 
         // 是否有正在运行的任务
@@ -44,19 +48,20 @@ public class JobManager {
                 .in(EtlJobInstance::getStatus, FlinkJobStatusEnum.getProcessingStatus())
                 .exists();
         if (exists) {
-            return ResponseVO.error("运行失败，尚有正在运行的任务");
+            throw new EtlJobException("运行失败，尚有正在运行的任务");
         }
 
         // flink集群信息
         val clusterId = etlJob.getClusterId();
         val flinkCluster = flinkClusterService.getById(clusterId);
         if (flinkCluster == null) {
-            return ResponseVO.recordNotFoundError("flinkClusterId:" + clusterId);
+            throw new EtlJobException("Flink 集群未找到: " + clusterId);
         }
+
         // 检查集群状态
         val status = flinkCluster.getStatus();
         if (!status) {
-            return ResponseVO.error("运行失败，集群已禁用: " + flinkCluster.getName());
+            throw new EtlJobException("运行失败，集群已禁用: " + flinkCluster.getName());
         }
         val jobManagerUrl = flinkCluster.getJobManagerUrl();
 
@@ -64,7 +69,7 @@ public class JobManager {
         val jarId = etlJob.getJarId();
         val jarPackage = jarPackageService.getById(jarId);
         if (jarPackage == null) {
-            return ResponseVO.recordNotFoundError("jarPackageId:" + jarId);
+            throw new EtlJobException("Jar 包未找到: " + jarId);
         }
         val filePath = jarPackage.getFilePath();
 
@@ -83,7 +88,7 @@ public class JobManager {
             // 如果jar包更新时间大于flink jar上传时间，表示jar包需要更新
             val updateTime = LocalDateTimeUtil.toMs(jarPackage.getUpdateTime());
             val uploaded = clusterUploadedJar.getUploaded();
-            if (updateTime > uploaded) {
+            if (updateTime > uploaded + UPLOADED_OFFSET.toMillis()) {
                 // 重新上传jar包到flink，并更新同步表
                 val flinkJarId = flinkApiProvider.uploadJar(jobManagerUrl, filePath, clusterUploadedJar.getJarId());
                 clusterUploadedJar.setJarId(flinkJarId);
@@ -93,7 +98,7 @@ public class JobManager {
         }
 
         val flinkJarId = clusterUploadedJar.getJarId();
-        val flinkJobId = flinkApiProvider.runJob(jobManagerUrl, flinkJarId, jarPackage.getMainClass(), etlJob.getConfig(), form.getSavepointPath());
+        val flinkJobId = flinkApiProvider.runJob(jobManagerUrl, flinkJarId, jarPackage.getMainClass(), etlJob.getConfig(), savepointPath);
 
         // 插入任务实例表
         val etlJobInstance = new EtlJobInstance(
@@ -105,18 +110,16 @@ public class JobManager {
                 FlinkJobStatusEnum.UNKNOWN
         );
         etlJobInstanceService.save(etlJobInstance);
-        return ResponseVO.ok();
     }
 
-
-    public ResponseVO<Void> cancelJob(String jobInstanceId) {
+    public void cancelJob(String jobInstanceId) {
         val etlJobInstance = etlJobInstanceService.queryChain()
                 .eq(EtlJobInstance::getId, jobInstanceId)
                 .eq(EtlJobInstance::getStatus, FlinkJobStatusEnum.RUNNING)
                 .one();
 
         if (etlJobInstance == null) {
-            return ResponseVO.recordNotFoundError("jobInstanceId:" + jobInstanceId);
+            throw new EtlJobException("Etl 任务实例未找到: " + jobInstanceId);
         }
 
         val clusterId = etlJobInstance.getClusterId();
@@ -125,11 +128,10 @@ public class JobManager {
                 .one();
 
         if (flinkCluster == null) {
-            return ResponseVO.recordNotFoundError("flinkClusterId:" + clusterId);
+            throw new EtlJobException("Flink 集群未找到: " + clusterId);
         }
 
         flinkApiProvider.cancelJob(flinkCluster.getJobManagerUrl(), jobInstanceId);
-        return ResponseVO.ok();
     }
 
     public ResponseVO<List<DictionaryVO>> getCheckpointHistory(Long jobId, String instanceId) {

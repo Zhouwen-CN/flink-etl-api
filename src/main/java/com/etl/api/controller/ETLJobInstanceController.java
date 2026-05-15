@@ -14,7 +14,7 @@ import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
-import com.etl.api.service.manager.JobManager;
+import com.etl.api.service.manager.EtlJobManager;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -44,7 +44,7 @@ public class ETLJobInstanceController {
     private final FlinkClusterService flinkClusterService;
     private final EtlJobService etlJobService;
     private final JarPackageService jarPackageService;
-    private final JobManager jobManager;
+    private final EtlJobManager etlJobManager;
 
     @SaCheckPermission("instance.select")
     @Operation(summary = "分页查询")
@@ -120,6 +120,11 @@ public class ETLJobInstanceController {
     @PostMapping("/job/cancel/{id}")
     @Operation(summary = "停止任务实例")
     public ResponseVO<Void> cancelJob(@PathVariable @Parameter(description = "任务实例ID") String id) {
-        return jobManager.cancelJob(id);
+        try {
+            etlJobManager.cancelJob(id);
+        } catch (Exception e) {
+            return ResponseVO.error(e.getMessage());
+        }
+        return ResponseVO.ok();
     }
 }

@@ -12,5 +12,7 @@ create table T_ETL_JOB_INSTANCE
     create_user varchar(30) default null comment '创建者',
     create_time datetime    default CURRENT_TIMESTAMP comment '创建时间',
     update_user varchar(30) default null comment '修改者',
-    update_time datetime    default CURRENT_TIMESTAMP comment '更新时间'
+    update_time datetime default CURRENT_TIMESTAMP comment '更新时间',
+    index idx_etl_job_status (status),
+    index idx_elt_job_update_time (update_time desc)
 ) comment 'ETL任务实例表'

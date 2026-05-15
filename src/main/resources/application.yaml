@@ -60,6 +60,49 @@ spring:
       max-file-size: 200MB
       max-request-size: 200MB
 
+  # Quartz配置，参考：SchedulerFactoryBean.initSchedulerFactory
+  quartz:
+    scheduler-name: ${spring.application.name} #集群名称
+    job-store-type: jdbc #存储器类型，默认为 memory
+    auto-startup: true #是否自动启动
+    startup-delay: 0s #启动延迟
+    wait-for-jobs-to-complete-on-shutdown: true #应用关闭时，是否等待定时任务执行完成，默认为 false
+    overwrite-existing-jobs: true #是否覆盖已有Job的配置，仅适用于Bean注册
+    properties: #quartz附加属性，参考：http://www.quartz-scheduler.org/documentation/2.4.0-SNAPSHOT/configuration.html
+      org:
+        quartz:
+          # Scheduler配置
+          scheduler:
+            #instanceName: 不需要配置，同 spring.quartz.scheduler-name
+            instanceId: AUTO #自动生成 instanceID
+            instanceIdGenerator:
+              class: org.quartz.simpl.SimpleInstanceIdGenerator #id生成策略类，默认为 SimpleInstanceIdGenerator
+          # JobStore 相关配置
+          jobStore:
+            class: org.springframework.scheduling.quartz.LocalDataSourceJobStore #JobStore实现类
+            #driverDelegateClass: 在 EnvironmentConfiguration 类中动态配置
+            tablePrefix: QRTZ_ #Quartz表前缀
+            isClustered: true #是集群模式
+            clusterCheckinInterval: 15000 #集群检查频率，单位：毫秒。默认为 15000
+            misfireThreshold: 60000 #允许任务在错过触发时间后自动重试，比如任务暂停时间在60秒之内，那么期间没有执行的任务会补充执行
+            useProperties: false
+    jdbc:
+      initialize-schema: never #不初始化数据库
+
+  # 线程池配置
+  task:
+    execution:
+      pool:
+        core-size: 1
+        max-size: 5
+        queue-capacity: 50
+        keep-alive: 60s
+        allow-core-thread-timeout: true
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+      thread-name-prefix: quartz-
+
 # 可观测性
 management:
   endpoints:

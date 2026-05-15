@@ -76,17 +76,19 @@ values (22, '查询jar', 'jar.select');
 insert into T_PERMISSION(id, name, code)
 values (23, '新增jar', 'jar.insert');
 insert into T_PERMISSION(id, name, code)
-values (24, '删除jar', 'jar.delete');
+values (24, '更新jar', 'jar.update');
+insert into T_PERMISSION(id, name, code)
+values (25, '删除jar', 'jar.delete');
 
 -- job
 insert into T_PERMISSION(id, name, code)
-values (25, '查询任务', 'job.select');
+values (26, '查询任务', 'job.select');
 insert into T_PERMISSION(id, name, code)
-values (26, '新增任务', 'job.insert');
+values (27, '新增任务', 'job.insert');
 insert into T_PERMISSION(id, name, code)
-values (27, '更新任务', 'job.update');
+values (28, '更新任务', 'job.update');
 insert into T_PERMISSION(id, name, code)
-values (28, '删除任务', 'job.delete');
+values (29, '删除任务', 'job.delete');
 
 create table T_ROLE_PERMISSION
 (

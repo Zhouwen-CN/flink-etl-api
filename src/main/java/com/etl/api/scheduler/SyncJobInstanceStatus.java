@@ -28,7 +28,7 @@ public class SyncJobInstanceStatus {
     private final EtlJobInstanceService etlJobInstanceService;
     private final FlinkApiProvider flinkApiProvider;
 
-    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
     private void run() {
         log.debug("同步 Flink 作业信息");
         val flinkClusterMap = flinkClusterService.list()

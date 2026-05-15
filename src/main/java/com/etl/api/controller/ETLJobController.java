@@ -17,7 +17,7 @@ import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
-import com.etl.api.service.manager.JobManager;
+import com.etl.api.service.manager.EtlJobManager;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -52,7 +52,7 @@ public class ETLJobController {
     private final JarPackageService jarPackageService;
     private final FlinkClusterService flinkClusterService;
     private final EtlJobInstanceService etlJobInstanceService;
-    private final JobManager jobManager;
+    private final EtlJobManager etlJobManager;
 
     @SaCheckPermission("job.select")
     @Operation(summary = "分页查询")
@@ -123,7 +123,12 @@ public class ETLJobController {
     @Operation(summary = "运行任务")
     @PostMapping("/run")
     public ResponseVO<Void> runJob(@RequestBody @Validated EtlJobSubmitForm form) {
-        return jobManager.runJob(form);
+        try {
+            etlJobManager.runJob(form.getId(), form.getSavepointPath());
+        } catch (Exception e) {
+            return ResponseVO.error(e.getMessage());
+        }
+        return ResponseVO.ok();
     }
 
     @SaCheckPermission("job.select")
@@ -151,6 +156,6 @@ public class ETLJobController {
             @RequestParam("jobId") @Parameter(description = "任务id") Long jobId,
             @RequestParam("instanceId") @Parameter(description = "实例id") String instanceId
     ) {
-        return jobManager.getCheckpointHistory(jobId, instanceId);
+        return etlJobManager.getCheckpointHistory(jobId, instanceId);
     }
 }
