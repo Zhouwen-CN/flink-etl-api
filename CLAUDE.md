@@ -4,177 +4,146 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个基于 Spring Boot 3.5 的 Flink ETL API 应用，提供了 HTTP 请求监控、IP 地址解析等功能。项目集成了 Spring Boot Admin 用于监控和管理，使用 MyBatis-Flex 作为 ORM 框架。
+基于 Spring Boot 3.5 的 Flink ETL 管理平台，提供 Flink 集群管理、JAR 包管理、ETL 任务编排与调度、任务实例监控等功能。应用自带
+Spring Boot Admin 监控、Sa-Token RBAC 认证授权、Quartz 动态定时调度。
 
 ## 核心技术栈
 
-- **Java 17** - JDK 版本
-- **Spring Boot 3.5.13** - 基础框架
-- **Sa-Token 1.45.0** - 认证授权框架
-- **MyBatis-Flex 1.11.6** - ORM 框架
-- **Flyway** - 数据库版本控制和迁移
-- **H2 Database** - 开发环境数据库（支持 MySQL 模式）
-- **Spring Doc (OpenAPI)** - API 文档生成
-- **Spring Boot Admin** - 应用监控和管理
-- **Lombok + MapStruct** - 代码生成和简化
-- **Hutool 5.8.44** - Java 工具库
-- **IP2Region** - IP 地址解析库
+- **Java 17** / **Spring Boot 3.5.13**
+- **MyBatis-Flex 1.11.6** - ORM 框架，Service 继承 `ServiceImpl<Mapper, Entity>`，支持 `queryChain()` 链式查询
+- **Sa-Token 1.45.0** - JWT Token 模式认证授权，`@SaCheckPermission` 控制接口权限
+- **Quartz (JDBC 持久化)** - 动态定时调度 ETL 任务，支持集群模式
+- **Flyway** - 数据库版本迁移
+- **MapStruct 1.6.3 + Lombok** - 对象转换和代码简化（注解处理器顺序：Lombok → MapStruct）
+- **Spring Boot Admin** - 自托管监控（既是 Server 又是 Client）
+- **H2 Database** - 开发环境（MySQL 兼容模式）
+- **Hutool / IP2Region** - 工具库和 IP 地址解析
 
 ## 常用命令
 
-### 构建和运行
-
 ```bash
-# 编译项目
-mvn clean compile
-
-# 运行所有测试
-mvn test
-
-# 运行单个测试类
-mvn test -Dtest=FlinkEtlApiApplicationTests
-
-# 运行单个测试方法
-mvn test -Dtest=FlinkEtlApiApplicationTests#contextLoads
-
-# 打包项目（生成可执行 JAR）
-mvn clean package
-
-# 运行应用（开发环境）
-mvn spring-boot:run
-
-# 运行应用（生产环境）
-java -jar target/flink-etl-api-0.0.1-SNAPSHOT.jar
+mvn clean compile                                      # 编译
+mvn test                                               # 运行所有测试
+mvn test -Dtest=FlinkEtlApiApplicationTests            # 运行单个测试类
+mvn test -Dtest=FlinkEtlApiApplicationTests#contextLoads  # 运行单个方法
+mvn clean package                                      # 打包
+mvn spring-boot:run                                    # 开发环境运行
 ```
 
-### 数据库相关
+## 核心业务流程
 
-数据库迁移脚本位于 `src/main/resources/db/mysql/` 目录下，Flyway 会在应用启动时自动执行迁移。
+### ETL 任务生命周期
 
-开发环境使用 H2 数据库，可通过以下端点访问控制台：
-- URL: `/h2`
-- JDBC URL: `jdbc:h2:file:./database;MODE=MySQL;DB_CLOSE_DELAY=-1`
-- Username: `sa`
-- Password: `123`
+1. 管理员注册 Flink 集群（`FlinkCluster`，含 JobManager URL）
+2. 上传 JAR 包（`JarPackage`，含 mainClass）
+3. 创建 ETL 任务（`EtlJob`，关联集群、JAR、JSON 配置，类型：BATCH/STREAMING）
+4. 手动运行或通过 Quartz 定时触发：
+   - `EtlJobManager` 校验集群可用性，管理 JAR 上传缓存（`ClusterUploadedJar`）
+   - `FlinkApiProvider` 通过 Flink REST API 提交任务，返回 Flink jobId
+   - 创建 `EtlJobInstance` 记录
+5. 后台定时任务 `SyncJobInstanceStatus` 每 5 秒轮询 Flink API 同步状态
+6. 用户可查看实例状态、取消运行中的任务、从 Checkpoint 恢复
 
-生产环境需要配置以下环境变量：
-- `JDBC_DRIVER`
-- `JDBC_URL`
-- `JDBC_USERNAME`
-- `JDBC_PASSWORD`
+### Flink REST API 集成
 
-### 代码生成
+`FlinkApiProvider` 通过 `RestClient` 与 Flink JobManager 通信：
 
-MyBatis-Flex 提供了代码生成器，可以基于数据库表生成 Entity、Mapper、Service 等代码。参见 `FlinkEtlApiApplicationTests.contextLoads()` 测试方法中的配置示例。
+- `/config` - 获取集群版本
+- `/jars/upload` - 上传 JAR
+- `/jars/{jarId}/run` - 提交任务（配置 Base64 编码，支持 savepoint 恢复）
+- `/jobs/{jobId}` - 查询任务状态
+- `/jobs/{jobId}/stop` - 停止任务
+- `/jobs/{jobId}/checkpoints` - 获取 checkpoint 历史
+
+### 双调度系统
+
+- **@Scheduled 固定任务**（`scheduler/` 包）：清理过期记录（30min）、同步集群 JAR 列表（10min）、同步任务实例状态（5s）
+- **Quartz 动态调度**（JDBC 持久化、集群模式）：用户通过 `/schedule` API 创建/管理 cron 定时任务，`ScheduleJobHandler` 触发
+  ETL 任务执行
 
 ## 项目架构
 
-### 分层结构
+### 关键分层
 
 ```
 com.etl.api
-├── aop/             # AOP 切面（事务控制）
-├── config/          # 配置类（MyBatis、Sa-Token、Endpoint、数据源等）
-├── controller/      # REST API 控制器
-├── domain/          # 领域对象
-│   ├── base/        # 基础实体和监听器
-│   ├── convert/     # MapStruct 对象转换器
-│   ├── entity/      # 实体类（对应数据库表）
-│   ├── form/        # 表单对象（请求参数）
-│   ├── validator/   # 自定义验证器
-│   └── vo/          # 视图对象（ResponseVO、PageVO）
-├── enumeration/     # 枚举类
-├── exception/       # 异常处理
-├── mapper/          # MyBatis Mapper 接口
-├── scheduler/       # 定时任务
-├── service/         # 业务服务接口
-│   └ impl/          # 服务实现
-└── util/            # 工具类
+├── controller/          # REST API（12 个控制器）
+├── service/
+│   ├── impl/            # 业务服务实现（继承 ServiceImpl）
+│   ├── manager/         # 业务编排（EtlJobManager、ScheduleJobManager）
+│   └── provider/        # 外部 API 集成（FlinkApiProvider）
+├── domain/
+│   ├── entity/          # 数据库实体（T_ 前缀表）
+│   ├── form/            # 请求表单（含 Bean Validation）
+│   ├── convert/         # MapStruct 转换器
+│   ├── vo/              # 响应视图对象
+│   ├── base/            # BaseEntity + InsertListener/UpdateListener（自动填充时间）
+│   └── validator/       # 自定义验证器（FieldMatch、CronExpression）
+├── config/              # 配置类（Sa-Token、Quartz、RestClient、数据源等）
+├── aop/                 # @NonTransaction 注解 + TransactionAspect
+├── mapper/              # MyBatis Mapper 接口
+├── enumeration/         # 枚举（ETLJobTypeEnum、FlinkJobStatusEnum 等）
+├── exception/           # GlobalExceptionHandler 统一异常处理
+├── scheduler/           # @Scheduled 定时任务
+└── util/                # 工具类
 ```
 
 ### 核心设计模式
 
-1. **统一响应格式**：所有 API 使用 `ResponseVO<T>` 作为标准响应格式，包含 `success`、`code`、`data`、`message` 字段。
+- **统一响应**：所有 API 返回 `ResponseVO<T>`（success/code/data/message）
+- **三层业务编排**：Controller → Manager（编排逻辑）→ Service（CRUD）→ Mapper
+- **实体监听器**：继承 `BaseEntity` 的实体自动填充 `createTime`/`updateTime`
+- **AOP 事务控制**：默认 `@Transactional`，可通过 `@NonTransaction` 注解跳过
+- **权限模型**：User → Role → Permission，权限码格式 `resource.action`（如 `job.select`、`instance.delete`）
 
-2. **全局异常处理**：`GlobalExceptionHandler` 统一处理参数校验异常和业务异常，返回标准错误响应。
+## 数据库
 
-3. **MyBatis-Flex Service 模式**：Service 实现类继承 `ServiceImpl<Mapper, Entity>`，提供了链式查询方法 `queryChain()`。
+### 迁移脚本
 
-4. **实体监听器**：通过 `InsertListener` 和 `UpdateListener` 自动填充实体的创建时间和更新时间字段（继承 `BaseEntity` 的实体）。
+- 基础表：`src/main/resources/db/migration/base/`（V1 ~ V14）
+- Quartz 表：`src/main/resources/db/migration/{vendor}/`（H2 和 MySQL 脚本不通用，`{vendor}` 由 Flyway 按数据库类型自动解析）
 
-5. **HTTP Exchange 监控**：自定义 `HttpExchangeRepository` 实现将 HTTP 请求历史记录存储到数据库，并过滤特定 URL（如 `/actuator`、`/h2`、`/swagger-ui`）。
+### 开发环境（H2）
 
-6. **Sa-Token 认证授权**：使用 JWT Token 模式，通过 `StpInterfaceImpl` 扩展获取用户权限信息。登录接口返回 Token，客户端通过
-   `Authorization: Bearer <token>` 头携带。
+- 控制台：`/h2-console`
+- JDBC URL：`jdbc:h2:file:./database;MODE=MySQL;DB_CLOSE_DELAY=-1`
+- 用户名：`sa`，密码：`123`
 
-7. **AOP 事务控制**：使用 `@Transactional` 控制事务，特殊场景可通过 `@NonTransaction` 注解跳过事务（配合
-   `TransactionAspect`）。
+### 生产环境
 
-8. **对象转换**：使用 MapStruct 进行 Entity/VO/Form 之间的转换，转换器位于 `domain/convert/` 目录。
+通过环境变量配置：`JDBC_DRIVER`、`JDBC_URL`、`JDBC_USERNAME`、`JDBC_PASSWORD`
 
-9. **表单验证**：使用 Bean Validation 注解进行参数校验，支持自定义验证器（如 `FieldMatch` 用于字段匹配验证）。
+### 表命名规范
+
+数据库表使用 `T_` 前缀（如 `T_ETL_JOB`），MyBatis-Flex 配置了表前缀策略，实体类使用驼峰命名（如 `EtlJob`）。
+
+## REST API 端点
+
+| 路径                        | 控制器                                   | 说明                        |
+|---------------------------|---------------------------------------|---------------------------|
+| `/auth`                   | AuthController                        | 登录/登出/验证码                 |
+| `/job`                    | ETLJobController                      | ETL 任务 CRUD、运行、checkpoint |
+| `/instance`               | ETLJobInstanceController              | 任务实例查询、取消                 |
+| `/flink/cluster`          | FlinkClusterController                | Flink 集群管理                |
+| `/jar`                    | JarPackageController                  | JAR 包上传管理                 |
+| `/schedule`               | ScheduleJobController                 | Quartz 定时任务管理             |
+| `/user`                   | UserController                        | 用户管理、密码修改                 |
+| `/role`                   | RoleController                        | 角色管理                      |
+| `/permission`             | PermissionController                  | 权限管理                      |
+| `/dict/type`、`/dict/data` | DictTypeController、DictDataController | 字典管理                      |
+| `/log`                    | LogController                         | 登录日志、错误日志查询               |
 
 ## 配置要点
 
-### 多环境配置
+- 多环境：`application.yaml`（公共）、`application-dev.yaml`（H2）、`application-prod.yaml`（MySQL）
+- Sa-Token：JWT Token，`Authorization: Bearer <token>`，单设备登录，30 天过期
+- Quartz：JDBC 持久化，集群模式（`isClustered: true`），misfire 阈值 60s
+- 文件上传：最大 200MB
+- Swagger UI：`/swagger-ui`（开发环境可 Try it out，生产禁用）
+- Spring Boot Admin：`/applications`（自监控）
+- EndpointConfiguration：dev 环境用 `InMemoryHttpExchangeRepository`，prod 环境持久化到数据库
 
-- `application.yaml` - 公共配置
-- `application-dev.yaml` - 开发环境（H2 数据库）
-- `application-prod.yaml` - 生产环境（MySQL，通过环境变量配置）
+## 代码生成
 
-### Actuator 端点
-
-应用暴露了完整的 Actuator 端点用于监控：
-- `/actuator` - 所有监控端点
-- `/actuator/info` - 构建信息、Git 信息
-- `/actuator/health` - 健康检查
-- `/actuator/httpexchanges` - HTTP 请求历史
-- `/actuator/prometheus` - Prometheus 指标
-
-### Spring Doc 配置
-
-API 文档通过 Spring Doc 自动生成：
-- Swagger UI: `/swagger-ui`
-- API Docs: `/v3/api-docs`
-
-开发环境允许在 Swagger UI 中执行 "Try it out"，生产环境禁用。
-
-### Sa-Token 配置
-
-认证使用 JWT Token 模式：
-
-- Token 通过 `Authorization: Bearer <token>` 头传递
-- 用户权限通过 `StpInterfaceImpl` 从数据库动态获取
-- 登录日志记录通过 `LoginLog` 表存储
-
-### 数据源配置
-
-使用 HikariCP 连接池，关键配置参数：
-- `maxPoolSize`: 5
-- `minIdle`: 1
-- `connectionTimeout`: 5000ms
-- `idleTimeout`: 600000ms (10分钟)
-- `maxLifetime`: 1200000ms (20分钟)
-
-### 定时任务
-
-项目使用 `@Scheduled` 注解定义定时任务，位于 `scheduler/` 包。现有任务包括定期清理过期记录。
-
-## 可观测性集成
-
-项目集成了完整的可观测性功能：
-1. **Spring Boot Admin Server** - 自托管监控平台（`@EnableAdminServer`）
-2. **Spring Boot Admin Client** - 应用自身作为客户端注册到 Admin Server
-3. **Micrometer + Prometheus** - 指标收集和导出
-4. **Actuator** - 健康检查、信息暴露、HTTP 请求追踪
-
-## 依赖注入和注解处理
-
-项目使用 Lombok 和 MapStruct 进行代码生成，需特别注意：
-- Lombok 的 `@RequiredArgsConstructor` 用于构造器注入
-- MapStruct 用于对象映射转换
-- 注解处理器配置在 `pom.xml` 的 `maven-compiler-plugin` 中，顺序很重要（Lombok 必须在 MapStruct 之前）
-
-## 数据库表命名规范
-
-数据库表使用 `T_` 前缀（如 `T_HTTP_EXCHANGE_HISTORY`），实体类使用驼峰命名（如 `HttpExchangeHistory`）。MyBatis-Flex 配置了表前缀策略，生成代码时会自动去除前缀。
+MyBatis-Flex 代码生成器配置示例在 `FlinkEtlApiApplicationTests.contextLoads()` 中，可基于数据库表生成
+Entity/Mapper/Service 代码。

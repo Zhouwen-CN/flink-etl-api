@@ -39,12 +39,6 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
 
-  # h2 控制台
-  h2:
-    console:
-      path: /h2
-      enabled: true
-
   #springboot admin
   boot:
     admin:

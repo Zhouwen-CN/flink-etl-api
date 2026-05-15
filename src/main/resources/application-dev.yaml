@@ -1,3 +1,9 @@
+# h2 控制台
+spring:
+  h2:
+    console:
+      enabled: true
+
 # 开启 swagger-ui try it out
 springdoc:
   swagger-ui:

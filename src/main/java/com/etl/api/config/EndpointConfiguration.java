@@ -30,7 +30,7 @@ public class EndpointConfiguration {
             "/variables.css",
             "/assets",
             "/actuator",
-            "/h2",
+            "/h2-console",
             "/swagger-ui",
             "/v3/api-docs"
     );
