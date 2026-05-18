@@ -99,6 +99,14 @@ public class ETLJobController {
         return etlJobService.removeJobBatch(ids);
     }
 
+    @SaCheckPermission("job.insert")
+    @Operation(summary = "运行任务")
+    @PostMapping("/run")
+    public ResponseVO<Void> runJob(@RequestBody @Validated EtlJobSubmitForm form) {
+        etlJobManager.runJob(form.getId(), form.getSavepointPath());
+        return ResponseVO.ok();
+    }
+
     @SaCheckPermission("job.select")
     @Operation(summary = "jar包选择器")
     @GetMapping("/jar/selector")
@@ -117,18 +125,6 @@ public class ETLJobController {
                 .stream().map(FlinkClusterConvert.INSTANCE::convert)
                 .toList();
         return ResponseVO.ok(vos);
-    }
-
-    @SaCheckPermission("job.update")
-    @Operation(summary = "运行任务")
-    @PostMapping("/run")
-    public ResponseVO<Void> runJob(@RequestBody @Validated EtlJobSubmitForm form) {
-        try {
-            etlJobManager.runJob(form.getId(), form.getSavepointPath());
-        } catch (Exception e) {
-            return ResponseVO.error(e.getMessage());
-        }
-        return ResponseVO.ok();
     }
 
     @SaCheckPermission("job.select")
@@ -150,7 +146,7 @@ public class ETLJobController {
     }
 
     @SaCheckPermission("job.select")
-    @Operation(summary = "任务实例选择器")
+    @Operation(summary = "检查点历史选择器")
     @GetMapping("/checkpoint/selector")
     public ResponseVO<List<DictionaryVO>> checkpointSelector(
             @RequestParam("jobId") @Parameter(description = "任务id") Long jobId,

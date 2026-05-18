@@ -141,8 +141,8 @@ public class UserController {
         return userService.changePwd(form);
     }
 
-    @Operation(summary = "重置密码")
     @SaCheckRole("admin")
+    @Operation(summary = "重置密码")
     @PatchMapping("/pwd/reset/{id}")
     public ResponseVO<Void> resetPwd(@PathVariable @Parameter(description = "ID") Long id) {
         if (id == 1L) {

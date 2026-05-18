@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.time.Duration;
 import java.util.List;
 
@@ -71,7 +72,12 @@ public class EtlJobManager {
         if (jarPackage == null) {
             throw new EtlJobException("Jar 包未找到: " + jarId);
         }
+        // jar包是否存在
         val filePath = jarPackage.getFilePath();
+        val file = new File(filePath);
+        if (!file.exists()) {
+            throw new EtlJobException("Jar 包未找到: " + filePath);
+        }
 
         // jar包同步表信息
         ClusterUploadedJar clusterUploadedJar = clusterUploadedJarService.queryChain()

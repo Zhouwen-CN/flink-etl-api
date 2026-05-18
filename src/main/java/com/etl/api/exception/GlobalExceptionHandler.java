@@ -3,11 +3,15 @@ package com.etl.api.exception;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.service.ErrorLogService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -98,6 +102,22 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(FlinkApiRequestException.class)
     public ResponseVO<Void> flinkApiRequestExceptionHandler(FlinkApiRequestException e) {
+        return ResponseVO.error(ExceptionUtil.getRootCauseMessage(e));
+    }
+
+    /**
+     * ETL 任务异常
+     */
+    @ExceptionHandler(EtlJobException.class)
+    public ResponseVO<Void> etlJobExceptionHandler(EtlJobException e) {
+        return ResponseVO.error(e.getMessage());
+    }
+
+    /**
+     * 调度任务异常
+     */
+    @ExceptionHandler(ScheduleJobException.class)
+    public ResponseVO<Void> scheduleJobExceptionHandler(ScheduleJobException e) {
         return ResponseVO.error(e.getMessage());
     }
 
@@ -105,8 +125,13 @@ public class GlobalExceptionHandler {
      * 全局兜底异常处理
      */
     @ExceptionHandler
-    public ResponseVO<Void> handlerException(Exception e) {
-        errorLogService.saveErrorLog(e);
-        return ResponseVO.error(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    public ResponseEntity<ResponseVO<Void>> handlerException(Exception e, HttpServletRequest request) {
+        if (!"/applications".equals(request.getRequestURI())) {
+            errorLogService.saveErrorLog(e);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(ResponseVO.error(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
     }
 }

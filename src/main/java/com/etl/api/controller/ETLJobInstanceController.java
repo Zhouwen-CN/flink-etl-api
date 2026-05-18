@@ -27,7 +27,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -71,6 +71,14 @@ public class ETLJobInstanceController {
         return ResponseVO.ok(PageVO.from(page));
     }
 
+    @SaCheckPermission("instance.update")
+    @PutMapping("/job/cancel/{id}")
+    @Operation(summary = "停止任务实例")
+    public ResponseVO<Void> cancelJob(@PathVariable @Parameter(description = "任务实例ID") String id) {
+        etlJobManager.cancelJob(id);
+        return ResponseVO.ok();
+    }
+
     @SaCheckPermission("instance.delete")
     @DeleteMapping("/{id}")
     @Operation(summary = "删除")
@@ -108,23 +116,11 @@ public class ETLJobInstanceController {
 
     @SaCheckPermission("instance.select")
     @GetMapping("/jar/selector")
-    @Operation(summary = "任务状态选择器")
+    @Operation(summary = "jar包选择器")
     public ResponseVO<List<DictionaryVO>> getJarSelector() {
         val vos = jarPackageService.list()
                 .stream().map(JarPackageConvert.INSTANCE::convert)
                 .toList();
         return ResponseVO.ok(vos);
-    }
-
-    @SaCheckPermission("instance.update")
-    @PostMapping("/job/cancel/{id}")
-    @Operation(summary = "停止任务实例")
-    public ResponseVO<Void> cancelJob(@PathVariable @Parameter(description = "任务实例ID") String id) {
-        try {
-            etlJobManager.cancelJob(id);
-        } catch (Exception e) {
-            return ResponseVO.error(e.getMessage());
-        }
-        return ResponseVO.ok();
     }
 }

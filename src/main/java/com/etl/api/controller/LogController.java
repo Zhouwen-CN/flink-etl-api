@@ -1,5 +1,6 @@
 package com.etl.api.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.domain.entity.ErrorLog;
 import com.etl.api.domain.entity.LoginLog;
 import com.etl.api.domain.vo.ErrorLogVO;
@@ -31,6 +32,7 @@ public class LogController {
     private final LoginLogService loginLogService;
     private final ErrorLogService errorLogService;
 
+    @SaCheckPermission("login-log.select")
     @Operation(summary = "登入日志分页查询")
     @GetMapping("/login")
     public ResponseVO<PageVO<LoginLogVO>> getLoginLogPage(
@@ -46,6 +48,7 @@ public class LogController {
         return ResponseVO.ok(PageVO.from(page));
     }
 
+    @SaCheckPermission("error-log.select")
     @Operation(summary = "异常日志分页查询")
     @GetMapping("/error")
     public ResponseVO<PageVO<ErrorLogVO>> getErrorLogPage(
