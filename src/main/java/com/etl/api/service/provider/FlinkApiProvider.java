@@ -47,18 +47,7 @@ public class FlinkApiProvider {
                 .orElseThrow(() -> new FlinkApiRequestException("Flink API [获取集群版本信息] 解析version错误: " + jsonNode));
     }
 
-    public String uploadJar(String jobManagerUrl, String path, String jarId) {
-        if (jarId != null) {
-            try {
-                restClient.delete()
-                        .uri(jobManagerUrl + "/jars/" + jarId)
-                        .retrieve()
-                        .body(Void.class);
-            } catch (Exception e) {
-                throw new FlinkApiRequestException("Flink API [删除jar包] 请求失败", e);
-            }
-        }
-
+    public String uploadJar(String jobManagerUrl, String path) {
         val builder = new MultipartBodyBuilder();
         builder.part("jarfile", new FileSystemResource(path));
 
@@ -150,6 +139,17 @@ public class FlinkApiProvider {
                 .map(item -> objectMapper.convertValue(item, new TypeReference<List<CheckpointHistoryDTO>>() {
                 }))
                 .orElseThrow(() -> new FlinkApiRequestException("Flink API [获取检查点历史] 数据解析错误: " + jsonNode));
+    }
+
+    public void deleteJar(String jobManagerUrl, String jarId) {
+        try {
+            restClient.delete()
+                    .uri(jobManagerUrl + "/jars/" + jarId)
+                    .retrieve()
+                    .body(Void.class);
+        } catch (Exception e) {
+            throw new FlinkApiRequestException("Flink API [删除jar包] 请求失败", e);
+        }
     }
 
     @Getter

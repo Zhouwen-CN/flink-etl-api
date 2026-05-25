@@ -27,15 +27,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EtlJobManager {
 
+    // 服务器时间容忍3分钟误差，通常内网的服务器时间会慢
+    private static final Duration UPLOADED_OFFSET = Duration.ofMinutes(3);
     private final EtlJobService etlJobService;
     private final FlinkClusterService flinkClusterService;
     private final JarPackageService jarPackageService;
     private final ClusterUploadedJarService clusterUploadedJarService;
     private final FlinkApiProvider flinkApiProvider;
     private final EtlJobInstanceService etlJobInstanceService;
-
-    // 服务器时间容忍5分钟误差
-    private static final Duration UPLOADED_OFFSET = Duration.ofMinutes(5);
 
     public void runJob(Long jobId, @Nullable String savepointPath) {
         val etlJob = etlJobService.getById(jobId);
@@ -80,23 +79,40 @@ public class EtlJobManager {
         }
 
         // jar包同步表信息
-        ClusterUploadedJar clusterUploadedJar = clusterUploadedJarService.queryChain()
+        val clusterUploadedJarList = clusterUploadedJarService.queryChain()
                 .eq(ClusterUploadedJar::getClusterId, clusterId)
                 .eq(ClusterUploadedJar::getJarName, jarPackage.getFileName())
-                .one();
+                .orderBy(ClusterUploadedJar::getUploaded, false)
+                .list();
+
+        // 如果jar包同步表有记录，那么获取最新的一条；如果有多的记录，那么删除
+        ClusterUploadedJar clusterUploadedJar = null;
+        val size = clusterUploadedJarList.size();
+        if (size > 0) {
+            for (int i = 0; i < size; i++) {
+                if (i == 0) {
+                    clusterUploadedJar = clusterUploadedJarList.get(i);
+                } else {
+                    val deleteClusterUploadedJar = clusterUploadedJarList.get(i);
+                    flinkApiProvider.deleteJar(jobManagerUrl, deleteClusterUploadedJar.getJarId());
+                    clusterUploadedJarService.removeById(deleteClusterUploadedJar.getId());
+                }
+            }
+        }
 
         if (clusterUploadedJar == null) {
             // 上传jar包，获取jarId，并且插入到同步表
-            val flinkJarId = flinkApiProvider.uploadJar(jobManagerUrl, filePath, null);
+            val flinkJarId = flinkApiProvider.uploadJar(jobManagerUrl, filePath);
             clusterUploadedJar = new ClusterUploadedJar(clusterId, flinkJarId, jarPackage.getFileName(), System.currentTimeMillis());
             clusterUploadedJarService.save(clusterUploadedJar);
         } else {
-            // 如果jar包更新时间大于flink jar上传时间，表示jar包需要更新
+            // 如果jar包更新时间 大于 flink jar上传时间 + 5分钟，表示jar包需要更新
             val updateTime = LocalDateTimeUtil.toMs(jarPackage.getUpdateTime());
             val uploaded = clusterUploadedJar.getUploaded();
             if (updateTime > uploaded + UPLOADED_OFFSET.toMillis()) {
                 // 重新上传jar包到flink，并更新同步表
-                val flinkJarId = flinkApiProvider.uploadJar(jobManagerUrl, filePath, clusterUploadedJar.getJarId());
+                flinkApiProvider.deleteJar(jobManagerUrl, clusterUploadedJar.getJarId());
+                val flinkJarId = flinkApiProvider.uploadJar(jobManagerUrl, filePath);
                 clusterUploadedJar.setJarId(flinkJarId);
                 clusterUploadedJar.setUploaded(System.currentTimeMillis());
                 clusterUploadedJarService.updateById(clusterUploadedJar);
