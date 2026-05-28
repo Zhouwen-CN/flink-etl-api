@@ -12,6 +12,7 @@ import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
+import com.etl.api.service.JobVariableService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.etl.api.util.LocalDateTimeUtil;
 import jakarta.annotation.Nullable;
@@ -35,6 +36,7 @@ public class EtlJobManager {
     private final ClusterUploadedJarService clusterUploadedJarService;
     private final FlinkApiProvider flinkApiProvider;
     private final EtlJobInstanceService etlJobInstanceService;
+    private final JobVariableService jobVariableService;
 
     public void runJob(Long jobId, @Nullable String savepointPath) {
         val etlJob = etlJobService.getById(jobId);
@@ -120,7 +122,14 @@ public class EtlJobManager {
         }
 
         val flinkJarId = clusterUploadedJar.getJarId();
-        val flinkJobId = flinkApiProvider.runJob(jobManagerUrl, flinkJarId, jarPackage.getMainClass(), etlJob.getConfig(), savepointPath);
+        val config = etlJob.getConfig();
+        String replacedConfig;
+        try {
+            replacedConfig = jobVariableService.replaceVariable(config);
+        } catch (Exception e) {
+            throw new EtlJobException(e);
+        }
+        val flinkJobId = flinkApiProvider.runJob(jobManagerUrl, flinkJarId, jarPackage.getMainClass(), replacedConfig, savepointPath);
 
         // 插入任务实例表
         val etlJobInstance = new EtlJobInstance(
