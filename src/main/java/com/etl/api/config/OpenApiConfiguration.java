@@ -24,7 +24,7 @@ public class OpenApiConfiguration {
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
                 .components(new Components().addSecuritySchemes(SECURITY_SCHEME_NAME, createAPIKeyScheme()))
                 .info(new Info().title("Flink-ETL-API")
-                        .description("基于 Flink 的 ETL 工具")
+                        .description("基于 Flink 的 ETL 平台后端服务")
                         .version("0.0.1")
                         .license(new License()
                                 .name("Apache 2.0")

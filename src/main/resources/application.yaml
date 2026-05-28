@@ -39,7 +39,7 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
 
-  #springboot admin
+  # springboot admin
   boot:
     admin:
       monitor:
@@ -53,8 +53,8 @@ spring:
   # 文件上传
   servlet:
     multipart:
-      max-file-size: 200MB
-      max-request-size: 200MB
+      max-file-size: 100MB
+      max-request-size: 100MB
 
   # Quartz配置，参考：SchedulerFactoryBean.initSchedulerFactory
   quartz:
@@ -174,25 +174,9 @@ mybatis-flex:
     master:
       <<: *hikari-config
 
-# 日志配置
-logging:
-  include-application-name: false
-  level:
-    root: info
-    org.springframework.context.support.PostProcessorRegistrationDelegate: error
-  file:
-    name: ./logs/${spring.application.name}.log
-  pattern:
-    dateformat: yyyy-MM-dd HH:mm:ss
-    # springboot admin 日志颜色
-    file: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID}){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"
-
-
 custom:
   default-pwd: 123456 #重置默认密码
   captcha:
     expiration: 1m #验证码数据过期时间
   http-exchange:
     expiration: 1h #http请求数据过期时间
-  jar-package:
-    location: D:\tmp\upload-jar

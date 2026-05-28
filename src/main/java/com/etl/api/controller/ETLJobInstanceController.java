@@ -64,8 +64,8 @@ public class ETLJobInstanceController {
                 .eq(EtlJobInstance::getJobId, jobId, Objects.nonNull(jobId))
                 .eq(EtlJobInstance::getJobType, jobType, Objects.nonNull(jobType))
                 .eq(EtlJobInstance::getStatus, status, Objects.nonNull(status))
-                .orderBy(EtlJobInstance::getStatus, true)
                 .orderBy(EtlJobInstance::getUpdateTime, false)
+                .orderBy(EtlJobInstance::getStatus, true)
                 .pageAs(Page.of(currentPage, pageSize), ETLJobInstanceVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
