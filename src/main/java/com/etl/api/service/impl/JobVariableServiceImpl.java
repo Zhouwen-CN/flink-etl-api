@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class JobVariableServiceImpl extends ServiceImpl<JobVariableMapper, JobVariable> implements JobVariableService {
-    private static final Pattern pattern = Pattern.compile("\\$\\{(?<variable>\\w+)}");
+    private static final Pattern pattern = Pattern.compile("\\$\\{(?<variable>[^}]+)}");
 
     @Override
     public String replaceVariable(String config) {
