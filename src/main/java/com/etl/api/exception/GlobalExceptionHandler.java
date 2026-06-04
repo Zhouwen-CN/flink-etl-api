@@ -3,7 +3,6 @@ package com.etl.api.exception;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.service.ErrorLogService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -102,7 +101,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(FlinkApiRequestException.class)
     public ResponseVO<Void> flinkApiRequestExceptionHandler(FlinkApiRequestException e) {
-        return ResponseVO.error(ExceptionUtil.getRootCauseMessage(e));
+        return ResponseVO.error(e.getMessage());
     }
 
     /**

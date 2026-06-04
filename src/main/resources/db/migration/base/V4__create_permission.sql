@@ -60,61 +60,71 @@ values (16, '更新字典', 'dict.update');
 insert into T_PERMISSION(id, name, code)
 values (17, '删除字典', 'dict.delete');
 
+-- variable
+insert into T_PERMISSION(id, name, code)
+values (18, '查询变量', 'variable.select');
+insert into T_PERMISSION(id, name, code)
+values (19, '新增变量', 'variable.insert');
+insert into T_PERMISSION(id, name, code)
+values (20, '更新变量', 'variable.update');
+insert into T_PERMISSION(id, name, code)
+values (21, '删除变量', 'variable.delete');
+
 -- schedule
 insert into T_PERMISSION(id, name, code)
-values (18, '查询定时', 'schedule.select');
+values (22, '查询定时', 'schedule.select');
 insert into T_PERMISSION(id, name, code)
-values (19, '新增定时', 'schedule.insert');
+values (23, '新增定时', 'schedule.insert');
 insert into T_PERMISSION(id, name, code)
-values (20, '更新定时', 'schedule.update');
+values (24, '更新定时', 'schedule.update');
 insert into T_PERMISSION(id, name, code)
-values (21, '删除定时', 'schedule.delete');
+values (25, '删除定时', 'schedule.delete');
 
 -- cluster
 insert into T_PERMISSION(id, name, code)
-values (22, '查询集群', 'cluster.select');
+values (26, '查询集群', 'cluster.select');
 insert into T_PERMISSION(id, name, code)
-values (23, '新增集群', 'cluster.insert');
+values (27, '新增集群', 'cluster.insert');
 insert into T_PERMISSION(id, name, code)
-values (24, '更新集群', 'cluster.update');
+values (28, '更新集群', 'cluster.update');
 insert into T_PERMISSION(id, name, code)
-values (25, '删除集群', 'cluster.delete');
+values (29, '删除集群', 'cluster.delete');
 
 -- jar
 insert into T_PERMISSION(id, name, code)
-values (26, '查询jar', 'jar.select');
+values (30, '查询jar', 'jar.select');
 insert into T_PERMISSION(id, name, code)
-values (27, '新增jar', 'jar.insert');
+values (31, '新增jar', 'jar.insert');
 insert into T_PERMISSION(id, name, code)
-values (28, '更新jar', 'jar.update');
+values (32, '更新jar', 'jar.update');
 insert into T_PERMISSION(id, name, code)
-values (29, '删除jar', 'jar.delete');
+values (33, '删除jar', 'jar.delete');
 
 -- job
 insert into T_PERMISSION(id, name, code)
-values (30, '查询任务', 'job.select');
+values (34, '查询任务', 'job.select');
 insert into T_PERMISSION(id, name, code)
-values (31, '新增任务', 'job.insert');
+values (35, '新增任务', 'job.insert');
 insert into T_PERMISSION(id, name, code)
-values (32, '更新任务', 'job.update');
+values (36, '更新任务', 'job.update');
 insert into T_PERMISSION(id, name, code)
-values (33, '删除任务', 'job.delete');
+values (37, '删除任务', 'job.delete');
 
 -- instance
 insert into T_PERMISSION(id, name, code)
-values (34, '查询实例', 'instance.select');
+values (38, '查询实例', 'instance.select');
 insert into T_PERMISSION(id, name, code)
-values (35, '新增实例', 'instance.insert');
+values (39, '新增实例', 'instance.insert');
 insert into T_PERMISSION(id, name, code)
-values (36, '更新实例', 'instance.update');
+values (40, '更新实例', 'instance.update');
 insert into T_PERMISSION(id, name, code)
-values (37, '删除实例', 'instance.delete');
+values (41, '删除实例', 'instance.delete');
 
 -- log
 insert into T_PERMISSION(id, name, code)
-values (38, '查询登入日志', 'login-log.select');
+values (42, '查询登入日志', 'login-log.select');
 insert into T_PERMISSION(id, name, code)
-values (39, '查询错误日志', 'error-log.select');
+values (43, '查询错误日志', 'error-log.select');
 
 create table T_ROLE_PERMISSION
 (
