@@ -17,7 +17,7 @@ import java.io.Serializable;
  * ETL任务表 实体类。
  *
  * @author chen
- * @since 2026-05-12
+ * @since 2026-06-09
  */
 @Data
 @Builder
@@ -40,6 +40,11 @@ public class EtlJob extends BaseEntity implements Serializable {
     private String name;
 
     /**
+     * 任务类型(1batch 2streaming)
+     */
+    private Integer type;
+
+    /**
      * flink集群id
      */
     private Long clusterId;
@@ -50,12 +55,18 @@ public class EtlJob extends BaseEntity implements Serializable {
     private Long jarId;
 
     /**
+     * 任务并行度
+     */
+    private Integer parallelism;
+
+    /**
+     * 检查点间隔
+     */
+    private Integer checkpointInterval;
+
+    /**
      * json配置
      */
     private String config;
 
-    /**
-     * 任务类型(1batch 2streaming)
-     */
-    private Integer type;
 }

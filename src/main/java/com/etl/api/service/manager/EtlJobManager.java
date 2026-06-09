@@ -1,5 +1,6 @@
 package com.etl.api.service.manager;
 
+import com.etl.api.domain.dto.JobConfig;
 import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.FlinkCluster;
@@ -15,8 +16,11 @@ import com.etl.api.service.JarPackageService;
 import com.etl.api.service.JobVariableService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.etl.api.util.LocalDateTimeUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +28,7 @@ import java.io.File;
 import java.time.Duration;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EtlJobManager {
@@ -37,6 +42,7 @@ public class EtlJobManager {
     private final FlinkApiProvider flinkApiProvider;
     private final EtlJobInstanceService etlJobInstanceService;
     private final JobVariableService jobVariableService;
+    private final ObjectMapper objectMapper;
 
     public void runJob(Long jobId, @Nullable String savepointPath) {
         val etlJob = etlJobService.getById(jobId);
@@ -120,8 +126,9 @@ public class EtlJobManager {
                 clusterUploadedJarService.updateById(clusterUploadedJar);
             }
         }
-
         val flinkJarId = clusterUploadedJar.getJarId();
+
+        // 变量替换
         val config = etlJob.getConfig();
         String replacedConfig;
         try {
@@ -129,6 +136,23 @@ public class EtlJobManager {
         } catch (Exception e) {
             throw new EtlJobException(e);
         }
+
+        // 合并配置，并校验
+        JobConfig jobConfig;
+        try {
+            jobConfig = objectMapper.readValue(replacedConfig, JobConfig.class);
+        } catch (JsonProcessingException e) {
+            throw new EtlJobException("任务配置解析异常: " + e.getMessage());
+        }
+        jobConfig.getJob().from(etlJob);
+        jobConfig.validate();
+        try {
+            replacedConfig = objectMapper.writeValueAsString(jobConfig);
+            log.info("提交任务配置: {}", replacedConfig);
+        } catch (JsonProcessingException e) {
+            throw new EtlJobException("任务配置序列化失败: " + e.getMessage());
+        }
+
         val flinkJobId = flinkApiProvider.runJob(jobManagerUrl, flinkJarId, jarPackage.getMainClass(), replacedConfig, savepointPath);
 
         // 插入任务实例表

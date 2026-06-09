@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 public class JobVariableServiceImpl extends ServiceImpl<JobVariableMapper, JobVariable> implements JobVariableService {
     private static final Pattern pattern = Pattern.compile("\\$\\{(?<variable>[^}]+)}");
 
+    @SuppressWarnings("deprecation")
     @Override
     public String replaceVariable(String config) {
         val variableMap = this.queryChain()
@@ -47,9 +48,7 @@ public class JobVariableServiceImpl extends ServiceImpl<JobVariableMapper, JobVa
             }
         }
 
-        val replaced = StrSubstitutor.replace(config, variableMap);
-        log.debug("变量替换后的任务配置: \n{}", replaced);
-        return replaced;
+        return StrSubstitutor.replace(config, variableMap);
     }
 
     @Override

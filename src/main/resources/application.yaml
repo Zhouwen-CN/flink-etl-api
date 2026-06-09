@@ -180,7 +180,6 @@ logging:
   level:
     root: info
     org.springframework.context.support.PostProcessorRegistrationDelegate: error
-    com.etl.api.service.impl.JobVariableServiceImpl: debug
   file:
     name: ./logs/${spring.application.name}.log
   pattern:
