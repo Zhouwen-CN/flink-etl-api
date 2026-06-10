@@ -41,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/job")
@@ -60,10 +61,12 @@ public class ETLJobController {
     public ResponseVO<PageVO<ETLJobVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
-            @RequestParam(value = "searchName", required = false) @Parameter(description = "任务名称") String searchName
+            @RequestParam(value = "name", required = false) @Parameter(description = "任务名称") String name,
+            @RequestParam(value = "type", required = false) @Parameter(description = "任务类型") Integer type
     ) {
         val page = etlJobService.queryChain()
-                .like(EtlJob::getName, searchName, StringUtils.hasText(searchName))
+                .like(EtlJob::getName, name, StringUtils.hasText(name))
+                .eq(EtlJob::getType, type, Objects.nonNull(type))
                 .pageAs(Page.of(currentPage, pageSize), ETLJobVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
