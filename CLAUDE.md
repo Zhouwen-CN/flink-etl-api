@@ -67,7 +67,7 @@ mvn spring-boot:run                                    # 开发环境运行
 
 ```
 com.etl.api
-├── controller/          # REST API（12 个控制器）
+├── controller/          # REST API（13 个控制器）
 ├── service/
 │   ├── impl/            # 业务服务实现（继承 ServiceImpl）
 │   ├── manager/         # 业务编排（EtlJobManager、ScheduleJobManager）
@@ -100,8 +100,8 @@ com.etl.api
 
 ### 迁移脚本
 
-- 基础表：`src/main/resources/db/migration/base/`（V1 ~ V14）
-- Quartz 表：`src/main/resources/db/migration/{vendor}/`（H2 和 MySQL 脚本不通用，`{vendor}` 由 Flyway 按数据库类型自动解析）
+- 基础表：`src/main/resources/db/migration/base/`（V1 ~ V15）
+- Quartz 表：`src/main/resources/db/migration/{vendor}/`（H2 和 MySQL 脚本不通用，`{vendor}` 由 Flyway 按数据库类型自动解析；使用 `R__` 重复迁移）
 
 ### 开发环境（H2）
 
@@ -131,6 +131,7 @@ com.etl.api
 | `/role`                   | RoleController                        | 角色管理                      |
 | `/permission`             | PermissionController                  | 权限管理                      |
 | `/dict/type`、`/dict/data` | DictTypeController、DictDataController | 字典管理                      |
+| `/variable`               | JobVariableController                 | 任务变量管理（用于 ETL 配置占位符替换）   |
 | `/log`                    | LogController                         | 登录日志、错误日志查询               |
 
 ## 配置要点

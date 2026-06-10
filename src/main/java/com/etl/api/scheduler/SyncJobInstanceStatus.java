@@ -49,14 +49,21 @@ public class SyncJobInstanceStatus {
                         val flinkJobId = etlJobInstance.getId();
 
                         // 请求状态数据并更新实体
-                        val flinkJobStatusDTO = flinkApiProvider.getJobStatus(jobManagerUrl, flinkJobId);
-                        etlJobInstance.setStatus(FlinkJobStatusEnum.formName(flinkJobStatusDTO.getState()));
-                        etlJobInstance.setStartTime(LocalDateTimeUtil.fromMs(flinkJobStatusDTO.getStartTime()));
-                        val endTime = flinkJobStatusDTO.getEndTime();
-                        if (endTime > 0) {
-                            etlJobInstance.setEndTime(LocalDateTimeUtil.fromMs(endTime));
+                        FlinkJobStatusDTO flinkJobStatusDTO = null;
+                        try {
+                            flinkJobStatusDTO = flinkApiProvider.getJobStatus(jobManagerUrl, flinkJobId);
+                        } catch (Exception e) {
+                            log.warn(e.getMessage());
                         }
-                        etlJobInstance.setDuration(flinkJobStatusDTO.getDuration());
+                        if (flinkJobStatusDTO != null) {
+                            etlJobInstance.setStatus(FlinkJobStatusEnum.formName(flinkJobStatusDTO.getState()));
+                            etlJobInstance.setStartTime(LocalDateTimeUtil.fromMs(flinkJobStatusDTO.getStartTime()));
+                            val endTime = flinkJobStatusDTO.getEndTime();
+                            if (endTime > 0) {
+                                etlJobInstance.setEndTime(LocalDateTimeUtil.fromMs(endTime));
+                            }
+                            etlJobInstance.setDuration(flinkJobStatusDTO.getDuration());
+                        }
                     }
                 })
                 .toList();
