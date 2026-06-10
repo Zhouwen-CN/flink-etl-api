@@ -162,7 +162,7 @@ public class EtlJobManager {
                 jarPackage.getId(),
                 jobId,
                 etlJob.getType(),
-                FlinkJobStatusEnum.UNKNOWN
+                FlinkJobStatusEnum.INITIALIZING
         );
         etlJobInstanceService.save(etlJobInstance);
     }

@@ -53,6 +53,8 @@ public class SyncJobInstanceStatus {
                         try {
                             flinkJobStatusDTO = flinkApiProvider.getJobStatus(jobManagerUrl, flinkJobId);
                         } catch (Exception e) {
+                            // 请求 status 异常，标记为 Unknown，并且不再请求，有可能是已完成的任务被清理了
+                            etlJobInstance.setStatus(FlinkJobStatusEnum.UNKNOWN);
                             log.warn(e.getMessage());
                         }
                         if (flinkJobStatusDTO != null) {

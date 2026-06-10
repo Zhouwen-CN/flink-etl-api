@@ -48,7 +48,6 @@ public enum FlinkJobStatusEnum {
      */
     public static List<Integer> getProcessingStatus() {
         return List.of(
-                FlinkJobStatusEnum.UNKNOWN.code,
                 FlinkJobStatusEnum.INITIALIZING.code,
                 FlinkJobStatusEnum.CREATED.code,
                 FlinkJobStatusEnum.RUNNING.code,
@@ -67,7 +66,8 @@ public enum FlinkJobStatusEnum {
                 FAILED,
                 CANCELED,
                 FINISHED,
-                RESTARTING
+                RESTARTING,
+                UNKNOWN
         ).map(item -> new DictionaryVO(item.desc, (long) item.code)).toList();
     }
 
