@@ -2,15 +2,9 @@ package com.etl.api.service.provider;
 
 import cn.hutool.core.codec.Base64;
 import com.etl.api.exception.FlinkApiRequestException;
-import com.etl.api.scheduler.SyncJobInstanceStatus;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nullable;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.core.io.FileSystemResource;
@@ -20,7 +14,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -29,8 +22,8 @@ import java.util.Optional;
 public class FlinkApiProvider {
 
     private final RestClient restClient;
-    private final ObjectMapper objectMapper;
 
+    // 获取版本信息
     public String getVersion(String jobManagerUrl) {
         JsonNode jsonNode;
         try {
@@ -48,6 +41,7 @@ public class FlinkApiProvider {
                 .orElseThrow(() -> new FlinkApiRequestException("Flink API [获取集群版本信息] 解析version错误: " + jsonNode));
     }
 
+    // 上传jar包
     public String uploadJar(String jobManagerUrl, String path) {
         val builder = new MultipartBodyBuilder();
         builder.part("jarfile", new FileSystemResource(path));
@@ -70,6 +64,31 @@ public class FlinkApiProvider {
                 .orElseThrow(() -> new FlinkApiRequestException("Flink API [上传jar包] 解析jarId错误: " + jsonNode));
     }
 
+    // 删除jar包
+    public void deleteJar(String jobManagerUrl, String jarId) {
+        try {
+            restClient.delete()
+                    .uri(jobManagerUrl + "/jars/" + jarId)
+                    .retrieve()
+                    .body(Void.class);
+        } catch (HttpClientErrorException e) {
+            throw new FlinkApiRequestException("Flink API [删除jar包] 请求失败: " + e.getResponseBodyAsString());
+        }
+    }
+
+    // 获取jar包列表
+    public JsonNode getJars(String jobManagerUrl) {
+        try {
+            return restClient.get()
+                    .uri(jobManagerUrl + "/jars")
+                    .retrieve()
+                    .body(JsonNode.class);
+        } catch (HttpClientErrorException e) {
+            throw new FlinkApiRequestException("Flink API [删除jar包] 请求失败: " + e.getResponseBodyAsString());
+        }
+    }
+
+    // 提交任务
     public String runJob(String jobManagerUrl, String jarId, String mainClass, String config, @Nullable String savePointPath) {
         val body = new HashMap<String, String>();
         body.put("entryClass", mainClass);
@@ -93,25 +112,19 @@ public class FlinkApiProvider {
                 .orElseThrow(() -> new FlinkApiRequestException("Flink API [启动任务] 解析jobId错误: " + jsonNode));
     }
 
-    public SyncJobInstanceStatus.FlinkJobStatusDTO getJobStatus(String jobManagerUrl, String jobId) {
-        JsonNode jsonNode;
+    // 获取任务状态
+    public JsonNode getJobStatus(String jobManagerUrl, String jobId) {
         try {
-            jsonNode = restClient.get()
+            return restClient.get()
                     .uri(jobManagerUrl + "/jobs/" + jobId)
                     .retrieve()
                     .body(JsonNode.class);
         } catch (HttpClientErrorException e) {
             throw new FlinkApiRequestException("Flink API [获取任务状态] 请求失败: " + e.getResponseBodyAsString());
         }
-
-
-        return Optional.ofNullable(jsonNode)
-                .filter(item -> item.get("jid") != null)
-                .map(item -> objectMapper.convertValue(item, SyncJobInstanceStatus.FlinkJobStatusDTO.class))
-                .orElseThrow(() -> new FlinkApiRequestException("Flink API [获取任务状态] 解析数据错误: " + jsonNode));
     }
 
-
+    // 停止任务
     public void cancelJob(String jobManagerUrl, String flinkJobId) {
         try {
             restClient.post()
@@ -123,46 +136,15 @@ public class FlinkApiProvider {
         }
     }
 
-    public List<CheckpointHistoryDTO> getCheckpointHistory(String jobManagerUrl, String flinkJobId) {
-        JsonNode jsonNode;
+    // 获取检查点列表
+    public JsonNode getCheckpointHistory(String jobManagerUrl, String flinkJobId) {
         try {
-            jsonNode = restClient.get()
+            return restClient.get()
                     .uri(jobManagerUrl + "/jobs/" + flinkJobId + "/checkpoints")
                     .retrieve()
                     .body(JsonNode.class);
         } catch (HttpClientErrorException e) {
             throw new FlinkApiRequestException("Flink API [获取检查点历史] 请求失败" + e.getResponseBodyAsString());
         }
-
-        return Optional.ofNullable(jsonNode)
-                .map(item -> item.get("history"))
-                .filter(JsonNode::isArray)
-                .map(item -> objectMapper.convertValue(item, new TypeReference<List<CheckpointHistoryDTO>>() {
-                }))
-                .orElseThrow(() -> new FlinkApiRequestException("Flink API [获取检查点历史] 数据解析错误: " + jsonNode));
-    }
-
-    public void deleteJar(String jobManagerUrl, String jarId) {
-        try {
-            restClient.delete()
-                    .uri(jobManagerUrl + "/jars/" + jarId)
-                    .retrieve()
-                    .body(Void.class);
-        } catch (HttpClientErrorException e) {
-            throw new FlinkApiRequestException("Flink API [删除jar包] 请求失败: " + e.getResponseBodyAsString());
-        }
-    }
-
-    @Getter
-    @Setter
-    public static class CheckpointHistoryDTO {
-        @JsonProperty("status")
-        private String status;
-        @JsonProperty("is_savepoint")
-        private Boolean savepoint;
-        @JsonProperty("trigger_timestamp")
-        private Long triggerTimestamp;
-        @JsonProperty("external_path")
-        private String externalPath;
     }
 }

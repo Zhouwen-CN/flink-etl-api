@@ -7,6 +7,8 @@ import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.etl.api.util.LocalDateTimeUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -15,6 +17,7 @@ import lombok.val;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -27,6 +30,7 @@ public class SyncJobInstanceStatus {
     private final FlinkClusterService flinkClusterService;
     private final EtlJobInstanceService etlJobInstanceService;
     private final FlinkApiProvider flinkApiProvider;
+    private final ObjectMapper objectMapper;
 
     @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
     private void run() {
@@ -49,23 +53,27 @@ public class SyncJobInstanceStatus {
                         val flinkJobId = etlJobInstance.getId();
 
                         // 请求状态数据并更新实体
-                        FlinkJobStatusDTO flinkJobStatusDTO = null;
+                        JsonNode jsonNode = null;
                         try {
-                            flinkJobStatusDTO = flinkApiProvider.getJobStatus(jobManagerUrl, flinkJobId);
+                            jsonNode = flinkApiProvider.getJobStatus(jobManagerUrl, flinkJobId);
                         } catch (Exception e) {
                             // 请求 status 异常，标记为 Unknown，并且不再请求，有可能是已完成的任务被清理了
                             etlJobInstance.setStatus(FlinkJobStatusEnum.UNKNOWN);
-                            log.warn(e.getMessage());
+                            log.error(e.getMessage());
                         }
-                        if (flinkJobStatusDTO != null) {
-                            etlJobInstance.setStatus(FlinkJobStatusEnum.formName(flinkJobStatusDTO.getState()));
-                            etlJobInstance.setStartTime(LocalDateTimeUtil.fromMs(flinkJobStatusDTO.getStartTime()));
-                            val endTime = flinkJobStatusDTO.getEndTime();
-                            if (endTime > 0) {
-                                etlJobInstance.setEndTime(LocalDateTimeUtil.fromMs(endTime));
-                            }
-                            etlJobInstance.setDuration(flinkJobStatusDTO.getDuration());
-                        }
+
+                        Optional.ofNullable(jsonNode)
+                                .filter(item -> item.get("jid") != null)
+                                .map(item -> objectMapper.convertValue(item, SyncJobInstanceStatus.FlinkJobStatusDTO.class))
+                                .ifPresent(flinkJobStatusDTO -> {
+                                    etlJobInstance.setStatus(FlinkJobStatusEnum.formName(flinkJobStatusDTO.getState()));
+                                    etlJobInstance.setStartTime(LocalDateTimeUtil.fromMs(flinkJobStatusDTO.getStartTime()));
+                                    val endTime = flinkJobStatusDTO.getEndTime();
+                                    if (endTime > 0) {
+                                        etlJobInstance.setEndTime(LocalDateTimeUtil.fromMs(endTime));
+                                    }
+                                    etlJobInstance.setDuration(flinkJobStatusDTO.getDuration());
+                                });
                     }
                 })
                 .toList();

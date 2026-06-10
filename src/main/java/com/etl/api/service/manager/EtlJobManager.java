@@ -4,8 +4,6 @@ import com.etl.api.domain.dto.JobConfig;
 import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.FlinkCluster;
-import com.etl.api.domain.vo.DictionaryVO;
-import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.exception.EtlJobException;
 import com.etl.api.service.ClusterUploadedJarService;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -187,30 +184,5 @@ public class EtlJobManager {
         }
 
         flinkApiProvider.cancelJob(flinkCluster.getJobManagerUrl(), jobInstanceId);
-    }
-
-    public ResponseVO<List<DictionaryVO>> getCheckpointHistory(Long jobId, String instanceId) {
-        val etlJob = etlJobService.getById(jobId);
-        if (etlJob == null) {
-            return ResponseVO.recordNotFoundError("jobId:" + jobId);
-        }
-        val clusterId = etlJob.getClusterId();
-        val flinkCluster = flinkClusterService.getById(clusterId);
-        if (flinkCluster == null) {
-            return ResponseVO.recordNotFoundError("clusterId:" + clusterId);
-        }
-
-        val vos = flinkApiProvider.getCheckpointHistory(flinkCluster.getJobManagerUrl(), instanceId)
-                .stream()
-                .filter(item -> "COMPLETED".equals(item.getStatus()))
-                .map(item -> {
-                    val prefix = item.getSavepoint() ? "SP - " : "CP - ";
-                    val label = prefix + LocalDateTimeUtil.format(LocalDateTimeUtil.fromMs(item.getTriggerTimestamp()));
-                    val value = item.getExternalPath();
-                    return new DictionaryVO(label, value);
-                })
-                .toList();
-
-        return ResponseVO.ok(vos);
     }
 }

@@ -6,6 +6,7 @@ import com.etl.api.domain.convert.FlinkClusterConvert;
 import com.etl.api.domain.convert.JarPackageConvert;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.entity.EtlJobInstance;
+import com.etl.api.domain.entity.FlinkCheckpoint;
 import com.etl.api.domain.form.EtlJobCreateForm;
 import com.etl.api.domain.form.EtlJobSubmitForm;
 import com.etl.api.domain.form.EtlJobUpdateForm;
@@ -15,9 +16,11 @@ import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
+import com.etl.api.service.FlinkCheckpointService;
 import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
 import com.etl.api.service.manager.EtlJobManager;
+import com.etl.api.util.LocalDateTimeUtil;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -54,6 +57,7 @@ public class ETLJobController {
     private final FlinkClusterService flinkClusterService;
     private final EtlJobInstanceService etlJobInstanceService;
     private final EtlJobManager etlJobManager;
+    private final FlinkCheckpointService flinkCheckpointService;
 
     @SaCheckPermission("job.select")
     @Operation(summary = "分页查询")
@@ -152,9 +156,22 @@ public class ETLJobController {
     @Operation(summary = "检查点历史选择器")
     @GetMapping("/checkpoint/selector")
     public ResponseVO<List<DictionaryVO>> checkpointSelector(
-            @RequestParam("jobId") @Parameter(description = "任务id") Long jobId,
             @RequestParam("instanceId") @Parameter(description = "实例id") String instanceId
     ) {
-        return etlJobManager.getCheckpointHistory(jobId, instanceId);
+        val vos = flinkCheckpointService.queryChain()
+                .eq(FlinkCheckpoint::getJobId, instanceId)
+                .eq(FlinkCheckpoint::getStatus, true)
+                .orderBy(FlinkCheckpoint::getChkId, false)
+                .limit(10) // 只输出5条
+                .list()
+                .stream()
+                .map(item -> {
+                    val prefix = item.getType() ? "SP - " : "CP - ";
+                    val label = prefix + LocalDateTimeUtil.format(item.getTriggerTime());
+                    val value = item.getPath();
+                    return new DictionaryVO(label, value);
+                })
+                .toList();
+        return ResponseVO.ok(vos);
     }
 }
