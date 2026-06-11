@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * http请求历史表 服务层实现。
@@ -33,12 +34,13 @@ public class HttpExchangeHistoryServiceImpl extends ServiceImpl<HttpExchangeHist
     private final ObjectMapper objectMapper;
 
     @Override
-    public void saveFromHttpExchange(HttpExchange httpExchange, List<String> filterUrls) throws JsonProcessingException {
+    public void saveFromHttpExchange(HttpExchange httpExchange, List<Predicate<String>> filters) throws JsonProcessingException {
         val request = httpExchange.getRequest();
         val response = httpExchange.getResponse();
 
         val path = request.getUri().getPath();
-        val anyMatch = filterUrls.stream().anyMatch(path::startsWith);
+
+        val anyMatch = filters.stream().anyMatch(item -> item.test(path));
         if (anyMatch) {
             return;
         }

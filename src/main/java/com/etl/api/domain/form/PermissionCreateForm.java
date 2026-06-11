@@ -16,7 +16,7 @@ public class PermissionCreateForm {
     private String name;
 
     @NotBlank
-    @Pattern(regexp = "^[a-z]+\\.[a-z]+$", message = "权限标识符格式错误")
+    @Pattern(regexp = "^[a-z-]+\\.[a-z]+$", message = "权限标识符格式错误")
     @Schema(description = "权限标识符")
     private String code;
 }

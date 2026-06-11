@@ -27,7 +27,7 @@ public class SyncClusterUploadedJar {
     private final ClusterUploadedJarService clusterUploadedJarService;
     private final FlinkApiProvider flinkApiProvider;
 
-    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     private void run() {
         log.debug("同步 Flink 集群已上传的 jar 包列表");
 

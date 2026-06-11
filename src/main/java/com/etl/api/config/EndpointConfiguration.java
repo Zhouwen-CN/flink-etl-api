@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * actuator 端点配置
@@ -21,14 +22,15 @@ import java.util.List;
 public class EndpointConfiguration {
 
     private static final int DEFAULT_LIMIT = 100;
-    private static final List<String> FILTER_URLS = List.of(
-            "/admin",
-            "/assets",
-            "/actuator",
-            "/h2-console",
-            "/swagger-ui",
-            "/v3/api-docs",
-            "/log"
+
+    private static final List<Predicate<String>> FILTERS = List.of(
+            (url) -> url.startsWith("/actuator"), //springboot actuator
+            (url) -> url.startsWith("/admin"), //springboot admin
+            (url) -> url.startsWith("/assets") || url.endsWith(".ico")
+                    || url.endsWith(".css") || url.endsWith(".js") || "/".equals(url), //一些静态资源
+            (url) -> url.startsWith("/swagger-ui") || url.startsWith("/v3/api-docs"), //swagger-ui
+            (url) -> url.startsWith("/log"), //日志相关请求不记录
+            (url) -> url.startsWith("/h2-console") //h2 console
     );
 
     private final HttpExchangeHistoryService httpExchangeHistoryService;
@@ -60,7 +62,7 @@ public class EndpointConfiguration {
             @Override
             public void add(HttpExchange httpExchange) {
                 try {
-                    httpExchangeHistoryService.saveFromHttpExchange(httpExchange, FILTER_URLS);
+                    httpExchangeHistoryService.saveFromHttpExchange(httpExchange, FILTERS);
                 } catch (JsonProcessingException e) {
                     log.error("保存 http 请求记录失败", e);
                 }

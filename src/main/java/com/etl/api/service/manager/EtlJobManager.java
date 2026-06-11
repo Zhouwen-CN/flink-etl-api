@@ -4,6 +4,7 @@ import com.etl.api.domain.dto.JobConfig;
 import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.FlinkCluster;
+import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.exception.EtlJobException;
 import com.etl.api.service.ClusterUploadedJarService;
@@ -50,6 +51,7 @@ public class EtlJobManager {
         // 是否有正在运行的任务
         val exists = etlJobInstanceService.queryChain()
                 .eq(EtlJobInstance::getJobId, jobId)
+                .eq(EtlJobInstance::getJobType, ETLJobTypeEnum.STREAMING.getCode())
                 .in(EtlJobInstance::getStatus, FlinkJobStatusEnum.getProcessingStatus())
                 .exists();
         if (exists) {

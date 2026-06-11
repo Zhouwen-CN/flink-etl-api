@@ -34,7 +34,7 @@ public class SyncJobInstanceStatus {
 
     @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
     private void run() {
-        log.debug("同步 Flink 作业信息");
+        log.debug("同步 Flink 作业状态信息");
         val flinkClusterMap = flinkClusterService.list()
                 .stream()
                 .collect(Collectors.toMap(FlinkCluster::getId, item -> item));

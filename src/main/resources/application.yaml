@@ -82,7 +82,7 @@ spring:
             tablePrefix: QRTZ_ #Quartz表前缀
             isClustered: true #是集群模式
             clusterCheckinInterval: 15000 #集群检查频率，单位：毫秒。默认为 15000
-            misfireThreshold: 60000 #允许任务在错过触发时间后自动重试，比如任务暂停时间在60秒之内，那么期间没有执行的任务会补充执行
+            misfireThreshold: 60000 #调度器允许触发器超过其下次触发时间多少毫秒，超过该毫秒数则视为“未触发”，默认值60000
             useProperties: false
     jdbc:
       initialize-schema: never #不初始化数据库

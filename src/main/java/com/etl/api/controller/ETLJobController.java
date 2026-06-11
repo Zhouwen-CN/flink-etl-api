@@ -141,7 +141,7 @@ public class ETLJobController {
         val vos = etlJobInstanceService.queryChain()
                 .eq(EtlJobInstance::getJobId, id)
                 .orderBy(EtlJobInstance::getCreateTime, false)
-                .limit(5)
+                .limit(5) // 只输出5条
                 .list()
                 .stream().map(etlJobInstance -> {
                     val flinkJobId = etlJobInstance.getId();
@@ -162,7 +162,7 @@ public class ETLJobController {
                 .eq(FlinkCheckpoint::getJobId, instanceId)
                 .eq(FlinkCheckpoint::getStatus, true)
                 .orderBy(FlinkCheckpoint::getChkId, false)
-                .limit(10) // 只输出5条
+                .limit(5) // 只输出5条
                 .list()
                 .stream()
                 .map(item -> {
