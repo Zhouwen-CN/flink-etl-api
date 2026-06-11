@@ -5,7 +5,6 @@ import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -14,11 +13,10 @@ import java.io.Serializable;
  * http请求历史表 实体类。
  *
  * @author chen
- * @since 2026-04-27
+ * @since 2026-06-11
  */
 @Data
 @Builder
-@EqualsAndHashCode
 @Table(value = "T_HTTP_EXCHANGE_HISTORY")
 public class HttpExchangeHistory implements Serializable {
 
@@ -70,5 +68,10 @@ public class HttpExchangeHistory implements Serializable {
      * 花费时间
      */
     private Long takenTime;
+
+    /**
+     * 创建者
+     */
+    private String createUser;
 
 }

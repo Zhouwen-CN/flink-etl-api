@@ -1,13 +1,17 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.etl.api.domain.convert.LogConvert;
 import com.etl.api.domain.entity.ErrorLog;
+import com.etl.api.domain.entity.HttpExchangeHistory;
 import com.etl.api.domain.entity.LoginLog;
 import com.etl.api.domain.vo.ErrorLogVO;
 import com.etl.api.domain.vo.LoginLogVO;
 import com.etl.api.domain.vo.PageVO;
+import com.etl.api.domain.vo.RequestLogVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.service.ErrorLogService;
+import com.etl.api.service.HttpExchangeHistoryService;
 import com.etl.api.service.LoginLogService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +35,7 @@ public class LogController {
 
     private final LoginLogService loginLogService;
     private final ErrorLogService errorLogService;
+    private final HttpExchangeHistoryService httpExchangeHistoryService;
 
     @SaCheckPermission("login-log.select")
     @Operation(summary = "登入日志分页查询")
@@ -62,5 +67,30 @@ public class LogController {
                 .pageAs(Page.of(currentPage, pageSize), ErrorLogVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
+    }
+
+
+    @SaCheckPermission("request-log.select")
+    @Operation(summary = "异常日志分页查询")
+    @GetMapping("/request")
+    public ResponseVO<PageVO<RequestLogVO>> getRequestLogPage(
+            @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
+            @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
+            @RequestParam(value = "username", required = false) @Parameter(description = "用户名") String username,
+            @RequestParam(value = "method", required = false) @Parameter(description = "请求方法") String method
+    ) {
+
+        val page = httpExchangeHistoryService.queryChain()
+                .eq(HttpExchangeHistory::getCreateUser, username, StringUtils.hasText(username))
+                .eq(HttpExchangeHistory::getRequestMethod, method, StringUtils.hasText(method))
+                .orderBy(HttpExchangeHistory::getTimestamp, false)
+                .page(Page.of(currentPage, pageSize));
+
+        val records = page.getRecords()
+                .stream()
+                .map(LogConvert.INSTANCE::convert)
+                .toList();
+
+        return ResponseVO.ok(new PageVO<>(records, page.getTotalRow()));
     }
 }

@@ -6,10 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.web.exchanges.HttpExchange;
 import org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository;
-import org.springframework.boot.actuate.web.exchanges.InMemoryHttpExchangeRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 import java.net.URISyntaxException;
 import java.util.List;
@@ -29,23 +27,22 @@ public class EndpointConfiguration {
             "/actuator",
             "/h2-console",
             "/swagger-ui",
-            "/v3/api-docs"
+            "/v3/api-docs",
+            "/log"
     );
+
     private final HttpExchangeHistoryService httpExchangeHistoryService;
 
-    /**
-     * http exchanges 端点
-     */
-    @Profile("dev")
+    /*@Profile("dev")
     @Bean
     public HttpExchangeRepository httpExchangeHistoryService() {
         return new InMemoryHttpExchangeRepository();
-    }
+    }*/
 
     /**
      * http exchanges 端点
      */
-    @Profile("prod")
+    // @Profile("prod")
     @Bean
     public HttpExchangeRepository httpExchangeRepository() {
         return new HttpExchangeRepository() {

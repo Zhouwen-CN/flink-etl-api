@@ -3,6 +3,7 @@ package com.etl.api.service.impl;
 import com.etl.api.domain.entity.HttpExchangeHistory;
 import com.etl.api.mapper.HttpExchangeHistoryMapper;
 import com.etl.api.service.HttpExchangeHistoryService;
+import com.etl.api.util.SaSessionUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,6 +52,7 @@ public class HttpExchangeHistoryServiceImpl extends ServiceImpl<HttpExchangeHist
                 .responseStatus(response.getStatus())
                 .responseHeaders(objectMapper.writeValueAsString(response.getHeaders()))
                 .takenTime(httpExchange.getTimeTaken().toMillis())
+                .createUser(SaSessionUtil.getUsername())
                 .build();
 
         this.save(httpExchangeHistory);
