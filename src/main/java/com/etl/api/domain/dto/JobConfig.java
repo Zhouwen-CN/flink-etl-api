@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,9 +16,9 @@ import java.util.Map;
 @Setter
 public class JobConfig {
     private Job job = new Job();
-    private List<Source> sources;
-    private List<Transform> transforms;
-    private List<Sink> sinks;
+    private List<Source> sources = new ArrayList<>();
+    private List<Transform> transforms = new ArrayList<>();
+    private List<Sink> sinks = new ArrayList<>();
 
     /**
      * 校验任务配置，拷贝至 flink-etl-tool：com.etl.core.config.ConfigParser#validate
@@ -132,5 +133,6 @@ public class JobConfig {
     public static class Sink {
         private String type;
         private String inputTable;
+        private Map<String, Object> config;
     }
 }
