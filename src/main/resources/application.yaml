@@ -42,10 +42,12 @@ spring:
   # springboot admin
   boot:
     admin:
+      context-path: /admin #SBA 的 UI 和 API 统一前缀
       monitor:
         status-interval: 30s
       client:
-        url: http://localhost:8080
+        url: http://localhost:8080/admin
+
   output:
     ansi:
       enabled: always #日志颜色

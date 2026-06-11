@@ -16,6 +16,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * <pre>
@@ -94,6 +95,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotPermissionException.class)
     public ResponseVO<Void> notPermissionExceptionHandler() {
         return ResponseVO.error(HttpStatus.FORBIDDEN, "未授权");
+    }
+
+    /**
+     * 资源未找到，返回404
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseVO<Void> noResourceFoundExceptionHandler(NoResourceFoundException e) {
+        return ResponseVO.error(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
     /**

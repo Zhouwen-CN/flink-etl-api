@@ -31,8 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
 .env
 logs
 database.mv.db
 database.trace.db
 .codegraph
+static

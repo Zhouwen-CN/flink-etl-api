@@ -21,6 +21,6 @@ public final class PageVO<E> {
     private long total;
 
     public static <E> PageVO<E> from(Page<E> page) {
-        return new PageVO<>(page.getRecords(), page.getTotalPage());
+        return new PageVO<>(page.getRecords(), page.getTotalRow());
     }
 }

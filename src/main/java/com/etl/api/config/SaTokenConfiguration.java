@@ -16,13 +16,16 @@ public class SaTokenConfiguration implements WebMvcConfigurer {
         registry.addInterceptor(new SaInterceptor(handle -> StpUtil.checkLogin()))
                 .addPathPatterns("/**")
                 .excludePathPatterns(
-                        "/swagger-ui/**",
+                        "/swagger-ui/**", // swagger-ui
                         "/v3/api-docs/**",
-                        "/instances",
-                        "/applications/**",
+                        "/admin/**", // springboot admin
+                        "/error",
+                        "/", // 静态资源
+                        "/index.html",
                         "/assets/**",
                         "/favicon.ico",
-                        "/error"
+                        "/*.js",
+                        "/*.css"
                 );
     }
 }

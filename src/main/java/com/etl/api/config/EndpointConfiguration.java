@@ -24,10 +24,7 @@ public class EndpointConfiguration {
 
     private static final int DEFAULT_LIMIT = 100;
     private static final List<String> FILTER_URLS = List.of(
-            "/instances",
-            "/applications",
-            "/sba-settings.js",
-            "/variables.css",
+            "/admin",
             "/assets",
             "/actuator",
             "/h2-console",

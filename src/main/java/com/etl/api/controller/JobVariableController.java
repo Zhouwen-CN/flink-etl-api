@@ -56,7 +56,7 @@ public class JobVariableController {
                 .map(JobVariableConvert.INSTANCE::convert)
                 .toList();
 
-        return ResponseVO.ok(new PageVO<>(list, page.getTotalPage()));
+        return ResponseVO.ok(new PageVO<>(list, page.getTotalRow()));
     }
 
     @SaCheckPermission("variable.insert")
