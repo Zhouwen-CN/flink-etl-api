@@ -26,7 +26,7 @@ import java.io.IOException;
  * </pre>
  */
 @Slf4j
-public class IP2RegionUtil {
+public final class IP2RegionUtil {
 
     private static final Ip2Region ip2Region;
 

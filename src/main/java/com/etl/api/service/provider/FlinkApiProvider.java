@@ -1,6 +1,5 @@
 package com.etl.api.service.provider;
 
-import cn.hutool.core.codec.Base64;
 import com.etl.api.exception.FlinkApiRequestException;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.Nullable;
@@ -13,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -91,8 +92,9 @@ public class FlinkApiProvider {
     // 提交任务
     public String runJob(String jobManagerUrl, String jarId, String mainClass, String config, @Nullable String savePointPath) {
         val body = new HashMap<String, String>();
+
         body.put("entryClass", mainClass);
-        body.put("programArgs", "--config " + Base64.encode(config));
+        body.put("programArgs", "--config " + Base64.getEncoder().encodeToString(config.getBytes(StandardCharsets.UTF_8)));
         body.put("savepointPath", savePointPath);
 
         JsonNode jsonNode;

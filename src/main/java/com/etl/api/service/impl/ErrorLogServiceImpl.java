@@ -1,6 +1,5 @@
 package com.etl.api.service.impl;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import com.etl.api.domain.entity.ErrorLog;
 import com.etl.api.mapper.ErrorLogMapper;
 import com.etl.api.service.ErrorLogService;
@@ -10,6 +9,7 @@ import com.etl.api.util.RequestUtil;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.val;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Service;
 
 /**
@@ -32,7 +32,7 @@ public class ErrorLogServiceImpl extends ServiceImpl<ErrorLogMapper, ErrorLog> i
                 .method(request.getMethod())
                 .ip(ip)
                 .region(region)
-                .errorMsg(ExceptionUtil.getRootCauseMessage(e))
+                .errorMsg(ExceptionUtils.getRootCauseMessage(e))
                 .createUser(username)
                 .build();
 

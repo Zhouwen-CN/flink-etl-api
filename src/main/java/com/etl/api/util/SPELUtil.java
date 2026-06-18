@@ -1,15 +1,14 @@
 package com.etl.api.util;
 
-import cn.hutool.core.date.DatePattern;
-import cn.hutool.core.date.DateTime;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * <pre>
@@ -32,6 +31,11 @@ public final class SPELUtil {
 
     private static final ExpressionParser parser = new SpelExpressionParser();
     private static final StandardEvaluationContext context = new StandardEvaluationContext();
+
+    // 不支持：#add_month(#now_format('yyyy-MM-dd'),-1)
+    // 默认日期计算 传入的日期 都是下面的格式
+    private static final String NORM_DATETIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    private static final DateTimeFormatter DEFAULT_FORMATTER = DateTimeFormatter.ofPattern(NORM_DATETIME_PATTERN);
 
     static {
         val thisClass = SPELUtil.class;
@@ -74,15 +78,15 @@ public final class SPELUtil {
     }
 
     public static String now() {
-        return nowFormat(DatePattern.NORM_DATETIME_PATTERN);
+        return nowFormat(NORM_DATETIME_PATTERN);
     }
 
     public static String nowFormat(String pattern) {
-        return DateTime.now().toString(pattern);
+        return DateTimeFormatter.ofPattern(pattern).format(LocalDateTime.now());
     }
 
     public static String addMonth(String date, Integer months) {
-        return calculationDate(date, months, DatePattern.NORM_DATETIME_PATTERN, DateCalcUnit.MONTH);
+        return calculationDate(date, months, NORM_DATETIME_PATTERN, DateCalcUnit.MONTH);
     }
 
     public static String addMonthFormat(String date, Integer months, String pattern) {
@@ -90,7 +94,7 @@ public final class SPELUtil {
     }
 
     public static String addDay(String date, Integer days) {
-        return calculationDate(date, days, DatePattern.NORM_DATETIME_PATTERN, DateCalcUnit.DAY);
+        return calculationDate(date, days, NORM_DATETIME_PATTERN, DateCalcUnit.DAY);
     }
 
     public static String addDayFormat(String date, Integer days, String pattern) {
@@ -98,7 +102,7 @@ public final class SPELUtil {
     }
 
     public static String addHour(String date, Integer hours) {
-        return calculationDate(date, hours, DatePattern.NORM_DATETIME_PATTERN, DateCalcUnit.HOUR);
+        return calculationDate(date, hours, NORM_DATETIME_PATTERN, DateCalcUnit.HOUR);
     }
 
     public static String addHourFormat(String date, Integer hours, String pattern) {
@@ -106,7 +110,7 @@ public final class SPELUtil {
     }
 
     public static String addMinute(String date, Integer minutes) {
-        return calculationDate(date, minutes, DatePattern.NORM_DATETIME_PATTERN, DateCalcUnit.MINUTE);
+        return calculationDate(date, minutes, NORM_DATETIME_PATTERN, DateCalcUnit.MINUTE);
     }
 
     public static String addMinuteFormat(String date, Integer minutes, String pattern) {
@@ -114,8 +118,7 @@ public final class SPELUtil {
     }
 
     private static String calculationDate(String date, Integer num, String pattern, DateCalcUnit dateCalcUnit) {
-        val localDateTime = DateUtil.parse(date).toLocalDateTime();
-
+        val localDateTime = LocalDateTime.parse(date, DEFAULT_FORMATTER);
         val result = switch (dateCalcUnit) {
             case MONTH -> localDateTime.plusMonths(num);
             case DAY -> localDateTime.plusDays(num);
@@ -123,7 +126,7 @@ public final class SPELUtil {
             case MINUTE -> localDateTime.plusMinutes(num);
         };
 
-        return LocalDateTimeUtil.format(result, pattern);
+        return DateTimeFormatter.ofPattern(pattern).format(result);
     }
 
     public static <T> T parseExpression(String expr, Class<T> clazz) {
