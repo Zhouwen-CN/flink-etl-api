@@ -21,6 +21,8 @@ import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -41,6 +43,14 @@ public class EtlJobManager {
     private final EtlJobInstanceService etlJobInstanceService;
     private final JobVariableService jobVariableService;
     private final ObjectMapper objectMapper;
+
+    private ObjectMapper yamlMapper;
+
+    @Autowired
+    @Qualifier("yamlMapper")
+    public void setYamlMapper(ObjectMapper yamlMapper) {
+        this.yamlMapper = yamlMapper;
+    }
 
     public void runJob(Long jobId, @Nullable String savepointPath) {
         val etlJob = etlJobService.getById(jobId);
@@ -131,7 +141,7 @@ public class EtlJobManager {
         val config = etlJob.getConfig();
         String replacedConfig;
         try {
-            replacedConfig = jobVariableService.replaceVariable(config);
+            replacedConfig = jobVariableService.replaceVariable(config).trim();
         } catch (Exception e) {
             throw new EtlJobException(e);
         }
@@ -139,7 +149,11 @@ public class EtlJobManager {
         // 合并配置，并校验
         JobConfig jobConfig;
         try {
-            jobConfig = objectMapper.readValue(replacedConfig, JobConfig.class);
+            if (replacedConfig.startsWith("{") && replacedConfig.endsWith("}")) {
+                jobConfig = objectMapper.readValue(replacedConfig, JobConfig.class);
+            } else {
+                jobConfig = yamlMapper.readValue(replacedConfig, JobConfig.class);
+            }
         } catch (JsonProcessingException e) {
             throw new EtlJobException("任务配置解析异常: " + e.getMessage());
         }

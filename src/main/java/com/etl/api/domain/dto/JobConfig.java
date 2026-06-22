@@ -104,9 +104,10 @@ public class JobConfig {
             this.parallelism = etlJob.getParallelism();
 
             // 检查点间隔和超时共用一个配置，简化配置项
-            if (etlJobTypeEnum == ETLJobTypeEnum.STREAMING) {
-                this.checkpointInterval = etlJob.getCheckpointInterval();
-                this.checkpointTimeout = etlJob.getCheckpointInterval();
+            val checkpointInterval = etlJob.getCheckpointInterval();
+            if (etlJobTypeEnum == ETLJobTypeEnum.STREAMING && checkpointInterval != null) {
+                this.checkpointInterval = checkpointInterval;
+                this.checkpointTimeout = checkpointInterval;
             }
         }
     }
