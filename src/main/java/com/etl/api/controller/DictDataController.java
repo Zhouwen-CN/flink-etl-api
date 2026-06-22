@@ -99,7 +99,7 @@ public class DictDataController {
 
     @Operation(summary = "获取字典")
     @GetMapping("/selector")
-    public ResponseVO<List<DictionaryVO>> getDictDataSelector(@RequestParam("name") @Parameter(description = "字典类型名称") String name) {
+    public ResponseVO<List<DictionaryVO>> getDictDataSelector(@RequestParam("name") @Parameter(description = "字典名称") String name) {
         val queryWrapper = QueryWrapper.create()
                 .select(DICT_DATA.LABEL, DICT_DATA.VALUE)
                 .from(DICT_TYPE)

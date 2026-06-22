@@ -80,16 +80,14 @@ public class RoleController {
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        roleService.removeRole(id);
-        return ResponseVO.ok();
+        return roleService.removeRole(id);
     }
 
     @SaCheckPermission("role.delete")
     @Operation(summary = "批量删除")
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
-        roleService.removeRoleBatch(ids);
-        return ResponseVO.ok();
+        return roleService.removeRoleBatch(ids);
     }
 
     @SaCheckPermission("role.select")

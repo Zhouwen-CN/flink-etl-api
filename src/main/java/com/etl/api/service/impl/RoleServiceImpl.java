@@ -61,19 +61,27 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     }
 
     @Override
-    public void removeRole(Long id) {
+    public ResponseVO<Void> removeRole(Long id) {
+        if (id == 1L) {
+            return ResponseVO.modifyAdminError();
+        }
         this.removeById(id);
         rolePermissionService.updateChain()
                 .eq(RolePermission::getRoleId, id)
                 .remove();
+        return ResponseVO.ok();
     }
 
     @Override
-    public void removeRoleBatch(Collection<Long> ids) {
+    public ResponseVO<Void> removeRoleBatch(Collection<Long> ids) {
+        if (ids.contains(1L)) {
+            return ResponseVO.modifyAdminError();
+        }
         this.removeByIds(ids);
         rolePermissionService.updateChain()
                 .in(RolePermission::getRoleId, ids)
                 .remove();
+        return ResponseVO.ok();
     }
 
     private void saveRolePermission(Long roleId, List<Long> permissionIds, boolean isUpdate) {

@@ -1,6 +1,8 @@
 package com.etl.api.service;
 
 import com.etl.api.domain.entity.LoginCaptcha;
+import com.etl.api.domain.vo.LoginCaptchaVO;
+import com.etl.api.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
 /**
@@ -11,4 +13,5 @@ import com.mybatisflex.core.service.IService;
  */
 public interface LoginCaptchaService extends IService<LoginCaptcha> {
 
+    ResponseVO<LoginCaptchaVO> genCaptcha();
 }

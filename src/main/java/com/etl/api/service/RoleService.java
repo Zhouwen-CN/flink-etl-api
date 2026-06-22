@@ -20,7 +20,7 @@ public interface RoleService extends IService<Role> {
 
     ResponseVO<Void> modifyRole(RoleUpdateForm form);
 
-    void removeRole(Long id);
+    ResponseVO<Void> removeRole(Long id);
 
-    void removeRoleBatch(Collection<Long> ids);
+    ResponseVO<Void> removeRoleBatch(Collection<Long> ids);
 }
