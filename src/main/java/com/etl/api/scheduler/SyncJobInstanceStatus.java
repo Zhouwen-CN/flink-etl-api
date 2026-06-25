@@ -17,6 +17,7 @@ import lombok.val;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -59,6 +60,7 @@ public class SyncJobInstanceStatus {
                         } catch (Exception e) {
                             // 请求 status 异常，标记为 Unknown，并且不再请求，有可能是已完成的任务被清理了
                             etlJobInstance.setStatus(FlinkJobStatusEnum.UNKNOWN);
+                            etlJobInstance.setEndTime(LocalDateTime.now());
                             log.error(e.getMessage());
                         }
 
