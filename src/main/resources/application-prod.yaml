@@ -22,4 +22,4 @@ sa-token:
 # 自定义配置
 custom:
   jar-package:
-    location: D:\tmp\upload-jar #jar包上传路径
+    location: /tmp/upload-jar #jar包上传路径

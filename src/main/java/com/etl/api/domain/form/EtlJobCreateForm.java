@@ -13,7 +13,7 @@ import org.hibernate.validator.constraints.Range;
 public class EtlJobCreateForm {
 
     @NotBlank
-    @Length(max = 30)
+    @Length(max = 100)
     @Schema(description = "任务名称")
     private String name;
 
