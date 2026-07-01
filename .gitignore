@@ -33,7 +33,7 @@ build/
 .vscode/
 
 
-.env
+.env*
 logs
 database.mv.db
 database.trace.db

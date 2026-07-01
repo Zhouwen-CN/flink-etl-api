@@ -34,10 +34,12 @@ public class DeleteExpirationRecord {
     public void run() {
         log.debug("删除 验证码、请求历史 过期数据");
 
+        // 删除过期的验证码
         loginCaptchaService.updateChain()
                 .lt(LoginCaptcha::getCreateTime, LocalDateTime.now().minus(captchaExpiration.toMillis(), ChronoUnit.MILLIS))
                 .remove();
 
+        // 删除过期的请求历史
         httpExchangeHistoryService.updateChain()
                 .lt(HttpExchangeHistory::getTimestamp, System.currentTimeMillis() - httpExchangeExpiration.toMillis())
                 .remove();

@@ -1,11 +1,11 @@
 package com.etl.api.service.impl;
 
+import cn.dev33.satoken.spring.SpringMVCUtil;
 import com.etl.api.domain.entity.ErrorLog;
 import com.etl.api.mapper.ErrorLogMapper;
 import com.etl.api.service.ErrorLogService;
 import com.etl.api.util.IP2RegionUtil;
 import com.etl.api.util.IPUtil;
-import com.etl.api.util.RequestUtil;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.val;
@@ -24,7 +24,7 @@ public class ErrorLogServiceImpl extends ServiceImpl<ErrorLogMapper, ErrorLog> i
     @Override
     public void saveErrorLog(Exception e) {
         val username = SaSessionUtil.getUsername();
-        val request = RequestUtil.getHttpServletRequest();
+        val request = SpringMVCUtil.getRequest();
         val ip = IPUtil.getClientIP(request);
         val region = IP2RegionUtil.search(ip);
         val errorLog = ErrorLog.builder()

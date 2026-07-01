@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * Flink检查点表 实体类。
  *
  * @author chen
- * @since 2026-06-10
+ * @since 2026-07-02
  */
 @Data
 @Builder
@@ -49,11 +49,6 @@ public class FlinkCheckpoint implements Serializable {
      * 检查点路径
      */
     private String path;
-
-    /**
-     * 检查点状态(0未完成 1已完成)
-     */
-    private Boolean status;
 
     /**
      * 检查点触发时间

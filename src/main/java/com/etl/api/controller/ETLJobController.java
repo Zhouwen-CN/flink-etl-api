@@ -160,7 +160,6 @@ public class ETLJobController {
     ) {
         val vos = flinkCheckpointService.queryChain()
                 .eq(FlinkCheckpoint::getJobId, instanceId)
-                .eq(FlinkCheckpoint::getStatus, true)
                 .orderBy(FlinkCheckpoint::getChkId, false)
                 .limit(5) // 只输出5条
                 .list()

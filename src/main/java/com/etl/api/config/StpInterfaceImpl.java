@@ -15,7 +15,7 @@ import static com.etl.api.domain.entity.table.RoleTableDef.ROLE;
 import static com.etl.api.domain.entity.table.UserRoleTableDef.USER_ROLE;
 
 /**
- * sa-token 自定义权限加载接口实现类
+ * sa-token 自定义权限加载接口实现类：<a href="https://sa-token.cc/doc.html#/fun/jur-cache">可以使用缓存</a>
  */
 @Component
 @RequiredArgsConstructor

@@ -1,3 +1,11 @@
+# 静态资源缓存
+spring:
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 1d
+
 # 禁用 swagger-ui try it out
 springdoc:
   swagger-ui:

@@ -73,8 +73,12 @@ public class SyncFlinkCheckpoint {
                                         .eq(FlinkCheckpoint::getJobId, flinkJobId)
                                         .oneAs(Long.class);
 
+                                // 只获取完成的 checkpoint
                                 if (maxChkId != null) {
-                                    list = list.stream().filter(item -> item.getId() > maxChkId).toList();
+                                    list = list.stream()
+                                            .filter(item ->
+                                                    item.getId() > maxChkId && "COMPLETED".equals(item.getStatus())
+                                            ).toList();
                                 }
 
                                 val flinkCheckpointList = list.stream().map(item -> item.toCheckPoint(flinkJobId)).toList();
@@ -103,7 +107,6 @@ public class SyncFlinkCheckpoint {
                     .chkId(this.id)
                     .type(this.savepoint)
                     .path(this.externalPath)
-                    .status("COMPLETED".equals(status))
                     .triggerTime(LocalDateTimeUtil.fromMs(this.triggerTimestamp))
                     .build();
         }
