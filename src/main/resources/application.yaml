@@ -192,6 +192,8 @@ logging:
 custom:
   default-pwd: 123456 #重置默认密码
   captcha:
-    expiration: 1m #验证码数据过期时间
+    expiration: 3m #验证码数据过期时间
   http-exchange:
-    expiration: 1h #http请求数据过期时间
+    expiration: 3d #http请求数据过期时间
+  job-instance:
+    expiration: 3d #任务实例数据过期时间
