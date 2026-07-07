@@ -149,4 +149,23 @@ public class FlinkApiProvider {
             throw new FlinkApiRequestException("Flink API [获取检查点历史] 请求失败" + e.getResponseBodyAsString());
         }
     }
+
+    // 获取任务异常信息
+    public String getJobException(String jobManagerUrl, String flinkJobId) {
+        JsonNode jsonNode;
+        try {
+
+            jsonNode = restClient.get()
+                    .uri(jobManagerUrl + "/jobs/" + flinkJobId + "/exceptions?maxExceptions=1")
+                    .retrieve()
+                    .body(JsonNode.class);
+        } catch (HttpClientErrorException e) {
+            throw new FlinkApiRequestException("Flink API [获取异常信息] 请求失败" + e.getResponseBodyAsString());
+        }
+
+        return Optional.ofNullable(jsonNode)
+                .map(item -> item.get("root-exception"))
+                .map(JsonNode::asText)
+                .orElseThrow(() -> new FlinkApiRequestException("Flink API [获取异常信息] 解析 root-exception 错误: " + jsonNode));
+    }
 }

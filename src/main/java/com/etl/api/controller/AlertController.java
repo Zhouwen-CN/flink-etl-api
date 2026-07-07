@@ -37,7 +37,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -133,8 +132,6 @@ public class AlertController {
         }
 
         sendMailManager.testSend(alert.getName(), alert.getEmail());
-        alert.setSendTime(LocalDateTime.now());
-        alertService.updateById(alert);
         return ResponseVO.ok();
     }
 }

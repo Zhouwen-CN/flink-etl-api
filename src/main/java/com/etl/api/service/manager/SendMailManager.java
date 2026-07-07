@@ -4,9 +4,12 @@ import com.etl.api.domain.entity.Alert;
 import com.etl.api.domain.entity.AlertJob;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.entity.EtlJobInstance;
+import com.etl.api.domain.entity.FlinkCluster;
 import com.etl.api.service.AlertJobService;
 import com.etl.api.service.AlertService;
 import com.etl.api.service.EtlJobService;
+import com.etl.api.service.FlinkClusterService;
+import com.etl.api.service.provider.FlinkApiProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -29,6 +32,8 @@ public class SendMailManager {
     private final AlertJobService alertJobService;
     private final AlertService alertService;
     private final EtlJobService etlJobService;
+    private final FlinkClusterService flinkClusterService;
+    private final FlinkApiProvider flinkApiProvider;
     @Value("${custom.send-mail.silent-time}")
     private Duration silentTime;
     @Value("${spring.mail.username}")
@@ -40,6 +45,10 @@ public class SendMailManager {
             val jobId = etlJobInstance.getJobId();
             val etlJob = etlJobService.queryChain()
                     .eq(EtlJob::getId, jobId)
+                    .one();
+
+            val flinkCluster = flinkClusterService.queryChain()
+                    .eq(FlinkCluster::getId, etlJob.getClusterId())
                     .one();
 
             val alertIds = alertJobService.queryChain()
@@ -60,12 +69,18 @@ public class SendMailManager {
                 if (sendTime == null || sendTime.isBefore(LocalDateTime.now().minus(silentTime.toMillis(), ChronoUnit.MILLIS))) {
                     alert.setSendTime(LocalDateTime.now());
                     updateAlertList.add(alert);
+
+                    val exception = flinkApiProvider.getJobException(flinkCluster.getJobManagerUrl(), etlJobInstance.getId());
                     this.send(
                             javaMailSender,
                             name,
                             """
-                                    <strong>%s</strong> 任务发生异常
-                                    """.formatted(etlJob.getName()),
+                                        <pre>
+                                        <strong>%s</strong> 任务发生异常
+                                    
+                                        %s
+                                        </pre>
+                                    """.formatted(etlJob.getName(), exception),
                             email
                     );
                 }
