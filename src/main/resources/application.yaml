@@ -17,6 +17,26 @@ spring:
     default-timeout: 60s #事务超时时间
     rollback-on-commit-failure: true #提交失败回滚
 
+  # 邮箱配置
+  mail:
+    #host: 没有配置host，自动配置类就不会加载，参考：org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    protocol: smtp
+    default-encoding: utf-8
+    ssl:
+      enabled: true
+    properties:
+      mail.debug: true
+      mail.transport.protocol: smtp
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 3000
+      mail.smtp.writetimeout: 5000
+
   # jackson配置
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
@@ -191,9 +211,9 @@ logging:
 
 custom:
   default-pwd: 123456 #重置默认密码
-  captcha:
-    expiration: 3m #验证码数据过期时间
-  http-exchange:
-    expiration: 3d #http请求数据过期时间
-  job-instance:
-    expiration: 3d #任务实例数据过期时间
+  data-expiration:
+    captcha: 3m #验证码数据过期时间
+    http-exchange: 3d #http请求数据过期时间
+    job-instance: 3d #任务实例数据过期时间
+  send-mail:
+    silent-time: 6h #邮件发送静默时间

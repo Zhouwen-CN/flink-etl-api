@@ -1,9 +1,11 @@
 package com.etl.api.scheduler;
 
+import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.FlinkCluster;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.FlinkClusterService;
+import com.etl.api.service.manager.SendMailManager;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.etl.api.util.LocalDateTimeUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,8 +24,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.etl.api.domain.entity.table.EtlJobInstanceTableDef.ETL_JOB_INSTANCE;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -32,6 +32,7 @@ public class SyncJobInstanceStatus {
     private final EtlJobInstanceService etlJobInstanceService;
     private final FlinkApiProvider flinkApiProvider;
     private final ObjectMapper objectMapper;
+    private final SendMailManager sendMailManager;
 
     @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
     private void run() {
@@ -42,7 +43,7 @@ public class SyncJobInstanceStatus {
 
         // 获取还在运行的任务
         val etlJobInstanceList = etlJobInstanceService.queryChain()
-                .where(ETL_JOB_INSTANCE.STATUS.isNull().or(ETL_JOB_INSTANCE.STATUS.in(FlinkJobStatusEnum.getProcessingStatus())))
+                .in(EtlJobInstance::getStatus, FlinkJobStatusEnum.getProcessingStatus())
                 .list()
                 .stream()
                 .peek(etlJobInstance -> {
@@ -68,13 +69,18 @@ public class SyncJobInstanceStatus {
                                 .filter(item -> item.get("jid") != null)
                                 .map(item -> objectMapper.convertValue(item, SyncJobInstanceStatus.FlinkJobStatusDTO.class))
                                 .ifPresent(flinkJobStatusDTO -> {
-                                    etlJobInstance.setStatus(FlinkJobStatusEnum.formName(flinkJobStatusDTO.getState()));
+                                    val flinkJobStatusEnum = FlinkJobStatusEnum.formName(flinkJobStatusDTO.getState());
+                                    etlJobInstance.setStatus(flinkJobStatusEnum);
                                     etlJobInstance.setStartTime(LocalDateTimeUtil.fromMs(flinkJobStatusDTO.getStartTime()));
                                     val endTime = flinkJobStatusDTO.getEndTime();
                                     if (endTime > 0) {
                                         etlJobInstance.setEndTime(LocalDateTimeUtil.fromMs(endTime));
                                     }
                                     etlJobInstance.setDuration(flinkJobStatusDTO.getDuration());
+
+                                    if (flinkJobStatusEnum == FlinkJobStatusEnum.RESTARTING || flinkJobStatusEnum == FlinkJobStatusEnum.FAILING) {
+                                        sendMailManager.send(etlJobInstance);
+                                    }
                                 });
                     }
                 })

@@ -45,7 +45,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final LoginCaptchaService loginCaptchaService;
     private final UserRoleService userRoleService;
     private final LoginLogService loginLogService;
-    @Value("${custom.captcha.expiration}")
+    @Value("${custom.data-expiration.captcha}")
     private Duration captchaExpiration;
 
     @Override

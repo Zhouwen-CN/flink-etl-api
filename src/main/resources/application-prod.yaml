@@ -5,6 +5,8 @@ spring:
       cache:
         cachecontrol:
           max-age: 1d
+  mail:
+    host: ${MAIL_HOST}
 
 # 禁用 swagger-ui try it out
 springdoc:

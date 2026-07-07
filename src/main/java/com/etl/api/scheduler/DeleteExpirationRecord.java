@@ -27,11 +27,11 @@ public class DeleteExpirationRecord {
     private final LoginCaptchaService loginCaptchaService;
     private final HttpExchangeHistoryService httpExchangeHistoryService;
     private final EtlJobInstanceService etlJobInstanceService;
-    @Value("${custom.captcha.expiration}")
+    @Value("${custom.data-expiration.captcha}")
     private Duration captchaExpiration;
-    @Value("${custom.http-exchange.expiration}")
+    @Value("${custom.data-expiration.http-exchange}")
     private Duration httpExchangeExpiration;
-    @Value("${custom.job-instance.expiration}")
+    @Value("${custom.data-expiration.job-instance}")
     private Duration jobInstanceExpiration;
 
     /*
