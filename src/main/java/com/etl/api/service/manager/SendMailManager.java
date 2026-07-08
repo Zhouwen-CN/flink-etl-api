@@ -18,11 +18,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
+
+import static com.etl.api.domain.entity.table.AlertJobTableDef.ALERT_JOB;
 
 @Slf4j
 @Service
@@ -42,41 +46,66 @@ public class SendMailManager {
 
     public void send(EtlJobInstance etlJobInstance) {
         javaMailSender.ifAvailable(javaMailSender -> {
+            // 获取 alert job 关系
             val jobId = etlJobInstance.getJobId();
+            val alertJobMap = alertJobService.queryChain()
+                    // sendTime 为空 || sendTime < now() - 静默时间
+                    .where(ALERT_JOB.JOB_ID.eq(jobId)
+                            .and(
+                                    ALERT_JOB.SEND_TIME.isNull()
+                                            .or(ALERT_JOB.SEND_TIME.lt(LocalDateTime.now().minus(silentTime.toMillis(), ChronoUnit.MILLIS)))
+                            )
+                    )
+                    .list()
+                    .stream()
+                    .collect(Collectors.toMap(AlertJob::getAlertId, item -> item));
+            if (alertJobMap.isEmpty()) {
+                return;
+            }
+
+            // 获取 etl 任务
             val etlJob = etlJobService.queryChain()
                     .eq(EtlJob::getId, jobId)
                     .one();
+            if (etlJob == null) {
+                return;
+            }
 
+            // 获取 flink 集群
             val flinkCluster = flinkClusterService.queryChain()
                     .eq(FlinkCluster::getId, etlJob.getClusterId())
                     .one();
+            if (flinkCluster == null) {
+                return;
+            }
 
-            val alertIds = alertJobService.queryChain()
-                    .select(AlertJob::getAlertId)
-                    .eq(AlertJob::getJobId, jobId)
-                    .listAs(Long.class);
-
+            // 获取 alert 列表
             val alertList = alertService.queryChain()
-                    .in(Alert::getId, alertIds)
+                    .in(Alert::getId, alertJobMap.keySet())
                     .list();
 
-            val updateAlertList = new ArrayList<Alert>();
+            // 待更新的 alertJob sendTime
+            val updateAlertJobList = new ArrayList<AlertJob>();
+
             for (Alert alert : alertList) {
                 val name = alert.getName();
                 val email = alert.getEmail();
-                val sendTime = alert.getSendTime();
+                val alertJob = alertJobMap.get(alert.getId());
+                val exception = flinkApiProvider.getJobException(flinkCluster.getJobManagerUrl(), etlJobInstance.getId());
 
-                if (sendTime == null || sendTime.isBefore(LocalDateTime.now().minus(silentTime.toMillis(), ChronoUnit.MILLIS))) {
-                    alert.setSendTime(LocalDateTime.now());
-                    updateAlertList.add(alert);
+                // 异常信息不为空
+                if (StringUtils.hasText(exception)) {
 
-                    val exception = flinkApiProvider.getJobException(flinkCluster.getJobManagerUrl(), etlJobInstance.getId());
+                    // 更新 sendTime
+                    alertJob.setSendTime(LocalDateTime.now());
+                    updateAlertJobList.add(alertJob);
+
                     this.send(
                             javaMailSender,
                             name,
                             """
                                         <pre>
-                                        <strong>%s</strong> 任务发生异常
+                                        <strong>%s</strong> 任务异常
                                     
                                         %s
                                         </pre>
@@ -86,16 +115,18 @@ public class SendMailManager {
                 }
             }
 
-            alertService.updateBatch(updateAlertList);
+            if (!updateAlertJobList.isEmpty()) {
+                alertJobService.updateBatch(updateAlertJobList);
+            }
         });
 
 
     }
 
-    public void testSend(String title, String email) {
-        javaMailSender.ifAvailable(javaMailSender -> {
-            this.send(javaMailSender, title, "这是一封测试邮件", email);
-        });
+    public void sendTest(String title, String email) {
+        javaMailSender.ifAvailable(javaMailSender ->
+                this.send(javaMailSender, title, "这是一封测试邮件", email)
+        );
     }
 
     private void send(JavaMailSender javaMailSender, String subject, String text, String email) {

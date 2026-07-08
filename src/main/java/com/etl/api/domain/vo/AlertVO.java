@@ -18,9 +18,6 @@ public class AlertVO {
     @Schema(description = "邮件地址")
     private String email;
 
-    @Schema(description = "发送时间")
-    private LocalDateTime sendTime;
-
     @Schema(description = "更新时间")
     private LocalDateTime updateTime;
 }

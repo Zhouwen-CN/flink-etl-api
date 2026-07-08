@@ -166,6 +166,6 @@ public class FlinkApiProvider {
         return Optional.ofNullable(jsonNode)
                 .map(item -> item.get("root-exception"))
                 .map(JsonNode::asText)
-                .orElseThrow(() -> new FlinkApiRequestException("Flink API [获取异常信息] 解析 root-exception 错误: " + jsonNode));
+                .orElse(null);
     }
 }

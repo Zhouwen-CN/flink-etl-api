@@ -12,10 +12,8 @@ public interface AlertConvert {
 
     AlertConvert INSTANCE = Mappers.getMapper(AlertConvert.class);
 
-    @Mapping(target = "sendTime", ignore = true)
     @Mapping(target = "id", ignore = true)
     Alert convert(AlertCreateForm form);
 
-    @Mapping(target = "sendTime", ignore = true)
     Alert convert(AlertUpdateForm form);
 }

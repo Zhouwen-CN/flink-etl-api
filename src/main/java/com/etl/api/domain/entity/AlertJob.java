@@ -12,12 +12,13 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 告警任务关系表 实体类。
  *
  * @author chen
- * @since 2026-07-07
+ * @since 2026-07-08
  */
 @Data
 @Builder
@@ -43,5 +44,10 @@ public class AlertJob extends BaseEntity implements Serializable {
      * 任务id
      */
     private Long jobId;
+
+    /**
+     * 发送时间
+     */
+    private LocalDateTime sendTime;
 
 }

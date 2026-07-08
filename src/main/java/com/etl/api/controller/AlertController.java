@@ -122,7 +122,7 @@ public class AlertController {
     @SaCheckPermission("alert.select")
     @GetMapping("/test/{id}")
     @Operation(summary = "邮件测试")
-    public ResponseVO<Void> testSend(@PathVariable @Parameter(description = "ID") Long id) {
+    public ResponseVO<Void> sendTest(@PathVariable @Parameter(description = "ID") Long id) {
         val alert = alertService.queryChain()
                 .eq(Alert::getId, id)
                 .one();
@@ -131,7 +131,7 @@ public class AlertController {
             return ResponseVO.recordNotFoundError(id);
         }
 
-        sendMailManager.testSend(alert.getName(), alert.getEmail());
+        sendMailManager.sendTest(alert.getName(), alert.getEmail());
         return ResponseVO.ok();
     }
 }

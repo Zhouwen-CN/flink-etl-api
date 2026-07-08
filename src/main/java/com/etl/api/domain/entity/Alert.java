@@ -12,13 +12,12 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * 告警表 实体类。
  *
  * @author chen
- * @since 2026-07-07
+ * @since 2026-07-08
  */
 @Data
 @Builder
@@ -44,10 +43,5 @@ public class Alert extends BaseEntity implements Serializable {
      * 邮件地址
      */
     private String email;
-
-    /**
-     * 发送时间
-     */
-    private LocalDateTime sendTime;
 
 }

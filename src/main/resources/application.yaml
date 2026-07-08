@@ -20,9 +20,9 @@ spring:
   # 邮箱配置
   mail:
     #host: 没有配置host，自动配置类就不会加载，参考：org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
-    port: ${MAIL_PORT}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    port: ${MAIL_PORT:}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     protocol: smtp
     default-encoding: utf-8
     ssl:
