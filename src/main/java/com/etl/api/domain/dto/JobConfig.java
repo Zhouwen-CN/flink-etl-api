@@ -93,9 +93,8 @@ public class JobConfig {
         private String name;
         private String mode;
         private Integer parallelism;
-        // 默认30秒
         private Integer checkpointInterval = 30000;
-        private Integer checkpointTimeout = 30000;
+        private Integer checkpointTimeout = 60000;
 
         public void from(EtlJob etlJob) {
             val etlJobTypeEnum = ETLJobTypeEnum.from(etlJob.getType());
@@ -103,11 +102,11 @@ public class JobConfig {
             this.mode = etlJobTypeEnum.getDesc();
             this.parallelism = etlJob.getParallelism();
 
-            // 检查点间隔和超时共用一个配置，简化配置项
+            // 检查点间隔 * 2 = 检查点超时
             val checkpointInterval = etlJob.getCheckpointInterval();
             if (etlJobTypeEnum == ETLJobTypeEnum.STREAMING && checkpointInterval != null) {
                 this.checkpointInterval = checkpointInterval;
-                this.checkpointTimeout = checkpointInterval;
+                this.checkpointTimeout = checkpointInterval * 2;
             }
         }
     }
