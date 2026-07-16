@@ -9,7 +9,7 @@ import lombok.val;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
 import java.nio.charset.StandardCharsets;
@@ -32,7 +32,7 @@ public class FlinkApiProvider {
                     .uri(jobManagerUrl + "/config")
                     .retrieve()
                     .body(JsonNode.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             throw new FlinkApiRequestException("Flink API [获取集群版本信息] 请求失败: " + e.getResponseBodyAsString());
         }
 
@@ -54,7 +54,7 @@ public class FlinkApiProvider {
                     .body(builder.build())
                     .retrieve()
                     .body(JsonNode.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             throw new FlinkApiRequestException("Flink API [上传jar包] 请求失败: " + e.getResponseBodyAsString());
         }
 
@@ -72,7 +72,7 @@ public class FlinkApiProvider {
                     .uri(jobManagerUrl + "/jars/" + jarId)
                     .retrieve()
                     .body(Void.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             throw new FlinkApiRequestException("Flink API [删除jar包] 请求失败: " + e.getResponseBodyAsString());
         }
     }
@@ -84,7 +84,7 @@ public class FlinkApiProvider {
                     .uri(jobManagerUrl + "/jars")
                     .retrieve()
                     .body(JsonNode.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             throw new FlinkApiRequestException("Flink API [删除jar包] 请求失败: " + e.getResponseBodyAsString());
         }
     }
@@ -99,12 +99,17 @@ public class FlinkApiProvider {
 
         JsonNode jsonNode;
         try {
+            restClient.get()
+                    .uri(jobManagerUrl + "/jars/" + jarId + "/plan?entryClass={entryClass}&program-args={programArgs}&savepointPath={savepointPath}", body)
+                    .retrieve()
+                    .body(Void.class);
+
             jsonNode = restClient.post()
                     .uri(jobManagerUrl + "/jars/" + jarId + "/run")
                     .body(body)
                     .retrieve()
                     .body(JsonNode.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             throw new FlinkApiRequestException("Flink API [启动任务] 请求失败: " + e.getResponseBodyAsString());
         }
 
@@ -121,7 +126,7 @@ public class FlinkApiProvider {
                     .uri(jobManagerUrl + "/jobs/" + jobId)
                     .retrieve()
                     .body(JsonNode.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             throw new FlinkApiRequestException("Flink API [获取任务状态] 请求失败: " + e.getResponseBodyAsString());
         }
     }
@@ -133,7 +138,7 @@ public class FlinkApiProvider {
                     .uri(jobManagerUrl + "/jobs/" + flinkJobId + "/stop")
                     .retrieve()
                     .body(Void.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             throw new FlinkApiRequestException("Flink API [停止任务] 请求失败: " + e.getResponseBodyAsString());
         }
     }
@@ -145,7 +150,7 @@ public class FlinkApiProvider {
                     .uri(jobManagerUrl + "/jobs/" + flinkJobId + "/checkpoints")
                     .retrieve()
                     .body(JsonNode.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             throw new FlinkApiRequestException("Flink API [获取检查点历史] 请求失败" + e.getResponseBodyAsString());
         }
     }
@@ -159,7 +164,7 @@ public class FlinkApiProvider {
                     .uri(jobManagerUrl + "/jobs/" + flinkJobId + "/exceptions?maxExceptions=1")
                     .retrieve()
                     .body(JsonNode.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpStatusCodeException e) {
             throw new FlinkApiRequestException("Flink API [获取异常信息] 请求失败" + e.getResponseBodyAsString());
         }
 
