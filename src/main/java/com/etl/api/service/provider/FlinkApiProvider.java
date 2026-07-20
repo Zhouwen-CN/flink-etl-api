@@ -95,15 +95,17 @@ public class FlinkApiProvider {
 
         body.put("entryClass", mainClass);
         body.put("programArgs", "--config " + Base64.getEncoder().encodeToString(config.getBytes(StandardCharsets.UTF_8)));
-        body.put("savepointPath", savePointPath);
+
 
         JsonNode jsonNode;
         try {
-            restClient.get()
-                    .uri(jobManagerUrl + "/jars/" + jarId + "/plan?entryClass={entryClass}&program-args={programArgs}&savepointPath={savepointPath}", body)
+            restClient.post()
+                    .uri(jobManagerUrl + "/jars/" + jarId + "/plan")
+                    .body(body)
                     .retrieve()
                     .body(Void.class);
 
+            body.put("savepointPath", savePointPath);
             jsonNode = restClient.post()
                     .uri(jobManagerUrl + "/jars/" + jarId + "/run")
                     .body(body)
