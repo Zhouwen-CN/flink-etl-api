@@ -62,14 +62,12 @@ public class JarPackageServiceImpl extends ServiceImpl<JarPackageMapper, JarPack
                         .filePath(dist.getPath())
                         .mainClass(mainClass)
                         .build();
-
                 this.saveOrUpdate(jarPackage);
-                return ResponseVO.ok();
             }
         } catch (IOException e) {
-            // do nothing
+            return ResponseVO.error("未能获取jar包入口类: " + e.getMessage());
         }
-        return ResponseVO.error("未获取到jar包入口类");
+        return ResponseVO.ok();
     }
 
     @Override
