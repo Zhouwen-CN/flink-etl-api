@@ -39,7 +39,7 @@ import static com.etl.api.domain.entity.table.RoleTableDef.ROLE;
 
 @RestController
 @RequestMapping("/role")
-@Tag(name = "用户表 控制器")
+@Tag(name = "角色 控制器")
 @RequiredArgsConstructor
 public class RoleController {
 

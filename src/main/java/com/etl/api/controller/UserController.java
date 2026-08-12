@@ -47,7 +47,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/user")
-@Tag(name = "用户表 控制器")
+@Tag(name = "用户 控制器")
 @RequiredArgsConstructor
 public class UserController {
 
