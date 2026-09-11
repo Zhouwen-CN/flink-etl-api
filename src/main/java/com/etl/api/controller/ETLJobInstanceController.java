@@ -5,6 +5,7 @@ import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.convert.FlinkClusterConvert;
 import com.etl.api.domain.convert.JarPackageConvert;
 import com.etl.api.domain.entity.EtlJobInstance;
+import com.etl.api.domain.form.JobInstanceRemapForm;
 import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.ETLJobInstanceVO;
 import com.etl.api.domain.vo.PageVO;
@@ -22,20 +23,20 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -86,7 +87,8 @@ public class ETLJobInstanceController {
     @SaCheckPermission("instance.update")
     @PatchMapping("/remapping")
     @Operation(summary = "实例重新映射")
-    public ResponseVO<Void> remapping(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<String> ids) {
+    public ResponseVO<Void> remapping(@Validated @RequestBody JobInstanceRemapForm form) {
+        val ids = form.getIds();
         for (String id : ids) {
             etlJobInstanceService.updateChain()
                     .eq(EtlJobInstance::getId, id)
