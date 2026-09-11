@@ -5,7 +5,6 @@ import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.convert.FlinkClusterConvert;
 import com.etl.api.domain.convert.JarPackageConvert;
 import com.etl.api.domain.entity.EtlJobInstance;
-import com.etl.api.domain.form.JobInstanceRemapForm;
 import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.ETLJobInstanceVO;
 import com.etl.api.domain.vo.PageVO;
@@ -26,13 +25,11 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.util.StringUtils;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -87,16 +84,16 @@ public class ETLJobInstanceController {
     @SaCheckPermission("instance.update")
     @PatchMapping("/remapping")
     @Operation(summary = "实例重新映射")
-    public ResponseVO<Void> remapping(@Validated @RequestBody JobInstanceRemapForm form) {
-        val ids = form.getIds();
-        for (String id : ids) {
-            etlJobInstanceService.updateChain()
-                    .eq(EtlJobInstance::getId, id)
-                    .eq(EtlJobInstance::getJobType, ETLJobTypeEnum.STREAMING.getCode())
-                    .eq(EtlJobInstance::getStatus, FlinkJobStatusEnum.UNKNOWN)
-                    .set(EtlJobInstance::getStatus, FlinkJobStatusEnum.INITIALIZING)
-                    .update();
-        }
+    public ResponseVO<Void> remapping() {
+        /*
+            flink 集群重启，主备切换，会导致请求失败，状态变更为 unknown
+            如果是实时任务，并且是 unknow 状态，那么更新成 init 状态
+         */
+        etlJobInstanceService.updateChain()
+                .eq(EtlJobInstance::getJobType, ETLJobTypeEnum.STREAMING.getCode())
+                .eq(EtlJobInstance::getStatus, FlinkJobStatusEnum.UNKNOWN)
+                .set(EtlJobInstance::getStatus, FlinkJobStatusEnum.INITIALIZING)
+                .update();
         return ResponseVO.ok();
     }
 
