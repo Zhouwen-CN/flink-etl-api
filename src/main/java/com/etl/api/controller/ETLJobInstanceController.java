@@ -9,6 +9,7 @@ import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.ETLJobInstanceVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
@@ -21,17 +22,20 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -78,6 +82,22 @@ public class ETLJobInstanceController {
         etlJobManager.cancelJob(id);
         return ResponseVO.ok();
     }
+
+    @SaCheckPermission("instance.update")
+    @PatchMapping("/remapping")
+    @Operation(summary = "实例重新映射")
+    public ResponseVO<Void> remapping(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<String> ids) {
+        for (String id : ids) {
+            etlJobInstanceService.updateChain()
+                    .eq(EtlJobInstance::getId, id)
+                    .eq(EtlJobInstance::getJobType, ETLJobTypeEnum.STREAMING.getCode())
+                    .eq(EtlJobInstance::getStatus, FlinkJobStatusEnum.UNKNOWN)
+                    .set(EtlJobInstance::getStatus, FlinkJobStatusEnum.INITIALIZING)
+                    .update();
+        }
+        return ResponseVO.ok();
+    }
+
 
     @SaCheckPermission("instance.delete")
     @DeleteMapping("/{id}")

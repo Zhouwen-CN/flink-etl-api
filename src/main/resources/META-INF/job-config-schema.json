@@ -164,18 +164,9 @@
               "type": "string",
               "description": "密码"
             },
-            "dialect": {
-              "type": "string",
-              "enum": [
-                "mysql",
-                "postgresql",
-                "oracle"
-              ],
-              "description": "数据库方言"
-            },
             "table": {
               "type": "string",
-              "description": "表明，和 sql 配置二选一"
+              "description": "表名，和 sql 配置二选一"
             },
             "sql": {
               "type": "string",
@@ -773,15 +764,6 @@
             "password": {
               "type": "string",
               "description": "密码"
-            },
-            "dialect": {
-              "type": "string",
-              "enum": [
-                "mysql",
-                "postgresql",
-                "oracle"
-              ],
-              "description": "数据库方言"
             },
             "table": {
               "type": "string",
