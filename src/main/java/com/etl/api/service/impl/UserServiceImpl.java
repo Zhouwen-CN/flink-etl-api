@@ -2,6 +2,7 @@ package com.etl.api.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.domain.convert.UserConvert;
+import com.etl.api.domain.entity.LoginCaptcha;
 import com.etl.api.domain.entity.User;
 import com.etl.api.domain.entity.UserRole;
 import com.etl.api.domain.form.ChangePwdForm;
@@ -11,6 +12,7 @@ import com.etl.api.domain.form.UserUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.TokenVO;
 import com.etl.api.enumeration.LoginOperationEnum;
+import com.etl.api.job.config.QuartzJobProperties;
 import com.etl.api.mapper.UserMapper;
 import com.etl.api.service.LoginCaptchaService;
 import com.etl.api.service.LoginLogService;
@@ -22,11 +24,9 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
@@ -45,24 +45,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final LoginCaptchaService loginCaptchaService;
     private final UserRoleService userRoleService;
     private final LoginLogService loginLogService;
-    @Value("${custom.data-expiration.captcha}")
-    private Duration captchaExpiration;
+    private final QuartzJobProperties quartzJobProperties;
 
     @Override
     public ResponseVO<TokenVO> login(UserLoginForm form, HttpServletRequest request) {
-        val captchaId = form.getCaptchaId();
-        val loginCaptcha = loginCaptchaService.getById(captchaId);
-
         val username = form.getUsername();
-        // 如果验证码为空 || code不相等 || 超过60秒，抛出异常
-        if (loginCaptcha == null
-                || !loginCaptcha.getCode().equals(form.getCode())
-                || LocalDateTime.now().minus(captchaExpiration.toMillis(), ChronoUnit.MILLIS).isAfter(loginCaptcha.getCreateTime())
-        ) {
+
+        // 验证码校验：id 匹配、code 相等、且未过期，条件全部下推到 where
+        val captchaExpiration = quartzJobProperties.getDeleteExpirationRecord().getCaptcha();
+        val loginCaptcha = loginCaptchaService.queryChain()
+                .eq(LoginCaptcha::getId, form.getCaptchaId())
+                .eq(LoginCaptcha::getCode, form.getCode())
+                .ge(LoginCaptcha::getCreateTime, LocalDateTime.now().minus(captchaExpiration.toMillis(), ChronoUnit.MILLIS))
+                .one();
+
+        // 查询不到说明验证码不存在、code错误或已过期
+        if (loginCaptcha == null) {
             loginLogService.saveLoginLog(request, username, LoginOperationEnum.LOGIN, false, "验证码错误");
             return ResponseVO.error(HttpStatus.BAD_REQUEST, "验证码错误");
         }
-
 
         val userOptional = this.queryChain()
                 .eq(User::getUsername, username)
@@ -88,7 +89,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         SaSessionUtil.setNickname(user.getNickname());
 
         // 删除验证码
-        loginCaptchaService.removeById(captchaId);
+        loginCaptchaService.removeById(loginCaptcha.getId());
         loginLogService.saveLoginLog(request, username, LoginOperationEnum.LOGIN, true, null);
         return ResponseVO.ok(new TokenVO(StpUtil.getTokenValue()));
     }

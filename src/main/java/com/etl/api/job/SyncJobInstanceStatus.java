@@ -1,4 +1,4 @@
-package com.etl.api.scheduler;
+package com.etl.api.job;
 
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.FlinkCluster;
@@ -16,26 +16,30 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.quartz.DisallowConcurrentExecution;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.springframework.scheduling.quartz.QuartzJobBean;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+/**
+ * 同步 Flink 作业状态信息
+ */
 @Slf4j
-@Service
+@DisallowConcurrentExecution
 @RequiredArgsConstructor
-public class SyncJobInstanceStatus {
+public class SyncJobInstanceStatus extends QuartzJobBean {
     private final FlinkClusterService flinkClusterService;
     private final EtlJobInstanceService etlJobInstanceService;
     private final FlinkApiProvider flinkApiProvider;
     private final ObjectMapper objectMapper;
     private final SendMailManager sendMailManager;
 
-    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
-    private void run() {
+    @Override
+    protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
         log.debug("同步 Flink 作业状态信息");
         val flinkClusterMap = flinkClusterService.list()
                 .stream()

@@ -1,4 +1,4 @@
-package com.etl.api.config;
+package com.etl.api.job.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.quartz.SchedulerFactoryBeanCustomizer;

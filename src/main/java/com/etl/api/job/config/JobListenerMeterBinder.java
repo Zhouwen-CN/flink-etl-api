@@ -1,4 +1,4 @@
-package com.etl.api.config;
+package com.etl.api.job.config;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;

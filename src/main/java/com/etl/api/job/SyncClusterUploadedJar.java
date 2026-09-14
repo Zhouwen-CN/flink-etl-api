@@ -1,4 +1,4 @@
-package com.etl.api.scheduler;
+package com.etl.api.job;
 
 import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.etl.api.domain.entity.FlinkCluster;
@@ -11,24 +11,28 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.quartz.DisallowConcurrentExecution;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.springframework.scheduling.quartz.QuartzJobBean;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
+/**
+ * 同步 Flink 集群已上传的 jar 包列表
+ */
 @Slf4j
-@Service
+@DisallowConcurrentExecution
 @RequiredArgsConstructor
-public class SyncClusterUploadedJar {
+public class SyncClusterUploadedJar extends QuartzJobBean {
     private final ObjectMapper objectMapper;
     private final FlinkClusterService flinkClusterService;
     private final ClusterUploadedJarService clusterUploadedJarService;
     private final FlinkApiProvider flinkApiProvider;
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
-    private void run() {
+    @Override
+    protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
         log.debug("同步 Flink 集群已上传的 jar 包列表");
 
         val flinkClusterList = flinkClusterService.list();

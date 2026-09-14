@@ -1,4 +1,4 @@
-package com.etl.api.scheduler;
+package com.etl.api.job;
 
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.FlinkCheckpoint;
@@ -19,30 +19,34 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.quartz.DisallowConcurrentExecution;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.springframework.scheduling.quartz.QuartzJobBean;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.etl.api.domain.entity.table.FlinkCheckpointTableDef.FLINK_CHECKPOINT;
 import static com.mybatisflex.core.query.QueryMethods.max;
 
 
+/**
+ * 同步 Flink 任务检查点列表
+ */
 @Slf4j
-@Service
+@DisallowConcurrentExecution
 @RequiredArgsConstructor
-public class SyncFlinkCheckpoint {
+public class SyncFlinkCheckpoint extends QuartzJobBean {
     private final EtlJobInstanceService etlJobInstanceService;
     private final FlinkClusterService flinkClusterService;
     private final FlinkApiProvider flinkApiProvider;
     private final ObjectMapper objectMapper;
     private final FlinkCheckpointService flinkCheckpointService;
 
-    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
-    private void run() {
+    @Override
+    protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
         log.debug("同步 Flink 任务检查点列表");
         val flinkClusterMap = flinkClusterService.list()
                 .stream()
