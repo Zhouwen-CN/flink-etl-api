@@ -114,6 +114,7 @@ public class RoleController {
         return ResponseVO.ok(vos);
     }
 
+    @SuppressWarnings("unchecked")
     @SaCheckPermission("role.select")
     @Operation(summary = "角色权限信息查询")
     @GetMapping("/permission/{id}")

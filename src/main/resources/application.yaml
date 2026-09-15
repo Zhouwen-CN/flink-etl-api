@@ -63,10 +63,15 @@ spring:
   boot:
     admin:
       context-path: /admin #SBA 的 UI 和 API 统一前缀
+      server:
+        enabled: true
+      client:
+        url: http://127.0.0.1:${server.port}/${spring.boot.admin.context-path}
+        instance:
+          service-host-type: ip
+          service-base-url: http://127.0.0.1:${server.port}
       monitor:
         status-interval: 30s
-      client:
-        url: http://localhost:8080/admin
 
   output:
     ansi:

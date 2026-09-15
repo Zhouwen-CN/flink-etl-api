@@ -125,6 +125,18 @@ insert into T_PERMISSION(id, name, code)
 values (42, '查询登入日志', 'login-log.select');
 insert into T_PERMISSION(id, name, code)
 values (43, '查询错误日志', 'error-log.select');
+insert into T_PERMISSION (id, name, code)
+values (44, '查询请求日志', 'request-log.select');
+
+-- alert
+INSERT INTO flink_etl_api.t_permission (id, name, code)
+VALUES (45, '查询告警', 'alert.select');
+INSERT INTO flink_etl_api.t_permission (id, name, code)
+VALUES (46, '新增告警', 'alert.insert');
+INSERT INTO flink_etl_api.t_permission (id, name, code)
+VALUES (47, '更新告警', 'alert.update');
+INSERT INTO flink_etl_api.t_permission (id, name, code)
+VALUES (48, '删除告警', 'alert.delete');
 
 create table T_ROLE_PERMISSION
 (

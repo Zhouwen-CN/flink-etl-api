@@ -162,6 +162,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         StpUtil.logout(id);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void revoke(Long id, HttpServletRequest request) {
         val username = this.queryChain()

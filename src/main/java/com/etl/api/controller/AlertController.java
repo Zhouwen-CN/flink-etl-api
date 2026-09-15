@@ -108,6 +108,7 @@ public class AlertController {
         return ResponseVO.ok(selectorList);
     }
 
+    @SuppressWarnings("unchecked")
     @SaCheckPermission("alert.select")
     @GetMapping("/job/{id}")
     @Operation(summary = "获取告警任务id列表")
