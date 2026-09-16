@@ -37,6 +37,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Objects;
 
+import static com.etl.api.domain.entity.table.EtlJobInstanceTableDef.ETL_JOB_INSTANCE;
+import static com.etl.api.domain.entity.table.FlinkClusterTableDef.FLINK_CLUSTER;
+
 @RestController
 @RequestMapping("/instance")
 @Tag(name = "任务实例 控制器")
@@ -60,7 +63,23 @@ public class ETLJobInstanceController {
             @RequestParam(value = "jobType", required = false) @Parameter(description = "集群id") Integer jobType,
             @RequestParam(value = "status", required = false) @Parameter(description = "任务状态") Integer status
     ) {
+
         val page = etlJobInstanceService.queryChain()
+                .select(
+                        ETL_JOB_INSTANCE.ID,
+                        ETL_JOB_INSTANCE.CLUSTER_ID,
+                        FLINK_CLUSTER.JOB_MANAGER_URL,
+                        ETL_JOB_INSTANCE.JAR_ID,
+                        ETL_JOB_INSTANCE.JOB_ID,
+                        ETL_JOB_INSTANCE.JOB_TYPE,
+                        ETL_JOB_INSTANCE.STATUS,
+                        ETL_JOB_INSTANCE.START_TIME,
+                        ETL_JOB_INSTANCE.END_TIME,
+                        ETL_JOB_INSTANCE.DURATION,
+                        ETL_JOB_INSTANCE.UPDATE_TIME
+                )
+                .join(FLINK_CLUSTER)
+                .on(ETL_JOB_INSTANCE.CLUSTER_ID.eq(FLINK_CLUSTER.ID))
                 .like(EtlJobInstance::getId, instanceId, StringUtils.hasText(instanceId))
                 .eq(EtlJobInstance::getClusterId, clusterId, Objects.nonNull(clusterId))
                 .eq(EtlJobInstance::getJobId, jobId, Objects.nonNull(jobId))

@@ -16,6 +16,9 @@ public class ETLJobInstanceVO {
     @Schema(description = "集群id")
     private Long clusterId;
 
+    @Schema(description = "集群地址")
+    private String jobManagerUrl;
+
     @Schema(description = "jar包id")
     private Long jarId;
 
