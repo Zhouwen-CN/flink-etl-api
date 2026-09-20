@@ -2,17 +2,19 @@ package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.domain.convert.EtlJobConvert;
+import com.etl.api.domain.convert.EtlProjectConvert;
 import com.etl.api.domain.convert.FlinkClusterConvert;
 import com.etl.api.domain.convert.JarPackageConvert;
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.vo.DictionaryVO;
-import com.etl.api.domain.vo.ETLJobInstanceVO;
+import com.etl.api.domain.vo.EtlJobInstanceVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
+import com.etl.api.service.EtlProjectService;
 import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
 import com.etl.api.service.manager.EtlJobManager;
@@ -44,20 +46,22 @@ import static com.etl.api.domain.entity.table.FlinkClusterTableDef.FLINK_CLUSTER
 @RequestMapping("/instance")
 @Tag(name = "任务实例 控制器")
 @RequiredArgsConstructor
-public class ETLJobInstanceController {
+public class EtlJobInstanceController {
     private final EtlJobInstanceService etlJobInstanceService;
     private final FlinkClusterService flinkClusterService;
     private final EtlJobService etlJobService;
     private final JarPackageService jarPackageService;
     private final EtlJobManager etlJobManager;
+    private final EtlProjectService etlProjectService;
 
     @SaCheckPermission("instance.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<ETLJobInstanceVO>> getPage(
+    public ResponseVO<PageVO<EtlJobInstanceVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "instanceId", required = false) @Parameter(description = "任务实例id") String instanceId,
+            @RequestParam(value = "projectId", required = false) @Parameter(description = "项目id") Long projectId,
             @RequestParam(value = "clusterId", required = false) @Parameter(description = "集群id") Long clusterId,
             @RequestParam(value = "jobId", required = false) @Parameter(description = "任务id") Long jobId,
             @RequestParam(value = "jobType", required = false) @Parameter(description = "集群id") Integer jobType,
@@ -67,6 +71,7 @@ public class ETLJobInstanceController {
         val page = etlJobInstanceService.queryChain()
                 .select(
                         ETL_JOB_INSTANCE.ID,
+                        ETL_JOB_INSTANCE.PROJECT_ID,
                         ETL_JOB_INSTANCE.CLUSTER_ID,
                         FLINK_CLUSTER.JOB_MANAGER_URL,
                         ETL_JOB_INSTANCE.JAR_ID,
@@ -81,13 +86,14 @@ public class ETLJobInstanceController {
                 .join(FLINK_CLUSTER)
                 .on(ETL_JOB_INSTANCE.CLUSTER_ID.eq(FLINK_CLUSTER.ID))
                 .like(EtlJobInstance::getId, instanceId, StringUtils.hasText(instanceId))
+                .eq(EtlJobInstance::getProjectId, projectId, Objects.nonNull(projectId))
                 .eq(EtlJobInstance::getClusterId, clusterId, Objects.nonNull(clusterId))
                 .eq(EtlJobInstance::getJobId, jobId, Objects.nonNull(jobId))
                 .eq(EtlJobInstance::getJobType, jobType, Objects.nonNull(jobType))
                 .eq(EtlJobInstance::getStatus, status, Objects.nonNull(status))
                 .orderBy(EtlJobInstance::getUpdateTime, false)
                 .orderBy(EtlJobInstance::getStatus, true)
-                .pageAs(Page.of(currentPage, pageSize), ETLJobInstanceVO.class);
+                .pageAs(Page.of(currentPage, pageSize), EtlJobInstanceVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }
@@ -106,12 +112,13 @@ public class ETLJobInstanceController {
     public ResponseVO<Void> remapping() {
         /*
             flink 集群重启，主备切换，会导致请求失败，状态变更为 unknown
-            如果是实时任务，并且是 unknow 状态，那么更新成 init 状态
+            如果是实时任务，并且是 unknow 状态，那么更新成 init 状态，结束时间置为空
          */
         etlJobInstanceService.updateChain()
                 .eq(EtlJobInstance::getJobType, ETLJobTypeEnum.STREAMING.getCode())
                 .eq(EtlJobInstance::getStatus, FlinkJobStatusEnum.UNKNOWN)
                 .set(EtlJobInstance::getStatus, FlinkJobStatusEnum.INITIALIZING)
+                .set(EtlJobInstance::getEndTime, null)
                 .update();
         return ResponseVO.ok();
     }
@@ -123,6 +130,18 @@ public class ETLJobInstanceController {
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") String id) {
         return etlJobInstanceService.removeInstance(id);
     }
+
+    @SaCheckPermission("instance.select")
+    @Operation(summary = "项目选择器")
+    @GetMapping("/project/selector")
+    public ResponseVO<List<DictionaryVO>> projectSelector() {
+        val vos = etlProjectService.list()
+                .stream()
+                .map(EtlProjectConvert.INSTANCE::convert)
+                .toList();
+        return ResponseVO.ok(vos);
+    }
+
 
     @SaCheckPermission("instance.select")
     @GetMapping("/cluster/selector")

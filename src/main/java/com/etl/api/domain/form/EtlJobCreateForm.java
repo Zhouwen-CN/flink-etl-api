@@ -22,6 +22,10 @@ public class EtlJobCreateForm {
     private Integer type;
 
     @NotNull
+    @Schema(description = "项目id")
+    private Long projectId;
+
+    @NotNull
     @Schema(description = "flink集群id")
     private Long clusterId;
 

@@ -14,16 +14,16 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * ETL任务表 实体类。
+ * ETL项目表 实体类。
  *
  * @author chen
- * @since 2026-06-09
+ * @since 2026-09-18
  */
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(value = "T_ETL_JOB", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
-public class EtlJob extends BaseEntity implements Serializable {
+@Table(value = "T_ETL_PROJECT", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
+public class EtlProject extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -35,43 +35,13 @@ public class EtlJob extends BaseEntity implements Serializable {
     private Long id;
 
     /**
-     * 任务名称
+     * 项目名称
      */
     private String name;
 
     /**
-     * 任务类型(1batch 2streaming)
+     * 项目描述
      */
-    private Integer type;
-
-    /**
-     * 项目id
-     */
-    private Long projectId;
-
-    /**
-     * flink集群id
-     */
-    private Long clusterId;
-
-    /**
-     * jar包id
-     */
-    private Long jarId;
-
-    /**
-     * 任务并行度
-     */
-    private Integer parallelism;
-
-    /**
-     * 检查点间隔
-     */
-    private Integer checkpointInterval;
-
-    /**
-     * json配置
-     */
-    private String config;
+    private String description;
 
 }

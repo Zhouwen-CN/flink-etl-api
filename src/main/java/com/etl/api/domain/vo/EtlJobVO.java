@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Schema(description = "ETL任务视图")
-public class ETLJobVO {
+public class EtlJobVO {
 
     @Schema(description = "自增主键")
     private Long id;
@@ -17,6 +17,9 @@ public class ETLJobVO {
 
     @Schema(description = "任务类型")
     private Integer type;
+
+    @Schema(description = "项目id")
+    private Long projectId;
 
     @Schema(description = "flink集群id")
     private Long clusterId;

@@ -171,6 +171,7 @@ public class EtlJobManager {
         // 插入任务实例表
         val etlJobInstance = new EtlJobInstance(
                 flinkJobId,
+                etlJob.getProjectId(),
                 clusterId,
                 jarPackage.getId(),
                 jobId,

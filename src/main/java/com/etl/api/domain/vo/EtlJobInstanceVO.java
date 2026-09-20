@@ -8,10 +8,13 @@ import java.time.LocalDateTime;
 
 @Data
 @Schema(description = "ETL任务实例视图")
-public class ETLJobInstanceVO {
+public class EtlJobInstanceVO {
 
     @Schema(description = "flink任务id")
     private String id;
+
+    @Schema(description = "项目id")
+    private Long projectId;
 
     @Schema(description = "集群id")
     private Long clusterId;

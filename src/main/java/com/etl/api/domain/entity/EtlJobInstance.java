@@ -38,6 +38,11 @@ public class EtlJobInstance extends BaseEntity implements Serializable {
     private String id;
 
     /**
+     * 项目id
+     */
+    private Long projectId;
+
+    /**
      * 集群id
      */
     private Long clusterId;
@@ -77,8 +82,9 @@ public class EtlJobInstance extends BaseEntity implements Serializable {
      */
     private Long duration;
 
-    public EtlJobInstance(String id, Long clusterId, Long jarId, Long jobId, Integer jobType, FlinkJobStatusEnum status) {
+    public EtlJobInstance(String id, Long projectId, Long clusterId, Long jarId, Long jobId, Integer jobType, FlinkJobStatusEnum status) {
         this.id = id;
+        this.projectId = projectId;
         this.clusterId = clusterId;
         this.jarId = jarId;
         this.jobId = jobId;

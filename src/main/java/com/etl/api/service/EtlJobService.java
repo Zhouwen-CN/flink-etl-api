@@ -15,7 +15,7 @@ import java.util.Collection;
  */
 public interface EtlJobService extends IService<EtlJob> {
 
-    ResponseVO<Void> addEtlJob(EtlJobCreateForm form);
+    ResponseVO<Void> addJob(EtlJobCreateForm form);
 
     ResponseVO<Void> removeJob(Long id);
 

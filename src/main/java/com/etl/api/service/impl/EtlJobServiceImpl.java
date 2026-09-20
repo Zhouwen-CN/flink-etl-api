@@ -30,7 +30,7 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
     private final EtlJobInstanceService etlJobInstanceService;
 
     @Override
-    public ResponseVO<Void> addEtlJob(EtlJobCreateForm form) {
+    public ResponseVO<Void> addJob(EtlJobCreateForm form) {
         val name = form.getName();
         val exists = this.queryChain()
                 .eq(EtlJob::getName, name)

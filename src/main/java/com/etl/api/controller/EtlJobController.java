@@ -2,6 +2,7 @@ package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.domain.convert.EtlJobConvert;
+import com.etl.api.domain.convert.EtlProjectConvert;
 import com.etl.api.domain.convert.FlinkClusterConvert;
 import com.etl.api.domain.convert.JarPackageConvert;
 import com.etl.api.domain.entity.EtlJob;
@@ -11,11 +12,12 @@ import com.etl.api.domain.form.EtlJobCreateForm;
 import com.etl.api.domain.form.EtlJobSubmitForm;
 import com.etl.api.domain.form.EtlJobUpdateForm;
 import com.etl.api.domain.vo.DictionaryVO;
-import com.etl.api.domain.vo.ETLJobVO;
+import com.etl.api.domain.vo.EtlJobVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
+import com.etl.api.service.EtlProjectService;
 import com.etl.api.service.FlinkCheckpointService;
 import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
@@ -50,7 +52,7 @@ import java.util.Objects;
 @RequestMapping("/job")
 @Tag(name = "ETL任务 控制器")
 @RequiredArgsConstructor
-public class ETLJobController {
+public class EtlJobController {
 
     private final EtlJobService etlJobService;
     private final JarPackageService jarPackageService;
@@ -58,20 +60,23 @@ public class ETLJobController {
     private final EtlJobInstanceService etlJobInstanceService;
     private final EtlJobManager etlJobManager;
     private final FlinkCheckpointService flinkCheckpointService;
+    private final EtlProjectService etlProjectService;
 
     @SaCheckPermission("job.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<ETLJobVO>> getPage(
+    public ResponseVO<PageVO<EtlJobVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "name", required = false) @Parameter(description = "任务名称") String name,
-            @RequestParam(value = "type", required = false) @Parameter(description = "任务类型") Integer type
+            @RequestParam(value = "type", required = false) @Parameter(description = "任务类型") Integer type,
+            @RequestParam(value = "projectId", required = false) @Parameter(description = "项目id") Long projectId
     ) {
         val page = etlJobService.queryChain()
                 .like(EtlJob::getName, name, StringUtils.hasText(name))
                 .eq(EtlJob::getType, type, Objects.nonNull(type))
-                .pageAs(Page.of(currentPage, pageSize), ETLJobVO.class);
+                .eq(EtlJob::getProjectId, projectId, Objects.nonNull(projectId))
+                .pageAs(Page.of(currentPage, pageSize), EtlJobVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }
@@ -80,7 +85,7 @@ public class ETLJobController {
     @Operation(summary = "新增")
     @PostMapping
     public ResponseVO<Void> add(@RequestBody @Validated EtlJobCreateForm form) {
-        return etlJobService.addEtlJob(form);
+        return etlJobService.addJob(form);
     }
 
     @SaCheckPermission("job.update")
@@ -120,6 +125,17 @@ public class ETLJobController {
     public ResponseVO<List<DictionaryVO>> jarSelector() {
         val vos = jarPackageService.list()
                 .stream().map(JarPackageConvert.INSTANCE::convert)
+                .toList();
+        return ResponseVO.ok(vos);
+    }
+
+    @SaCheckPermission("job.select")
+    @Operation(summary = "项目选择器")
+    @GetMapping("/project/selector")
+    public ResponseVO<List<DictionaryVO>> projectSelector() {
+        val vos = etlProjectService.list()
+                .stream()
+                .map(EtlProjectConvert.INSTANCE::convert)
                 .toList();
         return ResponseVO.ok(vos);
     }
