@@ -59,35 +59,38 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
                 .forEach(etlJobInstance -> {
                     val flinkJobId = etlJobInstance.getId();
                     val flinkCluster = flinkClusterMap.get(etlJobInstance.getClusterId());
-                    JsonNode jsonNode = null;
-                    try {
-                        jsonNode = flinkApiProvider.getCheckpointHistory(flinkCluster.getJobManagerUrl(), flinkJobId);
-                    } catch (Exception e) {
-                        log.error(e.getMessage());
+                    // 只有 flink 集群状态开启才同步
+                    if (flinkCluster != null && flinkCluster.getStatus()) {
+                        JsonNode jsonNode = null;
+                        try {
+                            jsonNode = flinkApiProvider.getCheckpointHistory(flinkCluster.getJobManagerUrl(), flinkJobId);
+                        } catch (Exception e) {
+                            log.error(e.getMessage());
+                        }
+
+                        Optional.ofNullable(jsonNode)
+                                .map(item -> item.get("history"))
+                                .filter(JsonNode::isArray)
+                                .map(item -> objectMapper.convertValue(item, new TypeReference<List<CheckpointHistoryDTO>>() {
+                                }))
+                                .ifPresent(list -> {
+                                    val maxChkId = flinkCheckpointService.queryChain()
+                                            .select(max(FLINK_CHECKPOINT.CHK_ID))
+                                            .eq(FlinkCheckpoint::getJobId, flinkJobId)
+                                            .oneAs(Long.class);
+
+                                    // 只获取完成的 checkpoint
+                                    if (maxChkId != null) {
+                                        list = list.stream()
+                                                .filter(item ->
+                                                        item.getId() > maxChkId && "COMPLETED".equals(item.getStatus())
+                                                ).toList();
+                                    }
+
+                                    val flinkCheckpointList = list.stream().map(item -> item.toCheckPoint(flinkJobId)).toList();
+                                    flinkCheckpointService.saveBatch(flinkCheckpointList);
+                                });
                     }
-
-                    Optional.ofNullable(jsonNode)
-                            .map(item -> item.get("history"))
-                            .filter(JsonNode::isArray)
-                            .map(item -> objectMapper.convertValue(item, new TypeReference<List<CheckpointHistoryDTO>>() {
-                            }))
-                            .ifPresent(list -> {
-                                val maxChkId = flinkCheckpointService.queryChain()
-                                        .select(max(FLINK_CHECKPOINT.CHK_ID))
-                                        .eq(FlinkCheckpoint::getJobId, flinkJobId)
-                                        .oneAs(Long.class);
-
-                                // 只获取完成的 checkpoint
-                                if (maxChkId != null) {
-                                    list = list.stream()
-                                            .filter(item ->
-                                                    item.getId() > maxChkId && "COMPLETED".equals(item.getStatus())
-                                            ).toList();
-                                }
-
-                                val flinkCheckpointList = list.stream().map(item -> item.toCheckPoint(flinkJobId)).toList();
-                                flinkCheckpointService.saveBatch(flinkCheckpointList);
-                            });
                 });
     }
 

@@ -54,7 +54,8 @@ public class SyncJobInstanceStatus extends QuartzJobBean {
                     // 获取flink集群信息
                     val clusterId = etlJobInstance.getClusterId();
                     val flinkCluster = flinkClusterMap.get(clusterId);
-                    if (flinkCluster != null) {
+                    // 只有 flink 集群状态开启才同步
+                    if (flinkCluster != null && flinkCluster.getStatus()) {
                         val jobManagerUrl = flinkCluster.getJobManagerUrl();
                         val flinkJobId = etlJobInstance.getId();
 
