@@ -51,14 +51,25 @@ public class SyncClusterUploadedJar extends QuartzJobBean {
                         .map(item -> item.get("files"))
                         .map(files -> objectMapper.convertValue(files, new TypeReference<List<ClusterUploadedJar>>() {
                         }))
-                        .map(list -> list.stream().peek(item -> item.setClusterId(clusterId)).toList())
-                        .ifPresent(entities -> {
-                            clusterUploadedJarService.updateChain()
-                                    .eq(ClusterUploadedJar::getClusterId, clusterId)
-                                    .remove();
+                        .map(list -> list.stream().filter(
+                                item -> {
+                                    // 如果找到，则跳过
+                                    val jarId = item.getJarId();
+                                    val exists = clusterUploadedJarService.queryChain()
+                                            .eq(ClusterUploadedJar::getClusterId, clusterId)
+                                            .eq(ClusterUploadedJar::getJarId, jarId)
+                                            .exists();
+                                    if (exists) {
+                                        return false;
+                                    }
 
-                            clusterUploadedJarService.saveBatch(entities);
-                        });
+                                    // 回填集群id
+                                    item.setClusterId(clusterId);
+                                    return true;
+                                }).toList()
+                        )
+                        // 实体类对象主键有值，则更新数据，若没有值，则保存数据。并不会像 mybatis plus那样去查询主键是否存在
+                        .ifPresent(clusterUploadedJarService::saveBatch);
             }
 
         }
