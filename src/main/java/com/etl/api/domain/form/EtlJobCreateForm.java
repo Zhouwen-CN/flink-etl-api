@@ -17,6 +17,10 @@ public class EtlJobCreateForm {
     @Schema(description = "任务名称")
     private String name;
 
+    @Length(max = 100)
+    @Schema(description = "任务描述")
+    private String description;
+
     @NotNull
     @Schema(description = "任务类型")
     private Integer type;

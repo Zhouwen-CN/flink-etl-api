@@ -15,6 +15,9 @@ public class EtlJobVO {
     @Schema(description = "任务名称")
     private String name;
 
+    @Schema(description = "任务描述")
+    private String description;
+
     @Schema(description = "任务类型")
     private Integer type;
 

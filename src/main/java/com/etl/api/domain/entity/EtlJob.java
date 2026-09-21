@@ -40,6 +40,11 @@ public class EtlJob extends BaseEntity implements Serializable {
     private String name;
 
     /**
+     * 任务描述
+     */
+    private String description;
+
+    /**
      * 任务类型(1batch 2streaming)
      */
     private Integer type;
