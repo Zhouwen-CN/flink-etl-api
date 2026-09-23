@@ -4,6 +4,7 @@ server:
   servlet:
     encoding:
       force: true
+    context-path: /etl-platform
 
 spring:
   application:
@@ -66,7 +67,7 @@ spring:
       server:
         enabled: true
       client:
-        url: http://127.0.0.1:${server.port}/${spring.boot.admin.context-path}
+        url: http://127.0.0.1:${server.port}${server.servlet.context-path:}${spring.boot.admin.context-path}
         instance:
           service-host-type: ip
           service-base-url: http://127.0.0.1:${server.port}
