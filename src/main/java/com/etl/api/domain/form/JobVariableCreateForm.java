@@ -17,7 +17,7 @@ public class JobVariableCreateForm {
     private String name;
 
     @NotBlank
-    @Length(max = 100)
+    @Length(max = 200)
     @Schema(description = "变量值(支持SPEL表达式)")
     private String value;
 
