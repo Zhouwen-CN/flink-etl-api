@@ -7,7 +7,6 @@ import org.springframework.boot.actuate.web.exchanges.HttpExchange;
 
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * http请求历史表 服务层。
@@ -17,7 +16,7 @@ import java.util.function.Predicate;
  */
 public interface HttpExchangeHistoryService extends IService<HttpExchangeHistory> {
 
-    void saveFromHttpExchange(HttpExchange httpExchange, List<Predicate<String>> filters) throws JsonProcessingException;
+    void saveFromHttpExchange(HttpExchange httpExchange, boolean ignoreGetMethod) throws JsonProcessingException;
 
     List<HttpExchange> getHttpExchangeList(int limit) throws URISyntaxException, JsonProcessingException;
 }

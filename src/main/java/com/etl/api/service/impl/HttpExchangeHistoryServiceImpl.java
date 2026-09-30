@@ -11,6 +11,7 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.boot.actuate.web.exchanges.HttpExchange;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -19,7 +20,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * http请求历史表 服务层实现。
@@ -34,22 +34,27 @@ public class HttpExchangeHistoryServiceImpl extends ServiceImpl<HttpExchangeHist
     private final ObjectMapper objectMapper;
 
     @Override
-    public void saveFromHttpExchange(HttpExchange httpExchange, List<Predicate<String>> filters) throws JsonProcessingException {
+    public void saveFromHttpExchange(HttpExchange httpExchange, boolean ignoreGetMethod) throws JsonProcessingException {
         val request = httpExchange.getRequest();
         val response = httpExchange.getResponse();
 
-        val path = request.getUri().getPath();
+        // 是否记录 get 请求
+        val method = request.getMethod();
+        if (ignoreGetMethod && HttpMethod.GET.name().equals(method)) {
+            return;
+        }
 
-        val anyMatch = filters.stream().anyMatch(item -> item.test(path));
-        if (anyMatch) {
+        // springboot admin
+        val requestUrl = request.getUri().getPath();
+        if (requestUrl.startsWith("/etl-platform/admin")) {
             return;
         }
 
         val httpExchangeHistory = HttpExchangeHistory.builder()
                 .timestamp(httpExchange.getTimestamp().toEpochMilli())
-                .requestUrl(request.getUri().toString())
+                .requestUrl(requestUrl)
                 .requestIp(request.getRemoteAddress())
-                .requestMethod(request.getMethod())
+                .requestMethod(method)
                 .requestHeaders(objectMapper.writeValueAsString(request.getHeaders()))
                 .responseStatus(response.getStatus())
                 .responseHeaders(objectMapper.writeValueAsString(response.getHeaders()))
