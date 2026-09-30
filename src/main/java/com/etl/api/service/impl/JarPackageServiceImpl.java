@@ -35,12 +35,12 @@ public class JarPackageServiceImpl extends ServiceImpl<JarPackageMapper, JarPack
 
     private ResponseVO<Void> saveJar(Long id, String name, MultipartFile uploadFile) {
         if (uploadFile == null) {
-            return ResponseVO.error("未发现文件，请上传文件");
+            return ResponseVO.error("请上传文件");
         }
 
         val originalFilename = uploadFile.getOriginalFilename();
         if (originalFilename == null || !originalFilename.endsWith(".jar")) {
-            return ResponseVO.error("文件格式错误，请上传jar包文件");
+            return ResponseVO.error("文件格式错误，请上传jar文件");
         }
 
         val dist = new File(jarPackageLocation, uploadFile.getOriginalFilename());

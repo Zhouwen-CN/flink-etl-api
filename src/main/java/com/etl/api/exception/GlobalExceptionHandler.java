@@ -134,7 +134,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler
     public ResponseEntity<ResponseVO<Void>> handlerException(Exception e, HttpServletRequest request) {
-        if (!"/admin/applications".equals(request.getRequestURI())) {
+        if (!request.getRequestURI().startsWith("/etl-platform/admin")) {
             errorLogService.saveErrorLog(e);
         }
 
