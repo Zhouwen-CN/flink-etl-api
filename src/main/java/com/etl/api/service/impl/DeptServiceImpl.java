@@ -1,27 +1,28 @@
 package com.etl.api.service.impl;
 
+import com.etl.api.domain.convert.DeptConvert;
 import com.etl.api.domain.entity.Dept;
+import com.etl.api.domain.entity.User;
 import com.etl.api.domain.form.DeptCreateForm;
 import com.etl.api.domain.form.DeptUpdateForm;
 import com.etl.api.domain.vo.DeptVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.DeptMapper;
-import com.etl.api.mapper.UserMapper;
 import com.etl.api.service.DeptService;
+import com.mybatisflex.core.row.DbChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
-import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
-
-import static com.etl.api.domain.entity.table.UserTableDef.USER;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 部门表 服务层实现。
@@ -30,10 +31,7 @@ import static com.etl.api.domain.entity.table.UserTableDef.USER;
  * @since 2026-10-10
  */
 @Service
-@RequiredArgsConstructor
 public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements DeptService {
-
-    private final UserMapper userMapper;
 
     @Override
     public ResponseVO<Void> addDept(DeptCreateForm form) {
@@ -41,17 +39,17 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         boolean exists = this.queryChain()
                 .eq(Dept::getName, name)
                 .exists();
+
         if (exists) {
             return ResponseVO.recordExistsError(name);
         }
-        if (!validateParent(form.getParentId())) {
+
+        if (validateParent(form.getParentId())) {
             return ResponseVO.recordNotFoundError("父部门 id:" + form.getParentId());
         }
-        this.save(Dept.builder()
-                .name(name)
-                .sort(form.getSort() == null ? 0 : form.getSort())
-                .parentId(form.getParentId())
-                .build());
+
+        val entity = DeptConvert.INSTANCE.convert(form);
+        this.save(entity);
         return ResponseVO.ok();
     }
 
@@ -59,20 +57,18 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     public ResponseVO<Void> modifyDept(DeptUpdateForm form) {
         Long id = form.getId();
         if (id == 1L) {
-            return ResponseVO.modifyAdminError();
+            return ResponseVO.modifyRootDeptError();
         }
+
         Dept dept = this.getById(id);
         if (dept == null) {
             return ResponseVO.recordNotFoundError("部门 id:" + id);
         }
-        // 不能将自己的子部门设置为父部门
-        if (!Objects.equals(id, form.getParentId())
-                && isDescendant(id, form.getParentId())) {
-            return ResponseVO.error("父部门不能是自己的子部门");
-        }
-        if (!validateParent(form.getParentId())) {
+
+        if (validateParent(form.getParentId())) {
             return ResponseVO.recordNotFoundError("父部门 id:" + form.getParentId());
         }
+
         // 名称唯一性（排除自身）
         boolean nameExists = this.queryChain()
                 .eq(Dept::getName, form.getName())
@@ -81,58 +77,82 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         if (nameExists) {
             return ResponseVO.recordExistsError(form.getName());
         }
-        this.updateById(Dept.builder()
-                .id(id)
-                .name(form.getName())
-                .sort(form.getSort() == null ? 0 : form.getSort())
-                .parentId(form.getParentId())
-                .build());
+
+        val entity = DeptConvert.INSTANCE.convert(form);
+        this.updateById(entity);
         return ResponseVO.ok();
     }
 
     @Override
     public ResponseVO<Void> removeDept(Long id) {
+        if (id == 1L) {
+            return ResponseVO.modifyRootDeptError();
+        }
+
         // 存在子部门不允许删除
         boolean childExists = this.queryChain()
                 .eq(Dept::getParentId, id)
                 .exists();
+
         if (childExists) {
-            return ResponseVO.error("删除失败，尚有子部门");
+            return ResponseVO.error("删除失败，尚有部门依赖");
         }
+
         // 存在用户引用不允许删除
-        long userCount = userMapper.selectCountByQuery(
-                query().where(USER.DEPT_ID.eq(id)));
-        if (userCount > 0) {
-            return ResponseVO.error("删除失败，部门下尚有用户");
+        val exists = DbChain.table(User.class)
+                .eq(User::getDeptId, id)
+                .exists();
+
+        if (exists) {
+            return ResponseVO.error("删除失败，尚有用户依赖");
         }
         this.removeById(id);
         return ResponseVO.ok();
     }
 
     @Override
-    public List<DeptVO> listTree() {
+    public List<DeptVO> listTree(String name) {
+        // 全量加载，便于回溯祖先和构建树
         List<Dept> all = this.list();
+        Map<Long, Dept> deptMap = all.stream()
+                .collect(Collectors.toMap(Dept::getId, d -> d));
+
+        Set<Long> selectedIds;
+        if (StringUtils.hasText(name)) {
+            // 1. 先查出名称命中的节点
+            Set<Long> matchedIds = all.stream()
+                    .filter(d -> d.getName() != null && d.getName().contains(name.trim()))
+                    .map(Dept::getId)
+                    .collect(Collectors.toSet());
+            // 2. 再沿 parentId 向上回溯，把全部祖先补进来
+            selectedIds = new HashSet<>(matchedIds);
+            matchedIds.forEach(id -> {
+                Long parentId = deptMap.get(id).getParentId();
+                while (parentId != null && selectedIds.add(parentId)) {
+                    parentId = deptMap.get(parentId).getParentId();
+                }
+            });
+        } else {
+            selectedIds = all.stream().map(Dept::getId).collect(Collectors.toSet());
+        }
+
         // id -> vo
-        java.util.Map<Long, DeptVO> voMap = new java.util.HashMap<>();
+        Map<Long, DeptVO> voMap = new HashMap<>();
         for (Dept dept : all) {
-            DeptVO vo = new DeptVO();
-            vo.setId(dept.getId());
-            vo.setParentId(dept.getParentId());
-            vo.setName(dept.getName());
-            vo.setSort(dept.getSort());
-            voMap.put(dept.getId(), vo);
+            if (selectedIds.contains(dept.getId())) {
+                voMap.put(dept.getId(), DeptConvert.INSTANCE.convert(dept));
+            }
         }
 
         List<DeptVO> roots = new ArrayList<>();
         for (Dept dept : all) {
             DeptVO vo = voMap.get(dept.getId());
+            if (vo == null) {
+                continue;
+            }
             Long parentId = dept.getParentId();
             if (parentId != null && voMap.containsKey(parentId)) {
-                DeptVO parent = voMap.get(parentId);
-                if (parent.getChildren() == null) {
-                    parent.setChildren(new ArrayList<>());
-                }
-                parent.getChildren().add(vo);
+                voMap.get(parentId).getChildren().add(vo);
             } else {
                 roots.add(vo);
             }
@@ -154,40 +174,6 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     }
 
     private boolean validateParent(Long parentId) {
-        return parentId == null || this.getById(parentId) != null;
-    }
-
-    /**
-     * 判断 targetId 是否为 id 的后代
-     */
-    private boolean isDescendant(Long id, Long targetId) {
-        if (targetId == null) {
-            return false;
-        }
-        List<Dept> all = this.list();
-        java.util.Map<Long, List<Dept>> childrenMap = new java.util.HashMap<>();
-        for (Dept dept : all) {
-            if (dept.getParentId() != null) {
-                childrenMap.computeIfAbsent(dept.getParentId(), k -> new ArrayList<>())
-                        .add(dept);
-            }
-        }
-        HashSet<Long> visited = new HashSet<>();
-        ArrayDeque<Long> stack = new ArrayDeque<>();
-        stack.push(id);
-        while (!stack.isEmpty()) {
-            Long current = stack.pop();
-            if (Objects.equals(current, targetId)) {
-                return true;
-            }
-            if (!visited.add(current)) {
-                continue;
-            }
-            List<Dept> children = childrenMap.getOrDefault(current, Collections.emptyList());
-            for (Dept child : children) {
-                stack.push(child.getId());
-            }
-        }
-        return false;
+        return parentId != null && this.getById(parentId) == null;
     }
 }

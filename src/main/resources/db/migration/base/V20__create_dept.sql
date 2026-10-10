@@ -36,3 +36,14 @@ alter table T_SCHEDULE_JOB
 update T_ROLE
 set data_scope = 1
 where id = 1;
+
+
+-- 添加数据范围字典
+insert into T_DICT_TYPE(id, name, remark, status)
+values (3, 'data_scope', '数据范围', 1);
+insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (6, 3, '全部', 1, 1);
+insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (7, 3, '本部门及以下', 2, 2);
+insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (8, 3, '本部门', 3, 3);

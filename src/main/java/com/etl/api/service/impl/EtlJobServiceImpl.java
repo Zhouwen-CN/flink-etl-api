@@ -3,12 +3,13 @@ package com.etl.api.service.impl;
 import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.entity.EtlJobInstance;
+import com.etl.api.domain.entity.EtlProject;
 import com.etl.api.domain.form.EtlJobCreateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.EtlJobMapper;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
-import com.etl.api.service.EtlProjectService;
+import com.mybatisflex.core.row.DbChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,6 @@ import java.util.Collection;
 public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> implements EtlJobService {
 
     private final EtlJobInstanceService etlJobInstanceService;
-    private final EtlProjectService etlProjectService;
 
     @Override
     public ResponseVO<Void> addJob(EtlJobCreateForm form) {
@@ -40,7 +40,11 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
         if (exists) {
             return ResponseVO.recordExistsError(name);
         }
-        val project = etlProjectService.getById(form.getProjectId());
+
+        val project = DbChain.table(EtlProject.class)
+                .eq(EtlProject::getId, form.getProjectId())
+                .oneAs(EtlProject.class);
+
         if (project == null) {
             return ResponseVO.error("项目未找到: " + form.getProjectId());
         }

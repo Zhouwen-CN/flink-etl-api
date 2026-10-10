@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -34,8 +35,8 @@ public class DeptController {
     @SaCheckPermission("dept.select")
     @Operation(summary = "部门树")
     @GetMapping("/tree")
-    public ResponseVO<List<DeptVO>> tree() {
-        val vos = deptService.listTree();
+    public ResponseVO<List<DeptVO>> tree(@RequestParam(value = "name", required = false) @Parameter(description = "部门名称") String name) {
+        val vos = deptService.listTree(name);
         return ResponseVO.ok(vos);
     }
 

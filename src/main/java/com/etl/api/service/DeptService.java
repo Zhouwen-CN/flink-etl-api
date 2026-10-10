@@ -23,6 +23,6 @@ public interface DeptService extends IService<Dept> {
 
     ResponseVO<Void> removeDept(Long id);
 
-    List<DeptVO> listTree();
+    List<DeptVO> listTree(String name);
 
 }

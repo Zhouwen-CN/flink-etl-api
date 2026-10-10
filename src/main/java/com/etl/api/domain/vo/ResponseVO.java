@@ -54,4 +54,8 @@ public final class ResponseVO<T> {
     public static <T> ResponseVO<T> modifyAdminError() {
         return error("超级管理员 账号/角色/权限 禁止修改和删除");
     }
+
+    public static <T> ResponseVO<T> modifyRootDeptError() {
+        return error("部门根节点 禁止修改和删除");
+    }
 }
