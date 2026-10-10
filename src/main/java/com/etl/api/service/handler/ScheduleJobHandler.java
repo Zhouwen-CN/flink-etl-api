@@ -4,6 +4,7 @@ import com.etl.api.domain.entity.ScheduleJob;
 import com.etl.api.service.ScheduleJobService;
 import com.etl.api.service.manager.EtlJobManager;
 import com.etl.api.service.manager.ScheduleJobManager;
+import com.mybatisflex.core.tenant.TenantManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -20,6 +21,8 @@ public class ScheduleJobHandler extends QuartzJobBean {
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
+        // 系统级任务，无登录态，忽略部门数据权限过滤
+        TenantManager.withoutTenantCondition(() -> {
         val mergedJobDataMap = context.getMergedJobDataMap();
         val etlJobId = mergedJobDataMap.getLong(ScheduleJobManager.ETL_ID);
         val scheduleName = context.getTrigger().getDescription();
@@ -38,5 +41,6 @@ public class ScheduleJobHandler extends QuartzJobBean {
         } catch (Exception e) {
             // do nothing
         }
+        });
     }
 }

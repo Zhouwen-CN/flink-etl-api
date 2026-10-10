@@ -5,6 +5,7 @@ import com.etl.api.job.config.QuartzJobProperties;
 import com.etl.api.job.config.SystemJobConfiguration;
 import com.etl.api.service.ScheduleJobService;
 import com.etl.api.service.manager.ScheduleJobManager;
+import com.mybatisflex.core.tenant.TenantManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -33,7 +34,14 @@ public class InitializeApplicationRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        this.initQuartzJob();
+        // 系统级任务，无登录态，忽略部门数据权限过滤
+        TenantManager.withoutTenantCondition(() -> {
+            try {
+                this.initQuartzJob();
+            } catch (SchedulerException e) {
+                log.error("初始化定时任务异常", e);
+            }
+        });
     }
 
     /**
