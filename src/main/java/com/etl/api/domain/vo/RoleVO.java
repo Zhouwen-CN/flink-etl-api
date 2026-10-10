@@ -22,6 +22,9 @@ public class RoleVO {
     @Schema(description = "角色标识符")
     private String code;
 
+    @Schema(description = "数据范围(1全部 2本部门及以下 3本部门)")
+    private Integer dataScope;
+
     @Schema(description = "更新时间")
     private LocalDateTime updateTime;
 }
