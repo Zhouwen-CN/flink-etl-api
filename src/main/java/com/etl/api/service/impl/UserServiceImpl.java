@@ -4,7 +4,6 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.domain.convert.UserConvert;
 import com.etl.api.domain.entity.Dept;
 import com.etl.api.domain.entity.LoginCaptcha;
-import com.etl.api.domain.entity.Role;
 import com.etl.api.domain.entity.User;
 import com.etl.api.domain.entity.UserRole;
 import com.etl.api.domain.form.ChangePwdForm;
@@ -13,6 +12,7 @@ import com.etl.api.domain.form.UserLoginForm;
 import com.etl.api.domain.form.UserUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.TokenVO;
+import com.etl.api.enumeration.DataScopeEnum;
 import com.etl.api.enumeration.LoginOperationEnum;
 import com.etl.api.job.config.QuartzJobProperties;
 import com.etl.api.mapper.DeptMapper;
@@ -33,14 +33,17 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.etl.api.domain.entity.table.DeptTableDef.DEPT;
 import static com.etl.api.domain.entity.table.RoleTableDef.ROLE;
 import static com.etl.api.domain.entity.table.UserRoleTableDef.USER_ROLE;
 
@@ -182,28 +185,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .join(ROLE)
                 .on(USER_ROLE.ROLE_ID.eq(ROLE.ID))
                 .where(USER_ROLE.USER_ID.eq(user.getId()));
-        List<Integer> dataScopes = userRoleService.listAs(sql, Integer.class);
+        Set<Integer> dataScopes = new HashSet<>(userRoleService.listAs(sql, Integer.class));
 
         boolean isAll = false;
         Long userDeptId = user.getDeptId();
         Set<Long> visibleDeptIds = new HashSet<>();
-        if (userDeptId != null) {
-            // 默认本部门
-            visibleDeptIds.add(userDeptId);
-        }
         for (Integer scope : dataScopes) {
             if (scope == null) {
                 continue;
             }
-            if (scope == 1) {
+            if (Objects.equals(scope, DataScopeEnum.ALL.getCode())) {
                 isAll = true;
                 break;
             }
-            if (scope == 3) {
-                // 本部门，已默认加入
-                continue;
+            if (Objects.equals(scope, DataScopeEnum.SELF_DEPT.getCode()) && userDeptId != null) {
+                // 本部门
+                visibleDeptIds.add(userDeptId);
             }
-            if (scope == 2 && userDeptId != null) {
+            if (Objects.equals(scope, DataScopeEnum.SELF_DEPT_AND_CHILDREN.getCode()) && userDeptId != null) {
                 // 本部门及以下：递归收集子树 id
                 visibleDeptIds.addAll(collectDeptIds(userDeptId));
             }
@@ -218,22 +217,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     private Set<Long> collectDeptIds(Long deptId) {
         Set<Long> result = new HashSet<>();
-        List<Dept> all = deptMapper.selectListByQuery(QueryWrapper.create().where(DEPT.ID.isNotNull()));
-        java.util.Map<Long, List<Long>> childrenMap = new java.util.HashMap<>();
-        for (Dept dept : all) {
+        List<Dept> deptList = deptMapper.selectListByQuery(QueryWrapper.create());
+        Map<Long, List<Long>> childrenMap = new HashMap<>();
+        for (Dept dept : deptList) {
             if (dept.getParentId() != null) {
                 childrenMap.computeIfAbsent(dept.getParentId(), k -> new ArrayList<>())
                         .add(dept.getId());
             }
         }
-        java.util.ArrayDeque<Long> queue = new java.util.ArrayDeque<>();
+        ArrayDeque<Long> queue = new ArrayDeque<>();
         queue.push(deptId);
         while (!queue.isEmpty()) {
             Long current = queue.poll();
             if (!result.add(current)) {
                 continue;
             }
-            List<Long> children = childrenMap.getOrDefault(current, java.util.Collections.emptyList());
+            List<Long> children = childrenMap.getOrDefault(current, Collections.emptyList());
             queue.addAll(children);
         }
         return result;

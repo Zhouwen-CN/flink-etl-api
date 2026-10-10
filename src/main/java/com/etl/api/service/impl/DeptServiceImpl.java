@@ -8,9 +8,11 @@ import com.etl.api.domain.form.DeptUpdateForm;
 import com.etl.api.domain.vo.DeptVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.DeptMapper;
+import com.etl.api.mapper.UserMapper;
 import com.etl.api.service.DeptService;
-import com.mybatisflex.core.row.DbChain;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -31,7 +33,10 @@ import java.util.stream.Collectors;
  * @since 2026-10-10
  */
 @Service
+@RequiredArgsConstructor
 public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements DeptService {
+
+    private final UserMapper userMapper;
 
     @Override
     public ResponseVO<Void> addDept(DeptCreateForm form) {
@@ -99,11 +104,12 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         }
 
         // 存在用户引用不允许删除
-        val exists = DbChain.table(User.class)
-                .eq(User::getDeptId, id)
-                .exists();
+        val user = userMapper.selectOneByQuery(
+                QueryWrapper.create()
+                        .eq(User::getDeptId, id)
+        );
 
-        if (exists) {
+        if (user != null) {
             return ResponseVO.error("删除失败，尚有用户依赖");
         }
         this.removeById(id);
