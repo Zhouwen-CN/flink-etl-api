@@ -8,6 +8,7 @@ import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.EtlJobMapper;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
+import com.etl.api.service.EtlProjectService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ import java.util.Collection;
 public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> implements EtlJobService {
 
     private final EtlJobInstanceService etlJobInstanceService;
+    private final EtlProjectService etlProjectService;
 
     @Override
     public ResponseVO<Void> addJob(EtlJobCreateForm form) {
@@ -38,7 +40,13 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
         if (exists) {
             return ResponseVO.recordExistsError(name);
         }
+        val project = etlProjectService.getById(form.getProjectId());
+        if (project == null) {
+            return ResponseVO.error("项目未找到: " + form.getProjectId());
+        }
         val entity = EtlJobConvert.INSTANCE.convert(form);
+        // 任务继承项目部门（数据权限）
+        entity.setDeptId(project.getDeptId());
         this.save(entity);
         return ResponseVO.ok();
     }

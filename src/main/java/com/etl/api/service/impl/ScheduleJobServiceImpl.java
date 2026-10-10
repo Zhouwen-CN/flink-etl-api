@@ -46,15 +46,17 @@ public class ScheduleJobServiceImpl extends ServiceImpl<ScheduleJobMapper, Sched
             return ResponseVO.recordExistsError(name + ":" + etlJobId);
         }
 
-        exists = etlJobService.queryChain()
+        val etlJob = etlJobService.queryChain()
                 .eq(EtlJob::getId, etlJobId)
                 .eq(EtlJob::getType, ETLJobTypeEnum.BATCH.getCode())
-                .exists();
-        if (!exists) {
+                .one();
+        if (etlJob == null) {
             return ResponseVO.error("Etl任务未找到 或 任务不是BATCH 模式: " + etlJobId);
         }
 
         val entity = ScheduleJobConvert.INSTANCE.convert(form);
+        // 定时任务继承任务部门（数据权限）
+        entity.setDeptId(etlJob.getDeptId());
         this.save(entity);
 
         try {
@@ -121,14 +123,16 @@ public class ScheduleJobServiceImpl extends ServiceImpl<ScheduleJobMapper, Sched
     @Override
     public ResponseVO<Void> modifyScheduleJob(ScheduleJobUpdateForm form) {
         val etlJobId = form.getEtlJobId();
-        val exists = etlJobService.queryChain()
+        val etlJob = etlJobService.queryChain()
                 .eq(EtlJob::getId, etlJobId)
                 .eq(EtlJob::getType, ETLJobTypeEnum.BATCH.getCode())
-                .exists();
-        if (!exists) {
+                .one();
+        if (etlJob == null) {
             return ResponseVO.error("Etl任务未找到 或 任务不是BATCH 模式: " + etlJobId);
         }
         val entity = ScheduleJobConvert.INSTANCE.convert(form);
+        // 定时任务继承任务部门（数据权限）
+        entity.setDeptId(etlJob.getDeptId());
         this.updateById(entity);
 
         try {

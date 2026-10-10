@@ -178,6 +178,8 @@ public class EtlJobManager {
                 etlJob.getType(),
                 FlinkJobStatusEnum.INITIALIZING
         );
+        // 任务实例继承任务部门（数据权限）
+        etlJobInstance.setDeptId(etlJob.getDeptId());
         etlJobInstanceService.save(etlJobInstance);
     }
 
