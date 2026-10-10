@@ -44,4 +44,9 @@ public class Role extends BaseEntity implements Serializable {
      */
     private String code;
 
+    /**
+     * 数据范围(1全部 2本部门及以下 3本部门)
+     */
+    private Integer dataScope;
+
 }

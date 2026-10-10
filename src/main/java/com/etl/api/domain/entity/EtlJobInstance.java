@@ -4,6 +4,7 @@ import com.etl.api.domain.base.BaseEntity;
 import com.etl.api.domain.base.InsertListener;
 import com.etl.api.domain.base.UpdateListener;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
+import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.Table;
 import lombok.AllArgsConstructor;
@@ -81,6 +82,12 @@ public class EtlJobInstance extends BaseEntity implements Serializable {
      * 持续时间
      */
     private Long duration;
+
+    /**
+     * 所属部门id（数据权限）
+     */
+    @Column(tenantId = true)
+    private Long deptId;
 
     public EtlJobInstance(String id, Long projectId, Long clusterId, Long jarId, Long jobId, Integer jobType, FlinkJobStatusEnum status) {
         this.id = id;

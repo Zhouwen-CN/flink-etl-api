@@ -3,6 +3,7 @@ package com.etl.api.domain.entity;
 import com.etl.api.domain.base.BaseEntity;
 import com.etl.api.domain.base.InsertListener;
 import com.etl.api.domain.base.UpdateListener;
+import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
@@ -43,5 +44,11 @@ public class EtlProject extends BaseEntity implements Serializable {
      * 项目描述
      */
     private String description;
+
+    /**
+     * 所属部门id（数据权限）
+     */
+    @Column(tenantId = true)
+    private Long deptId;
 
 }
