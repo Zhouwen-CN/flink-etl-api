@@ -9,11 +9,13 @@ import com.etl.api.domain.entity.UserRole;
 import com.etl.api.domain.form.ChangePwdForm;
 import com.etl.api.domain.form.UserCreateForm;
 import com.etl.api.domain.form.UserUpdateForm;
+import com.etl.api.domain.vo.DeptVO;
 import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.UserRoleVO;
 import com.etl.api.domain.vo.UserVO;
+import com.etl.api.service.DeptService;
 import com.etl.api.service.RoleService;
 import com.etl.api.service.UserRoleService;
 import com.etl.api.service.UserService;
@@ -54,6 +56,7 @@ public class UserController {
     private final UserService userService;
     private final RoleService roleService;
     private final UserRoleService userRoleService;
+    private final DeptService deptService;
     @Value("${custom.default-pwd}")
     private String defaultPwd;
 
@@ -126,9 +129,17 @@ public class UserController {
     }
 
     @SaCheckPermission("user.select")
+    @Operation(summary = "部门选择器")
+    @GetMapping("/dept/selector")
+    public ResponseVO<List<DeptVO>> deptSelector() {
+        val vos = deptService.listTree(null);
+        return ResponseVO.ok(vos);
+    }
+
+    @SaCheckPermission("user.select")
     @Operation(summary = "角色选择器")
     @GetMapping("/role/selector")
-    public ResponseVO<List<DictionaryVO>> selector() {
+    public ResponseVO<List<DictionaryVO>> roleSelector() {
         val vos = roleService.list()
                 .stream()
                 .map(RoleConvert.INSTANCE::convert)

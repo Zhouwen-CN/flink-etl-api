@@ -38,4 +38,7 @@ public class UserCreateForm {
     @Schema(description = "用户角色ID列表")
     private List<Long> roleIds;
 
+    @NotNull
+    @Schema(description = "所属部门id")
+    private Long deptId;
 }

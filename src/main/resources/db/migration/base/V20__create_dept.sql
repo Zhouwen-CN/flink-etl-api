@@ -47,3 +47,7 @@ insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (7, 3, '本部门及以下', 2, 2);
 insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (8, 3, '本部门', 3, 3);
+
+-- 添加部门根节点
+insert into T_DEPT(id, name)
+values (1, '海勃数科')

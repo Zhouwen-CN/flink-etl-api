@@ -28,6 +28,9 @@ public class UserVO {
     @Schema(description = "账号状态")
     private boolean status;
 
+    @Schema(description = "所属部门id")
+    private Long deptId;
+
     @Schema(description = "更新时间")
     private LocalDateTime updateTime;
 }
