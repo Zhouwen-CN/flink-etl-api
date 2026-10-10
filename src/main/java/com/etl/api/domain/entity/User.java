@@ -59,4 +59,9 @@ public class User extends BaseEntity implements Serializable {
      */
     private Boolean status;
 
+    /**
+     * 所属部门id
+     */
+    private Long deptId;
+
 }
