@@ -12,10 +12,12 @@ public interface ScheduleJobConvert {
 
     ScheduleJobConvert INSTANCE = Mappers.getMapper(ScheduleJobConvert.class);
 
+    @Mapping(target = "deptId", ignore = true)
     @Mapping(target = "jobEnable", ignore = true)
     @Mapping(target = "id", ignore = true)
     ScheduleJob convert(ScheduleJobCreateForm form);
 
+    @Mapping(target = "deptId", ignore = true)
     @Mapping(target = "jobEnable", ignore = true)
     ScheduleJob convert(ScheduleJobUpdateForm form);
 }

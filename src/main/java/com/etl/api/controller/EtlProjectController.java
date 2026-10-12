@@ -1,6 +1,7 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.etl.api.aop.IgnoreTenant;
 import com.etl.api.domain.convert.EtlProjectConvert;
 import com.etl.api.domain.entity.EtlProject;
 import com.etl.api.domain.form.EtlProjectCreateForm;
@@ -62,6 +63,7 @@ public class EtlProjectController {
         return etlProjectService.addProject(form);
     }
 
+    @IgnoreTenant
     @SaCheckPermission("project.update")
     @Operation(summary = "更新")
     @PutMapping

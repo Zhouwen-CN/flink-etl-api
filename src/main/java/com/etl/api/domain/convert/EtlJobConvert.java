@@ -13,9 +13,11 @@ public interface EtlJobConvert {
 
     EtlJobConvert INSTANCE = Mappers.getMapper(EtlJobConvert.class);
 
+    @Mapping(target = "deptId", ignore = true)
     @Mapping(target = "id", ignore = true)
     EtlJob convert(EtlJobCreateForm form);
 
+    @Mapping(target = "deptId", ignore = true)
     EtlJob convert(EtlJobUpdateForm form);
 
     @Mapping(target = "value", source = "id")
