@@ -15,8 +15,8 @@ import com.etl.api.domain.vo.TokenVO;
 import com.etl.api.enumeration.DataScopeEnum;
 import com.etl.api.enumeration.LoginOperationEnum;
 import com.etl.api.job.config.QuartzJobProperties;
-import com.etl.api.mapper.DeptMapper;
 import com.etl.api.mapper.UserMapper;
+import com.etl.api.service.DeptService;
 import com.etl.api.service.LoginCaptchaService;
 import com.etl.api.service.LoginLogService;
 import com.etl.api.service.UserRoleService;
@@ -61,7 +61,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final UserRoleService userRoleService;
     private final LoginLogService loginLogService;
     private final QuartzJobProperties quartzJobProperties;
-    private final DeptMapper deptMapper;
+    private final DeptService deptService;
 
     @Override
     public ResponseVO<TokenVO> login(UserLoginForm form, HttpServletRequest request) {
@@ -217,7 +217,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     private Set<Long> collectDeptIds(Long deptId) {
         Set<Long> result = new HashSet<>();
-        List<Dept> deptList = deptMapper.selectListByQuery(QueryWrapper.create());
+        List<Dept> deptList = deptService.list();
         Map<Long, List<Long>> childrenMap = new HashMap<>();
         for (Dept dept : deptList) {
             if (dept.getParentId() != null) {

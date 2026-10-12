@@ -15,6 +15,9 @@ public class EtlProjectVO {
     @Schema(description = "项目名称")
     private String name;
 
+    @Schema(description = "所属部门id（数据权限）")
+    private Long deptId;
+
     @Schema(description = "项目描述")
     private String description;
 

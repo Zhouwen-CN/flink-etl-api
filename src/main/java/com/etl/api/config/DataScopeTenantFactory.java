@@ -15,7 +15,7 @@ import java.util.List;
  * <ul>
  *     <li>全量（dataScopeAll=true）→ 返回 null，不附加部门条件（管理员兜底）</li>
  *     <li>非全量 → 返回登录会话中的可见部门 id 集合</li>
- *     <li>无登录态（异步线程等）→ 返回 null，不附加部门条件（由调用方按需用 withoutTenantCondition 包裹）</li>
+ *     <li>无登录态（异步线程等）→ 返回 null，不附加部门条件</li>
  * </ul>
  *
  * <p>Spring Boot starter 会自动识别容器中的 {@link TenantFactory} Bean 并注册到 {@code TenantManager}。

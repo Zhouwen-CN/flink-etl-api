@@ -1,6 +1,8 @@
 package com.etl.api.config;
 
 import com.mybatisflex.core.audit.AuditManager;
+import com.mybatisflex.core.audit.ConsoleMessageCollector;
+import com.mybatisflex.core.audit.MessageCollector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -18,9 +20,7 @@ public class MyBatisFlexConfiguration {
         AuditManager.setAuditEnable(true);
 
         //设置 SQL 审计收集器
-        AuditManager.setMessageCollector(auditMessage ->
-                log.info("{},{}ms", auditMessage.getFullSql()
-                        , auditMessage.getElapsedTime())
-        );
+        MessageCollector collector = new ConsoleMessageCollector();
+        AuditManager.setMessageCollector(collector);
     }
 }

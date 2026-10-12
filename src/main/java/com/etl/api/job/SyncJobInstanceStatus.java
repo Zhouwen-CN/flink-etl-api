@@ -11,7 +11,6 @@ import com.etl.api.util.LocalDateTimeUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mybatisflex.core.tenant.TenantManager;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -41,8 +40,6 @@ public class SyncJobInstanceStatus extends QuartzJobBean {
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-        // 系统级任务，无登录态，忽略部门数据权限过滤
-        TenantManager.withoutTenantCondition(() -> {
         log.debug("同步 Flink 作业状态信息");
         val flinkClusterMap = flinkClusterService.list()
                 .stream()
@@ -96,7 +93,6 @@ public class SyncJobInstanceStatus extends QuartzJobBean {
 
         // 更新任务状态
         etlJobInstanceService.updateBatch(etlJobInstanceList);
-        });
     }
 
     @Getter

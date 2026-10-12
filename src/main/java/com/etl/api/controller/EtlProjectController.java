@@ -5,9 +5,11 @@ import com.etl.api.domain.convert.EtlProjectConvert;
 import com.etl.api.domain.entity.EtlProject;
 import com.etl.api.domain.form.EtlProjectCreateForm;
 import com.etl.api.domain.form.EtlProjectUpdateForm;
+import com.etl.api.domain.vo.DeptVO;
 import com.etl.api.domain.vo.EtlProjectVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.service.DeptService;
 import com.etl.api.service.EtlProjectService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,12 +31,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/project")
 @Tag(name = "ETL项目 控制器")
 @RequiredArgsConstructor
 public class EtlProjectController {
     private final EtlProjectService etlProjectService;
+    private final DeptService deptService;
 
     @SaCheckPermission("project.select")
     @Operation(summary = "分页查询")
@@ -71,5 +76,13 @@ public class EtlProjectController {
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
         return etlProjectService.removeProject(id);
+    }
+
+    @SaCheckPermission("project.select")
+    @Operation(summary = "部门选择器")
+    @GetMapping("/dept/selector")
+    public ResponseVO<List<DeptVO>> deptSelector() {
+        val vos = deptService.listTree(null);
+        return ResponseVO.ok(vos);
     }
 }

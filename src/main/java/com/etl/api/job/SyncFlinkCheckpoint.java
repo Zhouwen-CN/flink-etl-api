@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mybatisflex.core.tenant.TenantManager;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -48,8 +47,6 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-        // 系统级任务，无登录态，忽略部门数据权限过滤
-        TenantManager.withoutTenantCondition(() -> {
         log.debug("同步 Flink 任务检查点列表");
         val flinkClusterMap = flinkClusterService.list()
                 .stream()
@@ -95,7 +92,6 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
                                 });
                     }
                 });
-        });
     }
 
     @Getter

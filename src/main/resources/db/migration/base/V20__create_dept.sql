@@ -14,22 +14,22 @@ create table T_DEPT
 
 -- 用户添加所属部门列
 alter table T_USER
-    add column dept_id bigint default null comment '所属部门id';
+    add column dept_id bigint default null comment '所属部门id' after status;
 
 -- 角色添加 数据范围列
 alter table T_ROLE
-    add column data_scope tinyint default null comment '数据范围（1全部，2本部门及以下，3本部门）';
+    add column data_scope tinyint default null comment '数据范围（1全部，2本部门及以下，3本部门）' after code;
 
 
 -- 4张需要做数据权限的表，添加所属部门列
 alter table T_ETL_PROJECT
-    add column dept_id bigint default null comment '归属部门id';
+    add column dept_id bigint default null comment '归属部门id' after description;
 alter table T_ETL_JOB
-    add column dept_id bigint default null comment '归属部门id';
+    add column dept_id bigint default null comment '归属部门id' after config;
 alter table T_ETL_JOB_INSTANCE
-    add column dept_id bigint default null comment '归属部门id';
+    add column dept_id bigint default null comment '归属部门id' after duration;
 alter table T_SCHEDULE_JOB
-    add column dept_id bigint default null comment '归属部门id';
+    add column dept_id bigint default null comment '归属部门id' after job_enable;
 
 
 -- 初始化角色数据范围：admin 角色（id=1）设为全部（data_scope=1），保证管理员全量可见
@@ -50,4 +50,25 @@ values (8, 3, '本部门', 3, 3);
 
 -- 添加部门根节点
 insert into T_DEPT(id, name)
-values (1, '海勃数科')
+values (1, '海勃数科');
+
+
+-- 项目权限
+INSERT INTO t_permission (id, name, code)
+VALUES (49, '查询项目', 'project.select');
+INSERT INTO t_permission (id, name, code)
+VALUES (50, '新增项目', 'project.insert');
+INSERT INTO t_permission (id, name, code)
+VALUES (51, '更新项目', 'project.update');
+INSERT INTO t_permission (id, name, code)
+VALUES (52, '删除项目', 'project.delete');
+
+-- 部门权限
+INSERT INTO t_permission (id, name, code)
+VALUES (53, '查询部门', 'dept.select');
+INSERT INTO t_permission (id, name, code)
+VALUES (54, '新增部门', 'dept.insert');
+INSERT INTO t_permission (id, name, code)
+VALUES (55, '更新部门', 'dept.update');
+INSERT INTO t_permission (id, name, code)
+VALUES (56, '删除部门', 'dept.delete');

@@ -9,7 +9,6 @@ import com.etl.api.job.config.QuartzJobProperties;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.HttpExchangeHistoryService;
 import com.etl.api.service.LoginCaptchaService;
-import com.mybatisflex.core.tenant.TenantManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -36,8 +35,6 @@ public class DeleteExpirationRecord extends QuartzJobBean {
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-        // 系统级任务，无登录态，忽略部门数据权限过滤
-        TenantManager.withoutTenantCondition(() -> {
         log.debug("删除 验证码、请求历史 过期数据");
 
         val config = quartzJobProperties.getDeleteExpirationRecord();
@@ -58,7 +55,6 @@ public class DeleteExpirationRecord extends QuartzJobBean {
                 .notIn(EtlJobInstance::getStatus, FlinkJobStatusEnum.getProcessingStatus())
                 .lt(EtlJobInstance::getEndTime, LocalDateTime.now().minus(config.getJobInstance().toMillis(), ChronoUnit.MILLIS))
                 .remove();
-        });
     }
 
 }
