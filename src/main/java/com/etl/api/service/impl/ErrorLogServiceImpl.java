@@ -23,7 +23,7 @@ public class ErrorLogServiceImpl extends ServiceImpl<ErrorLogMapper, ErrorLog> i
 
     @Override
     public void saveErrorLog(Exception e) {
-        val username = SaSessionUtil.getUsername();
+        val username = SaSessionUtil.getUserInfo().getUsername();
         val request = SpringMVCUtil.getRequest();
         val ip = IPUtil.getClientIP(request);
         val region = IP2RegionUtil.search(ip);

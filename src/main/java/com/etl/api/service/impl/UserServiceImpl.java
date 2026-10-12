@@ -101,10 +101,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         StpUtil.login(user.getId());
 
         // 使用 sa session 存储用户名称
-        SaSessionUtil.setUsername(username);
-        SaSessionUtil.setNickname(user.getNickname());
-        // 计算并写入部门数据范围（isDataScopeAll / deptIds）
-        initDataScope(user);
+        val sessionUserInfo = new SaSessionUtil.SaSessionUserInfo();
+        sessionUserInfo.setUsername(username);
+        sessionUserInfo.setNickname(user.getNickname());
+        sessionUserInfo.setDeptId(user.getDeptId());
+        // 计算并写入部门数据范围
+        initDataScope(user, sessionUserInfo);
+        SaSessionUtil.setUserInfo(sessionUserInfo);
 
         // 删除验证码
         loginCaptchaService.removeById(loginCaptcha.getId());
@@ -178,7 +181,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * isDataScopeAll=true（任一角色 data_scope=1 全部）
      * deptIds=可见部门 id 集合（2=本部门及以下，3=本部门）
      */
-    private void initDataScope(User user) {
+    private void initDataScope(User user, SaSessionUtil.SaSessionUserInfo sessionUserInfo) {
         val sql = QueryWrapper.create()
                 .select(ROLE.DATA_SCOPE)
                 .from(USER_ROLE)
@@ -194,22 +197,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             if (scope == null) {
                 continue;
             }
+
+            // 所有
             if (Objects.equals(scope, DataScopeEnum.ALL.getCode())) {
                 isAll = true;
                 break;
             }
+
+            // 本部门
             if (Objects.equals(scope, DataScopeEnum.SELF_DEPT.getCode()) && userDeptId != null) {
-                // 本部门
                 visibleDeptIds.add(userDeptId);
             }
+
+            // 本部门及以下：递归收集子树 id
             if (Objects.equals(scope, DataScopeEnum.SELF_DEPT_AND_CHILDREN.getCode()) && userDeptId != null) {
-                // 本部门及以下：递归收集子树 id
                 visibleDeptIds.addAll(collectDeptIds(userDeptId));
             }
         }
 
-        SaSessionUtil.setDataScopeAll(isAll);
-        SaSessionUtil.setDeptIds(new ArrayList<>(visibleDeptIds));
+        sessionUserInfo.setDataScopeAll(isAll);
+        sessionUserInfo.setDataScopeDeptIds(new ArrayList<>(visibleDeptIds));
     }
 
     /**
@@ -240,7 +247,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public void logout(Long id, HttpServletRequest request) {
-        val username = SaSessionUtil.getUsername();
+        val username = SaSessionUtil.getUserInfo().getUsername();
         loginLogService.saveLoginLog(request, username, LoginOperationEnum.LOGOUT, true, null);
         StpUtil.logout(id);
     }

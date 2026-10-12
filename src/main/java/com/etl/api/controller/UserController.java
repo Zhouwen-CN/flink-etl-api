@@ -106,10 +106,11 @@ public class UserController {
     @Operation(summary = "获取用户信息")
     @GetMapping("/info")
     public ResponseVO<UserRoleVO> getUserInfo() {
+        val userInfo = SaSessionUtil.getUserInfo();
         val userRoleVO = new UserRoleVO(
                 StpUtil.getLoginIdAsLong(),
-                SaSessionUtil.getUsername(),
-                SaSessionUtil.getNickname(),
+                userInfo.getUsername(),
+                userInfo.getNickname(),
                 StpUtil.getRoleList(),
                 StpUtil.getPermissionList()
         );
@@ -132,7 +133,7 @@ public class UserController {
     @Operation(summary = "部门选择器")
     @GetMapping("/dept/selector")
     public ResponseVO<List<DeptVO>> deptSelector() {
-        val vos = deptService.listTree(null);
+        val vos = deptService.treeSelector();
         return ResponseVO.ok(vos);
     }
 

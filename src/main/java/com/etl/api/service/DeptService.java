@@ -25,4 +25,6 @@ public interface DeptService extends IService<Dept> {
 
     List<DeptVO> listTree(String name);
 
+    List<DeptVO> treeSelector();
+
 }

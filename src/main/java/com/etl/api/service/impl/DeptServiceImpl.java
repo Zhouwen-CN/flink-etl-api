@@ -10,6 +10,7 @@ import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.DeptMapper;
 import com.etl.api.mapper.UserMapper;
 import com.etl.api.service.DeptService;
+import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -116,18 +118,18 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         return ResponseVO.ok();
     }
 
-    @Override
-    public List<DeptVO> listTree(String name) {
+
+    private List<DeptVO> listTree(Predicate<Dept> filter, boolean isFilter) {
         // 全量加载，便于回溯祖先和构建树
         List<Dept> all = this.list();
         Map<Long, Dept> deptMap = all.stream()
                 .collect(Collectors.toMap(Dept::getId, d -> d));
 
         Set<Long> selectedIds;
-        if (StringUtils.hasText(name)) {
+        if (isFilter) {
             // 1. 先查出名称命中的节点
             Set<Long> matchedIds = all.stream()
-                    .filter(d -> d.getName() != null && d.getName().contains(name.trim()))
+                    .filter(filter)
                     .map(Dept::getId)
                     .collect(Collectors.toSet());
             // 2. 再沿 parentId 向上回溯，把全部祖先补进来
@@ -167,6 +169,20 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         // 按 sort 升序排列（含子部门）
         sortTree(roots);
         return roots;
+    }
+
+    @Override
+    public List<DeptVO> listTree(String name) {
+        return this.listTree(d -> d.getName().contains(name.trim()), StringUtils.hasText(name));
+    }
+
+    @Override
+    public List<DeptVO> treeSelector() {
+        // 如果数据权限范围是所有 或者 传入的 id 为空，则不进行过滤
+        val userInfo = SaSessionUtil.getUserInfo();
+        val deptId = userInfo.getDeptId();
+        val dataScopeAll = userInfo.isDataScopeAll();
+        return this.listTree(d -> d.getId().equals(deptId), !dataScopeAll && deptId != null);
     }
 
     private void sortTree(List<DeptVO> list) {

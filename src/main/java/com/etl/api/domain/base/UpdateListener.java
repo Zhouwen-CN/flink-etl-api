@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 public class UpdateListener extends AbstractUpdateListener<BaseEntity> {
     @Override
     public void doUpdate(BaseEntity baseEntity) {
-        baseEntity.setUpdateUser(SaSessionUtil.getUsername());
+        baseEntity.setUpdateUser(SaSessionUtil.getUserInfo().getUsername());
         baseEntity.setUpdateTime(LocalDateTime.now());
     }
 }

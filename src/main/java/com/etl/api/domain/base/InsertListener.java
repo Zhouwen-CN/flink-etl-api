@@ -10,7 +10,7 @@ public class InsertListener extends AbstractInsertListener<BaseEntity> {
 
     @Override
     public void doInsert(BaseEntity baseEntity) {
-        val username = SaSessionUtil.getUsername();
+        val username = SaSessionUtil.getUserInfo().getUsername();
         baseEntity.setCreateUser(username);
         baseEntity.setCreateTime(LocalDateTime.now());
         baseEntity.setUpdateUser(username);

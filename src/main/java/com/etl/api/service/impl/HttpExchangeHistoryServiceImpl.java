@@ -59,7 +59,7 @@ public class HttpExchangeHistoryServiceImpl extends ServiceImpl<HttpExchangeHist
                 .responseStatus(response.getStatus())
                 .responseHeaders(objectMapper.writeValueAsString(response.getHeaders()))
                 .takenTime(httpExchange.getTimeTaken().toMillis())
-                .createUser(SaSessionUtil.getUsername())
+                .createUser(SaSessionUtil.getUserInfo().getUsername())
                 .build();
 
         this.save(httpExchangeHistory);
