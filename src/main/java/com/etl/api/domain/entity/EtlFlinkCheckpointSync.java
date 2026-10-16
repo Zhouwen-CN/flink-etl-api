@@ -11,15 +11,15 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * Flink检查点表 实体类。
+ * Flink 检查点同步表 实体类。
  *
  * @author chen
  * @since 2026-07-02
  */
 @Data
 @Builder
-@Table(value = "T_FLINK_CHECKPOINT")
-public class FlinkCheckpoint implements Serializable {
+@Table(value = "T_ETL_FLINK_CHECKPOINT_SYNC")
+public class EtlFlinkCheckpointSync implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

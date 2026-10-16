@@ -6,9 +6,9 @@ import com.etl.api.domain.convert.EtlFlinkClusterConvert;
 import com.etl.api.domain.convert.EtlJarPackageConvert;
 import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.convert.EtlProjectConvert;
+import com.etl.api.domain.entity.EtlFlinkCheckpointSync;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.entity.EtlJobInstance;
-import com.etl.api.domain.entity.FlinkCheckpoint;
 import com.etl.api.domain.form.EtlJobCreateForm;
 import com.etl.api.domain.form.EtlJobSubmitForm;
 import com.etl.api.domain.form.EtlJobUpdateForm;
@@ -16,12 +16,12 @@ import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.EtlJobVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.service.EtlFlinkCheckpointSyncService;
 import com.etl.api.service.EtlFlinkClusterService;
 import com.etl.api.service.EtlJarPackageService;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.EtlProjectService;
-import com.etl.api.service.FlinkCheckpointService;
 import com.etl.api.service.manager.EtlJobManager;
 import com.etl.api.util.LocalDateTimeUtil;
 import com.mybatisflex.core.paginate.Page;
@@ -60,7 +60,7 @@ public class EtlJobController {
     private final EtlFlinkClusterService flinkClusterService;
     private final EtlJobInstanceService etlJobInstanceService;
     private final EtlJobManager etlJobManager;
-    private final FlinkCheckpointService flinkCheckpointService;
+    private final EtlFlinkCheckpointSyncService flinkCheckpointSyncService;
     private final EtlProjectService etlProjectService;
 
     @SaCheckPermission("job.select")
@@ -176,9 +176,9 @@ public class EtlJobController {
     public ResponseVO<List<DictionaryVO>> checkpointSelector(
             @RequestParam("instanceId") @Parameter(description = "实例id") String instanceId
     ) {
-        val vos = flinkCheckpointService.queryChain()
-                .eq(FlinkCheckpoint::getJobId, instanceId)
-                .orderBy(FlinkCheckpoint::getChkId, false)
+        val vos = flinkCheckpointSyncService.queryChain()
+                .eq(EtlFlinkCheckpointSync::getJobId, instanceId)
+                .orderBy(EtlFlinkCheckpointSync::getChkId, false)
                 .limit(5) // 只输出5条
                 .list()
                 .stream()

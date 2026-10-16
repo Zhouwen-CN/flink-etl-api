@@ -1,13 +1,13 @@
 package com.etl.api.job;
 
+import com.etl.api.domain.entity.EtlFlinkCheckpointSync;
 import com.etl.api.domain.entity.EtlFlinkCluster;
 import com.etl.api.domain.entity.EtlJobInstance;
-import com.etl.api.domain.entity.FlinkCheckpoint;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
+import com.etl.api.service.EtlFlinkCheckpointSyncService;
 import com.etl.api.service.EtlFlinkClusterService;
 import com.etl.api.service.EtlJobInstanceService;
-import com.etl.api.service.FlinkCheckpointService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.etl.api.util.LocalDateTimeUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.etl.api.domain.entity.table.FlinkCheckpointTableDef.FLINK_CHECKPOINT;
+import static com.etl.api.domain.entity.table.EtlFlinkCheckpointSyncTableDef.ETL_FLINK_CHECKPOINT_SYNC;
 import static com.mybatisflex.core.query.QueryMethods.max;
 
 
@@ -43,7 +43,7 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
     private final EtlFlinkClusterService flinkClusterService;
     private final FlinkApiProvider flinkApiProvider;
     private final ObjectMapper objectMapper;
-    private final FlinkCheckpointService flinkCheckpointService;
+    private final EtlFlinkCheckpointSyncService flinkCheckpointSyncService;
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
@@ -74,9 +74,9 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
                                 .map(item -> objectMapper.convertValue(item, new TypeReference<List<CheckpointHistoryDTO>>() {
                                 }))
                                 .ifPresent(list -> {
-                                    val maxChkId = flinkCheckpointService.queryChain()
-                                            .select(max(FLINK_CHECKPOINT.CHK_ID))
-                                            .eq(FlinkCheckpoint::getJobId, flinkJobId)
+                                    val maxChkId = flinkCheckpointSyncService.queryChain()
+                                            .select(max(ETL_FLINK_CHECKPOINT_SYNC.CHK_ID))
+                                            .eq(EtlFlinkCheckpointSync::getJobId, flinkJobId)
                                             .oneAs(Long.class);
 
                                     // 只获取完成的 checkpoint
@@ -88,7 +88,7 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
                                     }
 
                                     val flinkCheckpointList = list.stream().map(item -> item.toCheckPoint(flinkJobId)).toList();
-                                    flinkCheckpointService.saveBatch(flinkCheckpointList);
+                                    flinkCheckpointSyncService.saveBatch(flinkCheckpointList);
                                 });
                     }
                 });
@@ -108,8 +108,8 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
         @JsonProperty("external_path")
         private String externalPath;
 
-        public FlinkCheckpoint toCheckPoint(String flinkJobId) {
-            return FlinkCheckpoint.builder()
+        public EtlFlinkCheckpointSync toCheckPoint(String flinkJobId) {
+            return EtlFlinkCheckpointSync.builder()
                     .jobId(flinkJobId)
                     .chkId(this.id)
                     .type(this.savepoint)

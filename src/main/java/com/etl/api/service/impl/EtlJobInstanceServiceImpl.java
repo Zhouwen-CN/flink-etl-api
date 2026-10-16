@@ -1,13 +1,13 @@
 package com.etl.api.service.impl;
 
+import com.etl.api.domain.entity.EtlFlinkCheckpointSync;
 import com.etl.api.domain.entity.EtlJobInstance;
-import com.etl.api.domain.entity.FlinkCheckpoint;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.mapper.EtlJobInstanceMapper;
+import com.etl.api.service.EtlFlinkCheckpointSyncService;
 import com.etl.api.service.EtlJobInstanceService;
-import com.etl.api.service.FlinkCheckpointService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EtlJobInstanceServiceImpl extends ServiceImpl<EtlJobInstanceMapper, EtlJobInstance> implements EtlJobInstanceService {
 
-    private final FlinkCheckpointService flinkCheckpointService;
+    private final EtlFlinkCheckpointSyncService flinkCheckpointSyncService;
 
     @Override
     public ResponseVO<Void> removeInstance(String id) {
@@ -38,8 +38,8 @@ public class EtlJobInstanceServiceImpl extends ServiceImpl<EtlJobInstanceMapper,
 
         // 流任务，删除实例的时候需要删除相关的检查点
         if (ETLJobTypeEnum.STREAMING.getCode().equals(etlJobInstance.getJobType())) {
-            flinkCheckpointService.updateChain()
-                    .eq(FlinkCheckpoint::getJobId, id)
+            flinkCheckpointSyncService.updateChain()
+                    .eq(EtlFlinkCheckpointSync::getJobId, id)
                     .remove();
         }
 
