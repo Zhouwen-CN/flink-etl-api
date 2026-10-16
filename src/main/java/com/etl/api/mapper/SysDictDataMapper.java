@@ -1,6 +1,6 @@
 package com.etl.api.mapper;
 
-import com.etl.api.domain.entity.DictData;
+import com.etl.api.domain.entity.SysDictData;
 import com.mybatisflex.core.BaseMapper;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.BaseMapper;
  * @author chen
  * @since 2026-05-12
  */
-public interface DictDataMapper extends BaseMapper<DictData> {
+public interface SysDictDataMapper extends BaseMapper<SysDictData> {
 
 }

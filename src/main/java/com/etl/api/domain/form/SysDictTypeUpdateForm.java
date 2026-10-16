@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Schema(description = "更新字典类型表单")
-public class DictTypeUpdateForm extends DictTypeCreateForm {
+public class SysDictTypeUpdateForm extends SysDictTypeCreateForm {
 
     @NotNull
     @Schema(description = "自增主键")

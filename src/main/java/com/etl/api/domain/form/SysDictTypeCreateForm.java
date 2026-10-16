@@ -8,7 +8,7 @@ import org.hibernate.validator.constraints.Length;
 
 @Data
 @Schema(description = "新增字典类型表单")
-public class DictTypeCreateForm {
+public class SysDictTypeCreateForm {
 
     @NotBlank
     @Length(max = 30)

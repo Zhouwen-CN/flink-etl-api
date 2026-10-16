@@ -1,6 +1,6 @@
 package com.etl.api.mapper;
 
-import com.etl.api.domain.entity.DictType;
+import com.etl.api.domain.entity.SysDictType;
 import com.mybatisflex.core.BaseMapper;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.BaseMapper;
  * @author chen
  * @since 2026-05-12
  */
-public interface DictTypeMapper extends BaseMapper<DictType> {
+public interface SysDictTypeMapper extends BaseMapper<SysDictType> {
 
 }

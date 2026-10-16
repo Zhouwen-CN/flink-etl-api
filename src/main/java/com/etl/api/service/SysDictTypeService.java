@@ -1,7 +1,7 @@
 package com.etl.api.service;
 
-import com.etl.api.domain.entity.DictType;
-import com.etl.api.domain.form.DictTypeCreateForm;
+import com.etl.api.domain.entity.SysDictType;
+import com.etl.api.domain.form.SysDictTypeCreateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
@@ -13,9 +13,9 @@ import java.util.Collection;
  * @author chen
  * @since 2026-05-12
  */
-public interface DictTypeService extends IService<DictType> {
+public interface SysDictTypeService extends IService<SysDictType> {
 
-    ResponseVO<Void> addDictType(DictTypeCreateForm form);
+    ResponseVO<Void> addDictType(SysDictTypeCreateForm form);
 
     ResponseVO<Void> removeDictType(Long id);
 

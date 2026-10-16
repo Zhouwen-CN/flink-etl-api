@@ -1,13 +1,13 @@
 package com.etl.api.service.impl;
 
-import com.etl.api.domain.convert.DictTypeConvert;
-import com.etl.api.domain.entity.DictData;
-import com.etl.api.domain.entity.DictType;
-import com.etl.api.domain.form.DictTypeCreateForm;
+import com.etl.api.domain.convert.SysDictTypeConvert;
+import com.etl.api.domain.entity.SysDictData;
+import com.etl.api.domain.entity.SysDictType;
+import com.etl.api.domain.form.SysDictTypeCreateForm;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.mapper.DictTypeMapper;
-import com.etl.api.service.DictDataService;
-import com.etl.api.service.DictTypeService;
+import com.etl.api.mapper.SysDictTypeMapper;
+import com.etl.api.service.SysDictDataService;
+import com.etl.api.service.SysDictTypeService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -23,20 +23,20 @@ import java.util.Collection;
  */
 @Service
 @RequiredArgsConstructor
-public class DictTypeServiceImpl extends ServiceImpl<DictTypeMapper, DictType> implements DictTypeService {
-    private final DictDataService dictDataService;
+public class SysDictTypeServiceImpl extends ServiceImpl<SysDictTypeMapper, SysDictType> implements SysDictTypeService {
+    private final SysDictDataService dictDataService;
 
     @Override
-    public ResponseVO<Void> addDictType(DictTypeCreateForm form) {
+    public ResponseVO<Void> addDictType(SysDictTypeCreateForm form) {
         val name = form.getName();
         val exists = this.queryChain()
-                .eq(DictType::getName, name)
+                .eq(SysDictType::getName, name)
                 .exists();
         if (exists) {
             return ResponseVO.recordExistsError(name);
         }
 
-        val entity = DictTypeConvert.INSTANCE.convert(form);
+        val entity = SysDictTypeConvert.INSTANCE.convert(form);
         this.save(entity);
         return ResponseVO.ok();
     }
@@ -44,7 +44,7 @@ public class DictTypeServiceImpl extends ServiceImpl<DictTypeMapper, DictType> i
     @Override
     public ResponseVO<Void> removeDictType(Long id) {
         val exists = dictDataService.queryChain()
-                .eq(DictData::getTypeId, id)
+                .eq(SysDictData::getTypeId, id)
                 .exists();
         if (exists) {
             return ResponseVO.error("删除失败，尚有字典数据依赖");
@@ -56,7 +56,7 @@ public class DictTypeServiceImpl extends ServiceImpl<DictTypeMapper, DictType> i
     @Override
     public ResponseVO<Void> removeBatchDictType(Collection<Long> ids) {
         val exists = dictDataService.queryChain()
-                .in(DictData::getTypeId, ids)
+                .in(SysDictData::getTypeId, ids)
                 .exists();
         if (exists) {
             return ResponseVO.error("删除失败，尚有字典数据依赖");

@@ -1,15 +1,15 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.etl.api.domain.convert.DictDataConvert;
-import com.etl.api.domain.entity.DictData;
-import com.etl.api.domain.form.DictDataCreateForm;
-import com.etl.api.domain.form.DictDataUpdateForm;
-import com.etl.api.domain.vo.DictDataVO;
+import com.etl.api.domain.convert.SysDictDataConvert;
+import com.etl.api.domain.entity.SysDictData;
+import com.etl.api.domain.form.SysDictDataCreateForm;
+import com.etl.api.domain.form.SysDictDataUpdateForm;
 import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.service.DictDataService;
+import com.etl.api.domain.vo.SysDictDataVO;
+import com.etl.api.service.SysDictDataService;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,20 +35,20 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Collection;
 import java.util.List;
 
-import static com.etl.api.domain.entity.table.DictDataTableDef.DICT_DATA;
-import static com.etl.api.domain.entity.table.DictTypeTableDef.DICT_TYPE;
+import static com.etl.api.domain.entity.table.SysDictDataTableDef.SYS_DICT_DATA;
+import static com.etl.api.domain.entity.table.SysDictTypeTableDef.SYS_DICT_TYPE;
 
 @RestController
 @RequestMapping("/dict/data")
 @Tag(name = "字典数据 控制器")
 @RequiredArgsConstructor
 public class DictDataController {
-    private final DictDataService dictDataService;
+    private final SysDictDataService dictDataService;
 
     @SaCheckPermission("dict.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<DictDataVO>> getPage(
+    public ResponseVO<PageVO<SysDictDataVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam("typeId") @Parameter(description = "字典类型ID") Long typeId,
@@ -56,10 +56,10 @@ public class DictDataController {
     ) {
 
         val page = dictDataService.queryChain()
-                .eq(DictData::getTypeId, typeId)
-                .like(DictData::getLabel, searchName, StringUtils.hasText(searchName))
-                .orderBy(DictData::getSortId, true)
-                .pageAs(Page.of(currentPage, pageSize), DictDataVO.class);
+                .eq(SysDictData::getTypeId, typeId)
+                .like(SysDictData::getLabel, searchName, StringUtils.hasText(searchName))
+                .orderBy(SysDictData::getSortId, true)
+                .pageAs(Page.of(currentPage, pageSize), SysDictDataVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }
@@ -67,7 +67,7 @@ public class DictDataController {
     @SaCheckPermission("dict.insert")
     @Operation(summary = "新增")
     @PostMapping
-    public ResponseVO<Void> add(@RequestBody @Validated DictDataCreateForm form) {
+    public ResponseVO<Void> add(@RequestBody @Validated SysDictDataCreateForm form) {
         return dictDataService.addDictData(form);
 
     }
@@ -75,8 +75,8 @@ public class DictDataController {
     @SaCheckPermission("dict.update")
     @Operation(summary = "更新")
     @PutMapping
-    public ResponseVO<Void> modify(@RequestBody @Validated DictDataUpdateForm form) {
-        val entity = DictDataConvert.INSTANCE.convert(form);
+    public ResponseVO<Void> modify(@RequestBody @Validated SysDictDataUpdateForm form) {
+        val entity = SysDictDataConvert.INSTANCE.convert(form);
         dictDataService.updateById(entity);
         return ResponseVO.ok();
     }
@@ -101,12 +101,12 @@ public class DictDataController {
     @GetMapping("/selector")
     public ResponseVO<List<DictionaryVO>> getDictDataSelector(@RequestParam("name") @Parameter(description = "字典名称") String name) {
         val queryWrapper = QueryWrapper.create()
-                .select(DICT_DATA.LABEL, DICT_DATA.VALUE)
-                .from(DICT_TYPE)
-                .join(DICT_DATA)
-                .on(DICT_TYPE.ID.eq(DICT_DATA.TYPE_ID))
-                .where(DICT_TYPE.NAME.eq(name))
-                .orderBy(DICT_DATA.SORT_ID, true);
+                .select(SYS_DICT_DATA.LABEL, SYS_DICT_DATA.VALUE)
+                .from(SYS_DICT_TYPE)
+                .join(SYS_DICT_DATA)
+                .on(SYS_DICT_TYPE.ID.eq(SYS_DICT_DATA.TYPE_ID))
+                .where(SYS_DICT_TYPE.NAME.eq(name))
+                .orderBy(SYS_DICT_DATA.SORT_ID, true);
 
         val vos = dictDataService.listAs(queryWrapper, DictionaryVO.class);
         return ResponseVO.ok(vos);

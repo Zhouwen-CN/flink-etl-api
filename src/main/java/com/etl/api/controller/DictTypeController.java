@@ -1,14 +1,14 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.etl.api.domain.convert.DictTypeConvert;
-import com.etl.api.domain.entity.DictType;
-import com.etl.api.domain.form.DictTypeCreateForm;
-import com.etl.api.domain.form.DictTypeUpdateForm;
-import com.etl.api.domain.vo.DictTypeVO;
+import com.etl.api.domain.convert.SysDictTypeConvert;
+import com.etl.api.domain.entity.SysDictType;
+import com.etl.api.domain.form.SysDictTypeCreateForm;
+import com.etl.api.domain.form.SysDictTypeUpdateForm;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.service.DictTypeService;
+import com.etl.api.domain.vo.SysDictTypeVO;
+import com.etl.api.service.SysDictTypeService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,19 +37,19 @@ import java.util.Collection;
 @Tag(name = "字典类型 控制器")
 @RequiredArgsConstructor
 public class DictTypeController {
-    private final DictTypeService dictTypeService;
+    private final SysDictTypeService dictTypeService;
 
     @SaCheckPermission("dict.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<DictTypeVO>> getPage(
+    public ResponseVO<PageVO<SysDictTypeVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "searchName", required = false) @Parameter(description = "字典名称") String searchName
     ) {
         val page = dictTypeService.queryChain()
-                .like(DictType::getName, searchName, StringUtils.hasText(searchName))
-                .pageAs(Page.of(currentPage, pageSize), DictTypeVO.class);
+                .like(SysDictType::getName, searchName, StringUtils.hasText(searchName))
+                .pageAs(Page.of(currentPage, pageSize), SysDictTypeVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }
@@ -57,15 +57,15 @@ public class DictTypeController {
     @SaCheckPermission("dict.insert")
     @Operation(summary = "新增")
     @PostMapping
-    public ResponseVO<Void> add(@RequestBody @Validated DictTypeCreateForm form) {
+    public ResponseVO<Void> add(@RequestBody @Validated SysDictTypeCreateForm form) {
         return dictTypeService.addDictType(form);
     }
 
     @SaCheckPermission("dict.update")
     @Operation(summary = "更新")
     @PutMapping
-    public ResponseVO<Void> modify(@RequestBody @Validated DictTypeUpdateForm form) {
-        val entity = DictTypeConvert.INSTANCE.convert(form);
+    public ResponseVO<Void> modify(@RequestBody @Validated SysDictTypeUpdateForm form) {
+        val entity = SysDictTypeConvert.INSTANCE.convert(form);
         dictTypeService.updateById(entity);
         return ResponseVO.ok();
     }

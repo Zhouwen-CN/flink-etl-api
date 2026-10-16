@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Schema(description = "字典类型视图")
-public class DictTypeVO {
+public class SysDictTypeVO {
 
     @Id(keyType = KeyType.Auto)
     @Schema(description = "自增主键")
