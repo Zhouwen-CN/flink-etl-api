@@ -1,11 +1,11 @@
 package com.etl.api.service.impl;
 
+import com.etl.api.domain.entity.EtlJarPackage;
 import com.etl.api.domain.entity.EtlJob;
-import com.etl.api.domain.entity.JarPackage;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.mapper.JarPackageMapper;
+import com.etl.api.mapper.EtlJarPackageMapper;
+import com.etl.api.service.EtlJarPackageService;
 import com.etl.api.service.EtlJobService;
-import com.etl.api.service.JarPackageService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -27,7 +27,7 @@ import java.util.jar.JarFile;
  */
 @Service
 @RequiredArgsConstructor
-public class JarPackageServiceImpl extends ServiceImpl<JarPackageMapper, JarPackage> implements JarPackageService {
+public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, EtlJarPackage> implements EtlJarPackageService {
 
     private final EtlJobService etlJobService;
     @Value("${custom.jar-package.location}")
@@ -55,7 +55,7 @@ public class JarPackageServiceImpl extends ServiceImpl<JarPackageMapper, JarPack
                     .getValue("Main-Class");
 
             if (StringUtils.hasText(mainClass)) {
-                val jarPackage = JarPackage.builder()
+                val jarPackage = EtlJarPackage.builder()
                         .id(id)
                         .name(name)
                         .fileName(originalFilename)

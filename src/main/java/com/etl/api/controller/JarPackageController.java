@@ -2,11 +2,11 @@ package com.etl.api.controller;
 
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.etl.api.domain.entity.JarPackage;
-import com.etl.api.domain.vo.JarPackageVO;
+import com.etl.api.domain.entity.EtlJarPackage;
+import com.etl.api.domain.vo.EtlJarPackageVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.service.JarPackageService;
+import com.etl.api.service.EtlJarPackageService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,20 +37,20 @@ import java.util.Collection;
 @RequiredArgsConstructor
 public class JarPackageController {
 
-    private final JarPackageService jarPackageService;
+    private final EtlJarPackageService jarPackageService;
 
 
     @SaCheckPermission("jar.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<JarPackageVO>> getPage(
+    public ResponseVO<PageVO<EtlJarPackageVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "searchName", required = false) @Parameter(description = "jar包名称") String searchName
     ) {
         val page = jarPackageService.queryChain()
-                .like(JarPackage::getName, searchName, StringUtils.hasText(searchName))
-                .pageAs(Page.of(currentPage, pageSize), JarPackageVO.class);
+                .like(EtlJarPackage::getName, searchName, StringUtils.hasText(searchName))
+                .pageAs(Page.of(currentPage, pageSize), EtlJarPackageVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }

@@ -1,6 +1,6 @@
 package com.etl.api.service;
 
-import com.etl.api.domain.entity.JarPackage;
+import com.etl.api.domain.entity.EtlJarPackage;
 import com.etl.api.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,7 +13,7 @@ import java.util.Collection;
  * @author chen
  * @since 2026-05-13
  */
-public interface JarPackageService extends IService<JarPackage> {
+public interface EtlJarPackageService extends IService<EtlJarPackage> {
 
     ResponseVO<Void> addJar(String name, MultipartFile file);
 

@@ -1,6 +1,6 @@
 package com.etl.api.mapper;
 
-import com.etl.api.domain.entity.JarPackage;
+import com.etl.api.domain.entity.EtlJarPackage;
 import com.mybatisflex.core.BaseMapper;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.BaseMapper;
  * @author chen
  * @since 2026-05-13
  */
-public interface JarPackageMapper extends BaseMapper<JarPackage> {
+public interface EtlJarPackageMapper extends BaseMapper<EtlJarPackage> {
 
 }

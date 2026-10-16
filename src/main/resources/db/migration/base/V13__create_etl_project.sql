@@ -7,10 +7,5 @@ create table T_ETL_PROJECT
     create_time datetime     default CURRENT_TIMESTAMP comment '创建时间',
     update_user varchar(30)  default null comment '修改者',
     update_time datetime     default CURRENT_TIMESTAMP comment '更新时间',
-    unique index uk_project_name (name)
+    unique index uk_etl_project_name (name)
 ) comment 'ETL项目表';
-
-alter table T_ETL_JOB
-    add column project_id bigint default null comment '项目id' after type;
-alter table T_ETL_JOB_INSTANCE
-    add column project_id bigint default null comment '项目id' after id;

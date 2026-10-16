@@ -3,9 +3,9 @@ package com.etl.api.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.aop.IgnoreTenant;
 import com.etl.api.domain.convert.EtlFlinkClusterConvert;
+import com.etl.api.domain.convert.EtlJarPackageConvert;
 import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.convert.EtlProjectConvert;
-import com.etl.api.domain.convert.JarPackageConvert;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.FlinkCheckpoint;
@@ -17,11 +17,11 @@ import com.etl.api.domain.vo.EtlJobVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.service.EtlFlinkClusterService;
+import com.etl.api.service.EtlJarPackageService;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.EtlProjectService;
 import com.etl.api.service.FlinkCheckpointService;
-import com.etl.api.service.JarPackageService;
 import com.etl.api.service.manager.EtlJobManager;
 import com.etl.api.util.LocalDateTimeUtil;
 import com.mybatisflex.core.paginate.Page;
@@ -56,7 +56,7 @@ import java.util.Objects;
 public class EtlJobController {
 
     private final EtlJobService etlJobService;
-    private final JarPackageService jarPackageService;
+    private final EtlJarPackageService jarPackageService;
     private final EtlFlinkClusterService flinkClusterService;
     private final EtlJobInstanceService etlJobInstanceService;
     private final EtlJobManager etlJobManager;
@@ -126,7 +126,7 @@ public class EtlJobController {
     @GetMapping("/jar/selector")
     public ResponseVO<List<DictionaryVO>> jarSelector() {
         val vos = jarPackageService.list()
-                .stream().map(JarPackageConvert.INSTANCE::convert)
+                .stream().map(EtlJarPackageConvert.INSTANCE::convert)
                 .toList();
         return ResponseVO.ok(vos);
     }

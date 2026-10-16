@@ -6,14 +6,14 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 上传jar包表 实体类。
+ * jar包管理表 视图类。
  *
  * @author chen
  * @since 2026-05-11
  */
 @Data
 @Schema(description = "jar包视图")
-public class JarPackageVO {
+public class EtlJarPackageVO {
 
     @Schema(description = "自增主键")
     private Long id;

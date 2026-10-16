@@ -22,8 +22,8 @@ import java.io.Serializable;
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(value = "T_JAR_PACKAGE", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
-public class JarPackage extends BaseEntity implements Serializable {
+@Table(value = "T_ETL_JAR_PACKAGE", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
+public class EtlJarPackage extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -1,6 +1,7 @@
 create table T_ETL_JOB_INSTANCE
 (
     id          varchar(50) primary key comment 'flink任务id',
+    project_id  bigint   default null comment '项目id',
     cluster_id  bigint  not null comment '集群id',
     jar_id      bigint  not null comment 'jar包id',
     job_id      bigint  not null comment '任务id',
@@ -13,6 +14,6 @@ create table T_ETL_JOB_INSTANCE
     create_time datetime    default CURRENT_TIMESTAMP comment '创建时间',
     update_user varchar(30) default null comment '修改者',
     update_time datetime default CURRENT_TIMESTAMP comment '更新时间',
-    index idx_etl_job_status (status),
-    index idx_elt_job_update_time (update_time desc)
+    index idx_etl_job_ins_status (status),
+    index idx_elt_job_ins_update_time (update_time desc)
 ) comment 'ETL任务实例表'
