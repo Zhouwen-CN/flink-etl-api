@@ -1,14 +1,14 @@
 package com.etl.api.service.impl;
 
-import com.etl.api.domain.convert.RoleConvert;
-import com.etl.api.domain.entity.Role;
+import com.etl.api.domain.convert.SysRoleConvert;
 import com.etl.api.domain.entity.RolePermission;
-import com.etl.api.domain.form.RoleCreateForm;
-import com.etl.api.domain.form.RoleUpdateForm;
+import com.etl.api.domain.entity.SysRole;
+import com.etl.api.domain.form.SysRoleCreateForm;
+import com.etl.api.domain.form.SysRoleUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.mapper.RoleMapper;
+import com.etl.api.mapper.SysRoleMapper;
 import com.etl.api.service.RolePermissionService;
-import com.etl.api.service.RoleService;
+import com.etl.api.service.SysRoleService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -25,22 +25,22 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements RoleService {
+public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> implements SysRoleService {
 
     private final RolePermissionService rolePermissionService;
 
     @Override
-    public ResponseVO<Void> addRole(RoleCreateForm form) {
+    public ResponseVO<Void> addRole(SysRoleCreateForm form) {
         val code = form.getCode();
         val exists = this.queryChain()
-                .eq(Role::getCode, code)
+                .eq(SysRole::getCode, code)
                 .exists();
 
         if (exists) {
             return ResponseVO.recordExistsError(code);
         }
 
-        val entity = RoleConvert.INSTANCE.convert(form);
+        val entity = SysRoleConvert.INSTANCE.convert(form);
         this.save(entity);
 
         this.saveRolePermission(entity.getId(), form.getPermissionIds(), false);
@@ -48,12 +48,12 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     }
 
     @Override
-    public ResponseVO<Void> modifyRole(RoleUpdateForm form) {
+    public ResponseVO<Void> modifyRole(SysRoleUpdateForm form) {
         val id = form.getId();
         if (id == 1L) {
             return ResponseVO.modifyAdminError();
         }
-        val entity = RoleConvert.INSTANCE.convert(form);
+        val entity = SysRoleConvert.INSTANCE.convert(form);
         this.updateById(entity);
 
         this.saveRolePermission(id, form.getPermissionIds(), true);

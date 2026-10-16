@@ -1,6 +1,6 @@
 package com.etl.api.service;
 
-import com.etl.api.domain.entity.UserRole;
+import com.etl.api.domain.entity.SysUserRole;
 import com.mybatisflex.core.service.IService;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.service.IService;
  * @author chen
  * @since 2026-04-28
  */
-public interface UserRoleService extends IService<UserRole> {
+public interface SysUserRoleService extends IService<SysUserRole> {
 
 }

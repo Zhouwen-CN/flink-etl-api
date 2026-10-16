@@ -5,7 +5,7 @@ import com.etl.api.domain.convert.SysUserConvert;
 import com.etl.api.domain.entity.Dept;
 import com.etl.api.domain.entity.LoginCaptcha;
 import com.etl.api.domain.entity.SysUser;
-import com.etl.api.domain.entity.UserRole;
+import com.etl.api.domain.entity.SysUserRole;
 import com.etl.api.domain.form.ChangePwdForm;
 import com.etl.api.domain.form.SysUserCreateForm;
 import com.etl.api.domain.form.SysUserLoginForm;
@@ -19,8 +19,8 @@ import com.etl.api.mapper.SysUserMapper;
 import com.etl.api.service.DeptService;
 import com.etl.api.service.LoginCaptchaService;
 import com.etl.api.service.LoginLogService;
+import com.etl.api.service.SysUserRoleService;
 import com.etl.api.service.SysUserService;
-import com.etl.api.service.UserRoleService;
 import com.etl.api.util.AESUtil;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -44,8 +44,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.etl.api.domain.entity.table.RoleTableDef.ROLE;
-import static com.etl.api.domain.entity.table.UserRoleTableDef.USER_ROLE;
+import static com.etl.api.domain.entity.table.SysRoleTableDef.SYS_ROLE;
+import static com.etl.api.domain.entity.table.SysUserRoleTableDef.SYS_USER_ROLE;
 
 /**
  * 用户表 服务层实现。
@@ -58,7 +58,7 @@ import static com.etl.api.domain.entity.table.UserRoleTableDef.USER_ROLE;
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
     private final LoginCaptchaService loginCaptchaService;
-    private final UserRoleService userRoleService;
+    private final SysUserRoleService userRoleService;
     private final LoginLogService loginLogService;
     private final QuartzJobProperties quartzJobProperties;
     private final DeptService deptService;
@@ -130,7 +130,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         val entity = SysUserConvert.INSTANCE.convert(form);
         this.save(entity);
 
-        this.saveUserRole(entity.getId(), form.getRoleIds(), false);
+        this.saveSysUserRole(entity.getId(), form.getRoleIds(), false);
         return ResponseVO.ok();
     }
 
@@ -146,7 +146,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         val entity = SysUserConvert.INSTANCE.convert(form);
         this.updateById(entity);
 
-        this.saveUserRole(id, form.getRoleIds(), true);
+        this.saveSysUserRole(id, form.getRoleIds(), true);
         return ResponseVO.ok();
     }
 
@@ -158,7 +158,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         this.removeById(id);
         userRoleService.updateChain()
-                .eq(UserRole::getUserId, id)
+                .eq(SysUserRole::getUserId, id)
                 .remove();
         return ResponseVO.ok();
     }
@@ -171,7 +171,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         this.removeByIds(ids);
         userRoleService.updateChain()
-                .in(UserRole::getUserId, ids)
+                .in(SysUserRole::getUserId, ids)
                 .remove();
         return ResponseVO.ok();
     }
@@ -183,11 +183,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     private void initDataScope(SysUser user, SaSessionUtil.SaSessionUserInfo sessionUserInfo) {
         val sql = QueryWrapper.create()
-                .select(ROLE.DATA_SCOPE)
-                .from(USER_ROLE)
-                .join(ROLE)
-                .on(USER_ROLE.ROLE_ID.eq(ROLE.ID))
-                .where(USER_ROLE.USER_ID.eq(user.getId()));
+                .select(SYS_ROLE.DATA_SCOPE)
+                .from(SYS_USER_ROLE)
+                .join(SYS_ROLE)
+                .on(SYS_USER_ROLE.ROLE_ID.eq(SYS_ROLE.ID))
+                .where(SYS_USER_ROLE.USER_ID.eq(user.getId()));
         Set<Integer> dataScopes = new HashSet<>(userRoleService.listAs(sql, Integer.class));
 
         boolean isAll = false;
@@ -285,11 +285,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
 
-    public void saveUserRole(Long userId, List<Long> roleIds, boolean isUpdate) {
+    public void saveSysUserRole(Long userId, List<Long> roleIds, boolean isUpdate) {
         // 待新增的角色列表
         val userRoleList = roleIds
                 .stream()
-                .map(roleId -> UserRole.builder()
+                .map(roleId -> SysUserRole.builder()
                         .userId(userId)
                         .roleId(roleId)
                         .build())
@@ -298,7 +298,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         // 删除角色
         if (isUpdate) {
             userRoleService.updateChain()
-                    .eq(UserRole::getUserId, userId)
+                    .eq(SysUserRole::getUserId, userId)
                     .remove();
         }
 

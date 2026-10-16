@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "用户角色视图")
-public class UserRoleVO {
+public class SysUserRoleVO {
     private Long id;
 
     @Schema(description = "用户名")

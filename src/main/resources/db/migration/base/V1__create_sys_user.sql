@@ -11,7 +11,7 @@ create table T_SYS_USER
     create_time datetime    default CURRENT_TIMESTAMP comment '创建时间',
     update_user varchar(30) default null comment '修改者',
     update_time datetime    default CURRENT_TIMESTAMP comment '更新时间',
-    unique index uk_user_name (username)
+    unique index uk_sys_user_name (username)
 ) comment '用户表';
 
 -- admin 密码：admin123

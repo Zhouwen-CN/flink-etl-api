@@ -3,9 +3,9 @@ package com.etl.api.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.stp.StpUtil;
-import com.etl.api.domain.convert.RoleConvert;
+import com.etl.api.domain.convert.SysRoleConvert;
 import com.etl.api.domain.entity.SysUser;
-import com.etl.api.domain.entity.UserRole;
+import com.etl.api.domain.entity.SysUserRole;
 import com.etl.api.domain.form.ChangePwdForm;
 import com.etl.api.domain.form.SysUserCreateForm;
 import com.etl.api.domain.form.SysUserUpdateForm;
@@ -13,12 +13,12 @@ import com.etl.api.domain.vo.DeptVO;
 import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.domain.vo.SysUserRoleVO;
 import com.etl.api.domain.vo.SysUserVO;
-import com.etl.api.domain.vo.UserRoleVO;
 import com.etl.api.service.DeptService;
-import com.etl.api.service.RoleService;
+import com.etl.api.service.SysRoleService;
+import com.etl.api.service.SysUserRoleService;
 import com.etl.api.service.SysUserService;
-import com.etl.api.service.UserRoleService;
 import com.etl.api.util.AESUtil;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.paginate.Page;
@@ -54,8 +54,8 @@ import java.util.List;
 public class UserController {
 
     private final SysUserService userService;
-    private final RoleService roleService;
-    private final UserRoleService userRoleService;
+    private final SysRoleService roleService;
+    private final SysUserRoleService userRoleService;
     private final DeptService deptService;
     @Value("${custom.default-pwd}")
     private String defaultPwd;
@@ -105,9 +105,9 @@ public class UserController {
 
     @Operation(summary = "获取用户信息")
     @GetMapping("/info")
-    public ResponseVO<UserRoleVO> getUserInfo() {
+    public ResponseVO<SysUserRoleVO> getUserInfo() {
         val userInfo = SaSessionUtil.getUserInfo();
-        val userRoleVO = new UserRoleVO(
+        val userRoleVO = new SysUserRoleVO(
                 StpUtil.getLoginIdAsLong(),
                 userInfo.getUsername(),
                 userInfo.getNickname(),
@@ -123,8 +123,8 @@ public class UserController {
     @GetMapping("/role/{id}")
     public ResponseVO<List<Long>> getRoleByUserId(@PathVariable @Parameter(description = "ID") Long id) {
         val roleIds = userRoleService.queryChain()
-                .select(UserRole::getRoleId)
-                .eq(UserRole::getUserId, id)
+                .select(SysUserRole::getRoleId)
+                .eq(SysUserRole::getUserId, id)
                 .listAs(Long.class);
         return ResponseVO.ok(roleIds);
     }
@@ -143,7 +143,7 @@ public class UserController {
     public ResponseVO<List<DictionaryVO>> roleSelector() {
         val vos = roleService.list()
                 .stream()
-                .map(RoleConvert.INSTANCE::convert)
+                .map(SysRoleConvert.INSTANCE::convert)
                 .toList();
         return ResponseVO.ok(vos);
     }

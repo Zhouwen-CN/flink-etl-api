@@ -10,7 +10,7 @@ import java.util.List;
 
 @Data
 @Schema(description = "新增角色表单")
-public class RoleCreateForm {
+public class SysRoleCreateForm {
 
     @NotNull
     @Length(max = 30)

@@ -1,8 +1,8 @@
 package com.etl.api.service;
 
-import com.etl.api.domain.entity.Role;
-import com.etl.api.domain.form.RoleCreateForm;
-import com.etl.api.domain.form.RoleUpdateForm;
+import com.etl.api.domain.entity.SysRole;
+import com.etl.api.domain.form.SysRoleCreateForm;
+import com.etl.api.domain.form.SysRoleUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
@@ -14,11 +14,11 @@ import java.util.Collection;
  * @author chen
  * @since 2026-04-28
  */
-public interface RoleService extends IService<Role> {
+public interface SysRoleService extends IService<SysRole> {
 
-    ResponseVO<Void> addRole(RoleCreateForm form);
+    ResponseVO<Void> addRole(SysRoleCreateForm form);
 
-    ResponseVO<Void> modifyRole(RoleUpdateForm form);
+    ResponseVO<Void> modifyRole(SysRoleUpdateForm form);
 
     ResponseVO<Void> removeRole(Long id);
 

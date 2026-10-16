@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Schema(description = "更新角色表单")
-public class RoleUpdateForm extends RoleCreateForm {
+public class SysRoleUpdateForm extends SysRoleCreateForm {
 
     @NotNull
     @Schema(description = "自增主键")

@@ -2,15 +2,15 @@ package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.domain.entity.RolePermission;
-import com.etl.api.domain.form.RoleCreateForm;
-import com.etl.api.domain.form.RoleUpdateForm;
+import com.etl.api.domain.form.SysRoleCreateForm;
+import com.etl.api.domain.form.SysRoleUpdateForm;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.PermissionSelectorVO;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.domain.vo.RoleVO;
+import com.etl.api.domain.vo.SysRoleVO;
 import com.etl.api.service.PermissionService;
 import com.etl.api.service.RolePermissionService;
-import com.etl.api.service.RoleService;
+import com.etl.api.service.SysRoleService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,7 +35,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import static com.etl.api.domain.entity.table.RoleTableDef.ROLE;
+import static com.etl.api.domain.entity.table.SysRoleTableDef.SYS_ROLE;
 
 @RestController
 @RequestMapping("/role")
@@ -43,21 +43,21 @@ import static com.etl.api.domain.entity.table.RoleTableDef.ROLE;
 @RequiredArgsConstructor
 public class RoleController {
 
-    private final RoleService roleService;
+    private final SysRoleService roleService;
     private final RolePermissionService rolePermissionService;
     private final PermissionService permissionService;
 
     @SaCheckPermission("role.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<RoleVO>> getPage(
+    public ResponseVO<PageVO<SysRoleVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "searchName", required = false) @Parameter(description = "角色名|角色编码") String searchName
     ) {
         val page = roleService.queryChain()
-                .where(ROLE.NAME.like(searchName).or(ROLE.CODE.like(searchName)))
-                .pageAs(Page.of(currentPage, pageSize), RoleVO.class);
+                .where(SYS_ROLE.NAME.like(searchName).or(SYS_ROLE.CODE.like(searchName)))
+                .pageAs(Page.of(currentPage, pageSize), SysRoleVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }
@@ -65,14 +65,14 @@ public class RoleController {
     @SaCheckPermission("role.insert")
     @Operation(summary = "新增")
     @PostMapping
-    public ResponseVO<Void> add(@RequestBody @Validated RoleCreateForm form) {
+    public ResponseVO<Void> add(@RequestBody @Validated SysRoleCreateForm form) {
         return roleService.addRole(form);
     }
 
     @SaCheckPermission("role.update")
     @Operation(summary = "更新")
     @PutMapping
-    public ResponseVO<Void> modify(@RequestBody @Validated RoleUpdateForm form) {
+    public ResponseVO<Void> modify(@RequestBody @Validated SysRoleUpdateForm form) {
         return roleService.modifyRole(form);
     }
 
