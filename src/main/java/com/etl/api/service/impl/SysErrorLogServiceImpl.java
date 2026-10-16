@@ -1,9 +1,9 @@
 package com.etl.api.service.impl;
 
 import cn.dev33.satoken.spring.SpringMVCUtil;
-import com.etl.api.domain.entity.ErrorLog;
-import com.etl.api.mapper.ErrorLogMapper;
-import com.etl.api.service.ErrorLogService;
+import com.etl.api.domain.entity.SysErrorLog;
+import com.etl.api.mapper.SysErrorLogMapper;
+import com.etl.api.service.SysErrorLogService;
 import com.etl.api.util.IP2RegionUtil;
 import com.etl.api.util.IPUtil;
 import com.etl.api.util.SaSessionUtil;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
  * @since 2026-05-09
  */
 @Service
-public class ErrorLogServiceImpl extends ServiceImpl<ErrorLogMapper, ErrorLog> implements ErrorLogService {
+public class SysErrorLogServiceImpl extends ServiceImpl<SysErrorLogMapper, SysErrorLog> implements SysErrorLogService {
 
     @Override
     public void saveErrorLog(Exception e) {
@@ -27,7 +27,7 @@ public class ErrorLogServiceImpl extends ServiceImpl<ErrorLogMapper, ErrorLog> i
         val request = SpringMVCUtil.getRequest();
         val ip = IPUtil.getClientIP(request);
         val region = IP2RegionUtil.search(ip);
-        val errorLog = ErrorLog.builder()
+        val errorLog = SysErrorLog.builder()
                 .url(request.getRequestURI())
                 .method(request.getMethod())
                 .ip(ip)

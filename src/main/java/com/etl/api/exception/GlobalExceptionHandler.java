@@ -4,7 +4,7 @@ package com.etl.api.exception;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.service.ErrorLogService;
+import com.etl.api.service.SysErrorLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -40,7 +40,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
-    private final ErrorLogService errorLogService;
+    private final SysErrorLogService errorLogService;
 
     /**
      * 请求体参数校验异常

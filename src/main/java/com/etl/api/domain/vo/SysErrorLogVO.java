@@ -6,14 +6,14 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 错误日志表 实体类。
+ * 错误日志表 视图类。
  *
  * @author chen
  * @since 2026-05-09
  */
 @Data
 @Schema(description = "异常日志视图")
-public class ErrorLogVO {
+public class SysErrorLogVO {
 
     @Schema(description = "自增主键")
     private Long id;

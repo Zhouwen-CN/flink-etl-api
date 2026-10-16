@@ -18,8 +18,8 @@ import java.time.LocalDateTime;
  */
 @Data
 @Builder
-@Table(value = "T_ERROR_LOG")
-public class ErrorLog implements Serializable {
+@Table(value = "T_SYS_ERROR_LOG")
+public class SysErrorLog implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

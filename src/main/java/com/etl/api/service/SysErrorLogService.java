@@ -1,6 +1,6 @@
 package com.etl.api.service;
 
-import com.etl.api.domain.entity.ErrorLog;
+import com.etl.api.domain.entity.SysErrorLog;
 import com.mybatisflex.core.service.IService;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.service.IService;
  * @author chen
  * @since 2026-05-09
  */
-public interface ErrorLogService extends IService<ErrorLog> {
+public interface SysErrorLogService extends IService<SysErrorLog> {
     void saveErrorLog(Exception e);
 }
