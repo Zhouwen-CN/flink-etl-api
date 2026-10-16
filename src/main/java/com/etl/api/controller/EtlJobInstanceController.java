@@ -47,12 +47,12 @@ import static com.etl.api.domain.entity.table.EtlJobInstanceTableDef.ETL_JOB_INS
 @Tag(name = "任务实例 控制器")
 @RequiredArgsConstructor
 public class EtlJobInstanceController {
-    private final EtlJobInstanceService etlJobInstanceService;
+    private final EtlJobInstanceService jobInstanceService;
     private final EtlFlinkClusterService flinkClusterService;
-    private final EtlJobService etlJobService;
+    private final EtlJobService jobService;
     private final EtlJarPackageService jarPackageService;
-    private final EtlJobManager etlJobManager;
-    private final EtlProjectService etlProjectService;
+    private final EtlJobManager jobManager;
+    private final EtlProjectService projectService;
 
     @SaCheckPermission("instance.select")
     @Operation(summary = "分页查询")
@@ -68,7 +68,7 @@ public class EtlJobInstanceController {
             @RequestParam(value = "status", required = false) @Parameter(description = "任务状态") Integer status
     ) {
 
-        val page = etlJobInstanceService.queryChain()
+        val page = jobInstanceService.queryChain()
                 .select(
                         ETL_JOB_INSTANCE.ID,
                         ETL_JOB_INSTANCE.PROJECT_ID,
@@ -102,7 +102,7 @@ public class EtlJobInstanceController {
     @PutMapping("/job/cancel/{id}")
     @Operation(summary = "停止任务实例")
     public ResponseVO<Void> cancelJob(@PathVariable @Parameter(description = "任务实例ID") String id) {
-        etlJobManager.cancelJob(id);
+        jobManager.cancelJob(id);
         return ResponseVO.ok();
     }
 
@@ -114,7 +114,7 @@ public class EtlJobInstanceController {
             flink 集群重启，主备切换，会导致请求失败，状态变更为 unknown
             如果是实时任务，并且是 unknow 状态，那么更新成 init 状态，结束时间置为空
          */
-        etlJobInstanceService.updateChain()
+        jobInstanceService.updateChain()
                 .eq(EtlJobInstance::getJobType, ETLJobTypeEnum.STREAMING.getCode())
                 .eq(EtlJobInstance::getStatus, FlinkJobStatusEnum.UNKNOWN)
                 .set(EtlJobInstance::getStatus, FlinkJobStatusEnum.INITIALIZING)
@@ -128,14 +128,14 @@ public class EtlJobInstanceController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") String id) {
-        return etlJobInstanceService.removeInstance(id);
+        return jobInstanceService.removeInstance(id);
     }
 
     @SaCheckPermission("instance.select")
     @Operation(summary = "项目选择器")
     @GetMapping("/project/selector")
     public ResponseVO<List<DictionaryVO>> projectSelector() {
-        val vos = etlProjectService.list()
+        val vos = projectService.list()
                 .stream()
                 .map(EtlProjectConvert.INSTANCE::convert)
                 .toList();
@@ -157,7 +157,7 @@ public class EtlJobInstanceController {
     @GetMapping("/job/selector")
     @Operation(summary = "任务选择器")
     public ResponseVO<List<DictionaryVO>> getJobSelector() {
-        val vos = etlJobService.list()
+        val vos = jobService.list()
                 .stream().map(EtlJobConvert.INSTANCE::convert)
                 .toList();
         return ResponseVO.ok(vos);

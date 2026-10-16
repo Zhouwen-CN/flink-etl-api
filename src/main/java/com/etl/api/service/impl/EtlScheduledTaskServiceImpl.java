@@ -8,11 +8,11 @@ import com.etl.api.domain.form.EtlScheduledTaskStatusChangeForm;
 import com.etl.api.domain.form.EtlScheduledTaskUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.enumeration.ETLJobTypeEnum;
-import com.etl.api.exception.ScheduleJobException;
+import com.etl.api.exception.ScheduledTaskException;
 import com.etl.api.mapper.EtlScheduledTaskMapper;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.EtlScheduledTaskService;
-import com.etl.api.service.manager.ScheduleJobManager;
+import com.etl.api.service.manager.ScheduledTaskManager;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -32,8 +32,8 @@ import static com.etl.api.domain.entity.table.EtlScheduledTaskTableDef.ETL_SCHED
 @Service
 @RequiredArgsConstructor
 public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMapper, EtlScheduledTask> implements EtlScheduledTaskService {
-    private final EtlJobService etlJobService;
-    private final ScheduleJobManager scheduleJobManager;
+    private final EtlJobService jobService;
+    private final ScheduledTaskManager scheduledTaskManager;
 
     @Override
     public ResponseVO<Void> addScheduleJob(EtlScheduledTaskCreateForm form) {
@@ -46,7 +46,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
             return ResponseVO.recordExistsError(name + ":" + etlJobId);
         }
 
-        val etlJob = etlJobService.queryChain()
+        val etlJob = jobService.queryChain()
                 .eq(EtlJob::getId, etlJobId)
                 .eq(EtlJob::getType, ETLJobTypeEnum.BATCH.getCode())
                 .one();
@@ -60,7 +60,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
         this.save(entity);
 
         try {
-            scheduleJobManager.addJob(
+            scheduledTaskManager.addJob(
                     entity.getId(),
                     entity.getName(),
                     entity.getEtlJobId(),
@@ -68,7 +68,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
                     false
             );
         } catch (SchedulerException e) {
-            throw new ScheduleJobException("添加定时任务异常", e);
+            throw new ScheduledTaskException("添加定时任务异常", e);
         }
         return ResponseVO.ok();
     }
@@ -90,9 +90,9 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
         this.removeById(id);
 
         try {
-            scheduleJobManager.deleteJob(id);
+            scheduledTaskManager.deleteJob(id);
         } catch (SchedulerException e) {
-            throw new ScheduleJobException("删除定时任务异常", e);
+            throw new ScheduledTaskException("删除定时任务异常", e);
         }
         return ResponseVO.ok();
     }
@@ -112,10 +112,10 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
 
         try {
             for (Long id : ids) {
-                scheduleJobManager.deleteJob(id);
+                scheduledTaskManager.deleteJob(id);
             }
         } catch (SchedulerException e) {
-            throw new ScheduleJobException("删除定时任务异常", e);
+            throw new ScheduledTaskException("删除定时任务异常", e);
         }
         return ResponseVO.ok();
     }
@@ -123,7 +123,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
     @Override
     public ResponseVO<Void> modifyScheduleJob(EtlScheduledTaskUpdateForm form) {
         val etlJobId = form.getEtlJobId();
-        val etlJob = etlJobService.queryChain()
+        val etlJob = jobService.queryChain()
                 .eq(EtlJob::getId, etlJobId)
                 .eq(EtlJob::getType, ETLJobTypeEnum.BATCH.getCode())
                 .one();
@@ -136,7 +136,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
         this.updateById(entity);
 
         try {
-            scheduleJobManager.updateJob(
+            scheduledTaskManager.updateJob(
                     entity.getId(),
                     entity.getName(),
                     entity.getEtlJobId(),
@@ -144,7 +144,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
                     false
             );
         } catch (SchedulerException e) {
-            throw new ScheduleJobException("修改定时任务异常", e);
+            throw new ScheduledTaskException("修改定时任务异常", e);
         }
         return ResponseVO.ok();
     }
@@ -160,9 +160,9 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
                 .update();
 
         try {
-            scheduleJobManager.switchJob(id, jobEnable);
+            scheduledTaskManager.switchJob(id, jobEnable);
         } catch (SchedulerException e) {
-            throw new ScheduleJobException("切换定时任务状态异常", e);
+            throw new ScheduledTaskException("切换定时任务状态异常", e);
         }
         return ResponseVO.ok();
     }

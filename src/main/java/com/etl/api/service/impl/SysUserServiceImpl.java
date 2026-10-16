@@ -6,16 +6,16 @@ import com.etl.api.domain.entity.SysDept;
 import com.etl.api.domain.entity.SysLoginCaptcha;
 import com.etl.api.domain.entity.SysUser;
 import com.etl.api.domain.entity.SysUserRole;
-import com.etl.api.domain.form.ChangePwdForm;
+import com.etl.api.domain.form.SysUserChangePwdForm;
 import com.etl.api.domain.form.SysUserCreateForm;
 import com.etl.api.domain.form.SysUserLoginForm;
 import com.etl.api.domain.form.SysUserUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.domain.vo.TokenVO;
+import com.etl.api.domain.vo.SysUserTokenVO;
 import com.etl.api.enumeration.DataScopeEnum;
 import com.etl.api.enumeration.LoginOperationEnum;
-import com.etl.api.job.config.QuartzJobProperties;
 import com.etl.api.mapper.SysUserMapper;
+import com.etl.api.schedule.config.QuartzJobProperties;
 import com.etl.api.service.SysDeptService;
 import com.etl.api.service.SysLoginCaptchaService;
 import com.etl.api.service.SysLoginLogService;
@@ -64,7 +64,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private final SysDeptService deptService;
 
     @Override
-    public ResponseVO<TokenVO> login(SysUserLoginForm form, HttpServletRequest request) {
+    public ResponseVO<SysUserTokenVO> login(SysUserLoginForm form, HttpServletRequest request) {
         val username = form.getUsername();
 
         // 验证码校验：id 匹配、code 相等、且未过期，条件全部下推到 where
@@ -112,7 +112,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         // 删除验证码
         loginCaptchaService.removeById(loginCaptcha.getId());
         loginLogService.saveLoginLog(request, username, LoginOperationEnum.LOGIN, true, null);
-        return ResponseVO.ok(new TokenVO(StpUtil.getTokenValue()));
+        return ResponseVO.ok(new SysUserTokenVO(StpUtil.getTokenValue()));
     }
 
     @Override
@@ -264,7 +264,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
-    public ResponseVO<Void> changePwd(ChangePwdForm form) {
+    public ResponseVO<Void> changePwd(SysUserChangePwdForm form) {
         val id = StpUtil.getLoginIdAsLong();
         val userOptional = this.queryChain()
                 .eq(SysUser::getId, id)

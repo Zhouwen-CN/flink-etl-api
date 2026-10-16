@@ -1,12 +1,12 @@
 package com.etl.api.service.manager;
 
-import com.etl.api.domain.entity.Alert;
-import com.etl.api.domain.entity.AlertJob;
+import com.etl.api.domain.entity.EtlAlert;
+import com.etl.api.domain.entity.EtlAlertJob;
 import com.etl.api.domain.entity.EtlFlinkCluster;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.entity.EtlJobInstance;
-import com.etl.api.service.AlertJobService;
-import com.etl.api.service.AlertService;
+import com.etl.api.service.EtlAlertJobService;
+import com.etl.api.service.EtlAlertService;
 import com.etl.api.service.EtlFlinkClusterService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.provider.FlinkApiProvider;
@@ -26,16 +26,16 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-import static com.etl.api.domain.entity.table.AlertJobTableDef.ALERT_JOB;
+import static com.etl.api.domain.entity.table.EtlAlertJobTableDef.ETL_ALERT_JOB;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class SendMailManager {
     private final ObjectProvider<JavaMailSender> javaMailSender;
-    private final AlertJobService alertJobService;
-    private final AlertService alertService;
-    private final EtlJobService etlJobService;
+    private final EtlAlertJobService alertJobService;
+    private final EtlAlertService alertService;
+    private final EtlJobService jobService;
     private final EtlFlinkClusterService flinkClusterService;
     private final FlinkApiProvider flinkApiProvider;
     @Value("${custom.send-mail.silent-time}")
@@ -50,21 +50,21 @@ public class SendMailManager {
             val jobId = etlJobInstance.getJobId();
             val alertJobMap = alertJobService.queryChain()
                     // sendTime 为空 || sendTime < now() - 静默时间
-                    .where(ALERT_JOB.JOB_ID.eq(jobId)
+                    .where(ETL_ALERT_JOB.JOB_ID.eq(jobId)
                             .and(
-                                    ALERT_JOB.SEND_TIME.isNull()
-                                            .or(ALERT_JOB.SEND_TIME.lt(LocalDateTime.now().minus(silentTime.toMillis(), ChronoUnit.MILLIS)))
+                                    ETL_ALERT_JOB.SEND_TIME.isNull()
+                                            .or(ETL_ALERT_JOB.SEND_TIME.lt(LocalDateTime.now().minus(silentTime.toMillis(), ChronoUnit.MILLIS)))
                             )
                     )
                     .list()
                     .stream()
-                    .collect(Collectors.toMap(AlertJob::getAlertId, item -> item));
+                    .collect(Collectors.toMap(EtlAlertJob::getAlertId, item -> item));
             if (alertJobMap.isEmpty()) {
                 return;
             }
 
             // 获取 etl 任务
-            val etlJob = etlJobService.queryChain()
+            val etlJob = jobService.queryChain()
                     .eq(EtlJob::getId, jobId)
                     .one();
             if (etlJob == null) {
@@ -81,13 +81,13 @@ public class SendMailManager {
 
             // 获取 alert 列表
             val alertList = alertService.queryChain()
-                    .in(Alert::getId, alertJobMap.keySet())
+                    .in(EtlAlert::getId, alertJobMap.keySet())
                     .list();
 
             // 待更新的 alertJob sendTime
-            val updateAlertJobList = new ArrayList<AlertJob>();
+            val updateAlertJobList = new ArrayList<EtlAlertJob>();
 
-            for (Alert alert : alertList) {
+            for (EtlAlert alert : alertList) {
                 val name = alert.getName();
                 val email = alert.getEmail();
                 val alertJob = alertJobMap.get(alert.getId());

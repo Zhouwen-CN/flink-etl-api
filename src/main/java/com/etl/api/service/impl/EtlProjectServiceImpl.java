@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EtlProjectServiceImpl extends ServiceImpl<EtlProjectMapper, EtlProject> implements EtlProjectService {
 
-    private final EtlJobService etlJobService;
+    private final EtlJobService jobService;
 
     @Override
     public ResponseVO<Void> addProject(EtlProjectCreateForm form) {
@@ -43,7 +43,7 @@ public class EtlProjectServiceImpl extends ServiceImpl<EtlProjectMapper, EtlProj
 
     @Override
     public ResponseVO<Void> removeProject(Long id) {
-        val exists = etlJobService.queryChain()
+        val exists = jobService.queryChain()
                 .eq(EtlJob::getProjectId, id)
                 .exists();
 

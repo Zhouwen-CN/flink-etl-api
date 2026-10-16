@@ -25,16 +25,9 @@ public class EndpointConfiguration {
 
     private final SysRequestLogService requestLogService;
 
-    /*@Profile("dev")
-    @Bean
-    public HttpExchangeRepository httpExchangeRepository() {
-        return new InMemoryHttpExchangeRepository();
-    }*/
-
     /**
      * http exchanges 端点
      */
-    // @Profile("prod")
     @Bean
     public HttpExchangeRepository httpExchangeRepository() {
         return new HttpExchangeRepository() {

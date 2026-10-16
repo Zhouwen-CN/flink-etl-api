@@ -1,0 +1,110 @@
+package com.etl.api.schedule;
+
+import com.etl.api.domain.entity.EtlFlinkCluster;
+import com.etl.api.domain.entity.EtlJobInstance;
+import com.etl.api.enumeration.FlinkJobStatusEnum;
+import com.etl.api.service.EtlFlinkClusterService;
+import com.etl.api.service.EtlJobInstanceService;
+import com.etl.api.service.manager.SendMailManager;
+import com.etl.api.service.provider.FlinkApiProvider;
+import com.etl.api.util.LocalDateTimeUtil;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
+import org.quartz.DisallowConcurrentExecution;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.springframework.scheduling.quartz.QuartzJobBean;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+/**
+ * 同步 Flink 作业状态信息
+ */
+@Slf4j
+@DisallowConcurrentExecution
+@RequiredArgsConstructor
+public class SyncFlinkJobStatus extends QuartzJobBean {
+    private final EtlFlinkClusterService flinkClusterService;
+    private final EtlJobInstanceService etlJobInstanceService;
+    private final FlinkApiProvider flinkApiProvider;
+    private final ObjectMapper objectMapper;
+    private final SendMailManager sendMailManager;
+
+    @Override
+    protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
+        log.debug("同步 Flink 作业状态信息");
+        val flinkClusterMap = flinkClusterService.list()
+                .stream()
+                .collect(Collectors.toMap(EtlFlinkCluster::getId, item -> item));
+
+        // 获取还在运行的任务
+        val etlJobInstanceList = etlJobInstanceService.queryChain()
+                .in(EtlJobInstance::getStatus, FlinkJobStatusEnum.getProcessingStatus())
+                .list()
+                .stream()
+                .peek(etlJobInstance -> {
+                    // 获取flink集群信息
+                    val clusterId = etlJobInstance.getClusterId();
+                    val flinkCluster = flinkClusterMap.get(clusterId);
+                    // 只有 flink 集群状态开启才同步
+                    if (flinkCluster != null && flinkCluster.getStatus()) {
+                        val jobManagerUrl = flinkCluster.getJobManagerUrl();
+                        val flinkJobId = etlJobInstance.getId();
+
+                        // 请求状态数据并更新实体
+                        JsonNode jsonNode = null;
+                        try {
+                            jsonNode = flinkApiProvider.getJobStatus(jobManagerUrl, flinkJobId);
+                        } catch (Exception e) {
+                            // 请求 status 异常，标记为 Unknown，并且不再请求，有可能是已完成的任务被清理了
+                            etlJobInstance.setStatus(FlinkJobStatusEnum.UNKNOWN);
+                            etlJobInstance.setEndTime(LocalDateTime.now());
+                            log.error(e.getMessage());
+                        }
+
+                        Optional.ofNullable(jsonNode)
+                                .filter(item -> item.get("jid") != null)
+                                .map(item -> objectMapper.convertValue(item, SyncFlinkJobStatus.FlinkJobStatusDTO.class))
+                                .ifPresent(flinkJobStatusDTO -> {
+                                    val flinkJobStatusEnum = FlinkJobStatusEnum.formName(flinkJobStatusDTO.getState());
+                                    etlJobInstance.setStatus(flinkJobStatusEnum);
+                                    etlJobInstance.setStartTime(LocalDateTimeUtil.fromMs(flinkJobStatusDTO.getStartTime()));
+                                    val endTime = flinkJobStatusDTO.getEndTime();
+                                    if (endTime > 0) {
+                                        etlJobInstance.setEndTime(LocalDateTimeUtil.fromMs(endTime));
+                                    }
+                                    etlJobInstance.setDuration(flinkJobStatusDTO.getDuration());
+
+                                    if (flinkJobStatusEnum == FlinkJobStatusEnum.RESTARTING || flinkJobStatusEnum == FlinkJobStatusEnum.FAILING) {
+                                        sendMailManager.send(etlJobInstance);
+                                    }
+                                });
+                    }
+                })
+                .toList();
+
+        // 更新任务状态
+        etlJobInstanceService.updateBatch(etlJobInstanceList);
+    }
+
+    @Getter
+    @Setter
+    public static class FlinkJobStatusDTO {
+        @JsonProperty("state")
+        private String state;
+        @JsonProperty("start-time")
+        private Long startTime;
+        @JsonProperty("end-time")
+        private Long endTime;
+        @JsonProperty("duration")
+        private Long duration;
+    }
+}

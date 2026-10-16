@@ -6,4 +6,4 @@ create table T_ETL_FLINK_JAR_SYNC
     jar_name   varchar(100) not null comment 'jar包名称',
     uploaded   bigint       not null comment '上传时间',
     unique index uk_etl_flink_jar_sync (cluster_id, jar_id)
-) comment 'Flink Jar 同步表';
+) comment 'Flink Jar同步表';

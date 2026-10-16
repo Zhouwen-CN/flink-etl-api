@@ -1,12 +1,12 @@
 package com.etl.api.service;
 
 import com.etl.api.domain.entity.SysUser;
-import com.etl.api.domain.form.ChangePwdForm;
+import com.etl.api.domain.form.SysUserChangePwdForm;
 import com.etl.api.domain.form.SysUserCreateForm;
 import com.etl.api.domain.form.SysUserLoginForm;
 import com.etl.api.domain.form.SysUserUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.domain.vo.TokenVO;
+import com.etl.api.domain.vo.SysUserTokenVO;
 import com.mybatisflex.core.service.IService;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -20,7 +20,7 @@ import java.util.Collection;
  */
 public interface SysUserService extends IService<SysUser> {
 
-    ResponseVO<TokenVO> login(SysUserLoginForm form, HttpServletRequest request);
+    ResponseVO<SysUserTokenVO> login(SysUserLoginForm form, HttpServletRequest request);
 
     ResponseVO<Void> addUser(SysUserCreateForm form);
 
@@ -34,5 +34,5 @@ public interface SysUserService extends IService<SysUser> {
 
     void revoke(Long id, HttpServletRequest request);
 
-    ResponseVO<Void> changePwd(ChangePwdForm form);
+    ResponseVO<Void> changePwd(SysUserChangePwdForm form);
 }

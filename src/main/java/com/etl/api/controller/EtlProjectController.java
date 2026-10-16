@@ -38,7 +38,7 @@ import java.util.List;
 @Tag(name = "ETL项目 控制器")
 @RequiredArgsConstructor
 public class EtlProjectController {
-    private final EtlProjectService etlProjectService;
+    private final EtlProjectService projectService;
     private final SysDeptService deptService;
 
     @SaCheckPermission("project.select")
@@ -49,7 +49,7 @@ public class EtlProjectController {
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "name", required = false) @Parameter(description = "项目名称") String name
     ) {
-        val page = etlProjectService.queryChain()
+        val page = projectService.queryChain()
                 .like(EtlProject::getName, name, StringUtils.hasText(name))
                 .pageAs(Page.of(currentPage, pageSize), EtlProjectVO.class);
         return ResponseVO.ok(PageVO.from(page));
@@ -59,7 +59,7 @@ public class EtlProjectController {
     @Operation(summary = "新增")
     @PostMapping
     public ResponseVO<Void> add(@RequestBody @Validated EtlProjectCreateForm form) {
-        return etlProjectService.addProject(form);
+        return projectService.addProject(form);
     }
 
     @SaCheckPermission("project.update")
@@ -67,7 +67,7 @@ public class EtlProjectController {
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated EtlProjectUpdateForm form) {
         val entity = EtlProjectConvert.INSTANCE.convert(form);
-        etlProjectService.updateById(entity);
+        projectService.updateById(entity);
         return ResponseVO.ok();
     }
 
@@ -75,7 +75,7 @@ public class EtlProjectController {
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        return etlProjectService.removeProject(id);
+        return projectService.removeProject(id);
     }
 
     @SaCheckPermission("project.select")

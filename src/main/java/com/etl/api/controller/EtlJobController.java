@@ -55,13 +55,13 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class EtlJobController {
 
-    private final EtlJobService etlJobService;
+    private final EtlJobService jobService;
     private final EtlJarPackageService jarPackageService;
     private final EtlFlinkClusterService flinkClusterService;
-    private final EtlJobInstanceService etlJobInstanceService;
-    private final EtlJobManager etlJobManager;
+    private final EtlJobInstanceService jobInstanceService;
+    private final EtlJobManager jobManager;
     private final EtlFlinkCheckpointSyncService flinkCheckpointSyncService;
-    private final EtlProjectService etlProjectService;
+    private final EtlProjectService projectService;
 
     @SaCheckPermission("job.select")
     @Operation(summary = "分页查询")
@@ -73,7 +73,7 @@ public class EtlJobController {
             @RequestParam(value = "type", required = false) @Parameter(description = "任务类型") Integer type,
             @RequestParam(value = "projectId", required = false) @Parameter(description = "项目id") Long projectId
     ) {
-        val page = etlJobService.queryChain()
+        val page = jobService.queryChain()
                 .like(EtlJob::getName, name, StringUtils.hasText(name))
                 .eq(EtlJob::getType, type, Objects.nonNull(type))
                 .eq(EtlJob::getProjectId, projectId, Objects.nonNull(projectId))
@@ -86,7 +86,7 @@ public class EtlJobController {
     @Operation(summary = "新增")
     @PostMapping
     public ResponseVO<Void> add(@RequestBody @Validated EtlJobCreateForm form) {
-        return etlJobService.addJob(form);
+        return jobService.addJob(form);
     }
 
     @IgnoreTenant
@@ -95,7 +95,7 @@ public class EtlJobController {
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated EtlJobUpdateForm form) {
         val entity = EtlJobConvert.INSTANCE.convert(form);
-        etlJobService.updateById(entity);
+        jobService.updateById(entity);
         return ResponseVO.ok();
     }
 
@@ -103,21 +103,21 @@ public class EtlJobController {
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        return etlJobService.removeJob(id);
+        return jobService.removeJob(id);
     }
 
     @SaCheckPermission("job.delete")
     @Operation(summary = "批量删除")
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
-        return etlJobService.removeJobBatch(ids);
+        return jobService.removeJobBatch(ids);
     }
 
     @SaCheckPermission("job.insert")
     @Operation(summary = "运行任务")
     @PostMapping("/run")
     public ResponseVO<Void> runJob(@RequestBody @Validated EtlJobSubmitForm form) {
-        etlJobManager.runJob(form.getId(), form.getSavepointPath());
+        jobManager.runJob(form.getId(), form.getSavepointPath());
         return ResponseVO.ok();
     }
 
@@ -135,7 +135,7 @@ public class EtlJobController {
     @Operation(summary = "项目选择器")
     @GetMapping("/project/selector")
     public ResponseVO<List<DictionaryVO>> projectSelector() {
-        val vos = etlProjectService.list()
+        val vos = projectService.list()
                 .stream()
                 .map(EtlProjectConvert.INSTANCE::convert)
                 .toList();
@@ -156,7 +156,7 @@ public class EtlJobController {
     @Operation(summary = "任务实例选择器")
     @GetMapping("/instance/selector/{id}")
     public ResponseVO<List<DictionaryVO>> instanceSelector(@PathVariable @Parameter(description = "ID") Long id) {
-        val vos = etlJobInstanceService.queryChain()
+        val vos = jobInstanceService.queryChain()
                 .eq(EtlJobInstance::getJobId, id)
                 .orderBy(EtlJobInstance::getCreateTime, false)
                 .limit(5) // 只输出5条

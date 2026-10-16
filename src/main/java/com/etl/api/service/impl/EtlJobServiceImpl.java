@@ -30,8 +30,8 @@ import java.util.Collection;
 @RequiredArgsConstructor
 public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> implements EtlJobService {
 
-    private final EtlJobInstanceService etlJobInstanceService;
-    private final EtlProjectMapper etlProjectMapper;
+    private final EtlJobInstanceService jobInstanceService;
+    private final EtlProjectMapper projectMapper;
 
     @Override
     public ResponseVO<Void> addJob(EtlJobCreateForm form) {
@@ -43,7 +43,7 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
             return ResponseVO.recordExistsError(name);
         }
 
-        val etlProject = etlProjectMapper.selectOneByQuery(
+        val etlProject = projectMapper.selectOneByQuery(
                 QueryWrapper.create()
                         .eq(EtlProject::getId, form.getProjectId())
         );
@@ -60,7 +60,7 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
 
     @Override
     public ResponseVO<Void> removeJob(Long id) {
-        val exists = etlJobInstanceService.queryChain()
+        val exists = jobInstanceService.queryChain()
                 .eq(EtlJobInstance::getJobId, id)
                 .exists();
 
@@ -73,7 +73,7 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
 
     @Override
     public ResponseVO<Void> removeJobBatch(Collection<Long> ids) {
-        val exists = etlJobInstanceService.queryChain()
+        val exists = jobInstanceService.queryChain()
                 .in(EtlJobInstance::getJobId, ids)
                 .exists();
 

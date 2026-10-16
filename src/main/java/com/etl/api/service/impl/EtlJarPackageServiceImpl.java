@@ -29,7 +29,7 @@ import java.util.jar.JarFile;
 @RequiredArgsConstructor
 public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, EtlJarPackage> implements EtlJarPackageService {
 
-    private final EtlJobService etlJobService;
+    private final EtlJobService jobService;
     @Value("${custom.jar-package.location}")
     private String jarPackageLocation;
 
@@ -82,7 +82,7 @@ public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, E
 
     @Override
     public ResponseVO<Void> removeJar(Long id) {
-        val exists = etlJobService.queryChain()
+        val exists = jobService.queryChain()
                 .eq(EtlJob::getJarId, id)
                 .exists();
         if (exists) {
@@ -95,7 +95,7 @@ public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, E
 
     @Override
     public ResponseVO<Void> removeJarBatch(Collection<Long> ids) {
-        val exists = etlJobService.queryChain()
+        val exists = jobService.queryChain()
                 .in(EtlJob::getJarId, ids)
                 .exists();
         if (exists) {

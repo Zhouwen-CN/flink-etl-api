@@ -35,12 +35,12 @@ public class EtlJobManager {
 
     // 服务器时间容忍3分钟误差，通常内网的服务器时间会慢
     private static final Duration UPLOADED_OFFSET = Duration.ofMinutes(3);
-    private final EtlJobService etlJobService;
+    private final EtlJobService jobService;
     private final EtlFlinkClusterService flinkClusterService;
     private final EtlJarPackageService jarPackageService;
     private final EtlFlinkJarSyncService flinkJarSyncService;
     private final FlinkApiProvider flinkApiProvider;
-    private final EtlJobInstanceService etlJobInstanceService;
+    private final EtlJobInstanceService jobInstanceService;
     private final SysVarSettingService varSettingService;
     private final ObjectMapper objectMapper;
 
@@ -53,13 +53,13 @@ public class EtlJobManager {
     }
 
     public void runJob(Long jobId, @Nullable String savepointPath) {
-        val etlJob = etlJobService.getById(jobId);
+        val etlJob = jobService.getById(jobId);
         if (etlJob == null) {
             throw new EtlJobException("Etl 任务未找到: " + jobId);
         }
 
         // 是否有正在运行的任务
-        val exists = etlJobInstanceService.queryChain()
+        val exists = jobInstanceService.queryChain()
                 .eq(EtlJobInstance::getJobId, jobId)
                 .eq(EtlJobInstance::getJobType, ETLJobTypeEnum.STREAMING.getCode())
                 .in(EtlJobInstance::getStatus, FlinkJobStatusEnum.getProcessingStatus())
@@ -180,11 +180,11 @@ public class EtlJobManager {
         );
         // 任务实例继承任务部门（数据权限）
         etlJobInstance.setDeptId(etlJob.getDeptId());
-        etlJobInstanceService.save(etlJobInstance);
+        jobInstanceService.save(etlJobInstance);
     }
 
     public void cancelJob(String jobInstanceId) {
-        val etlJobInstance = etlJobInstanceService.queryChain()
+        val etlJobInstance = jobInstanceService.queryChain()
                 .eq(EtlJobInstance::getId, jobInstanceId)
                 .eq(EtlJobInstance::getStatus, FlinkJobStatusEnum.RUNNING)
                 .one();

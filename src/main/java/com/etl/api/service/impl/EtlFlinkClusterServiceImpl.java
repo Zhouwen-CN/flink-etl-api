@@ -28,7 +28,7 @@ import java.util.Collection;
 @RequiredArgsConstructor
 public class EtlFlinkClusterServiceImpl extends ServiceImpl<EtlFlinkClusterMapper, EtlFlinkCluster> implements EtlFlinkClusterService {
     private final FlinkApiProvider flinkApiProvider;
-    private final EtlJobService etlJobService;
+    private final EtlJobService jobService;
     private final EtlFlinkJarSyncService flinkJarSyncService;
 
     @Override
@@ -51,7 +51,7 @@ public class EtlFlinkClusterServiceImpl extends ServiceImpl<EtlFlinkClusterMappe
 
     @Override
     public ResponseVO<Void> removeCluster(Long id) {
-        val exists = etlJobService.queryChain()
+        val exists = jobService.queryChain()
                 .eq(EtlJob::getClusterId, id)
                 .exists();
         if (exists) {
@@ -67,7 +67,7 @@ public class EtlFlinkClusterServiceImpl extends ServiceImpl<EtlFlinkClusterMappe
 
     @Override
     public ResponseVO<Void> removeClusterBatch(Collection<Long> ids) {
-        val exists = etlJobService.queryChain()
+        val exists = jobService.queryChain()
                 .in(EtlJob::getClusterId, ids)
                 .exists();
         if (exists) {

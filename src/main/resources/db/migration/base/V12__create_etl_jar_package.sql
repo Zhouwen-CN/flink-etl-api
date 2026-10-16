@@ -10,4 +10,4 @@ create table T_ETL_JAR_PACKAGE
     update_user varchar(30) default null comment '修改者',
     update_time datetime default CURRENT_TIMESTAMP comment '更新时间',
     unique index uk_etl_jar_package_name (name)
-) comment 'jar包管理表';
+) comment 'Jar包管理表';

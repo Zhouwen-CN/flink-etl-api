@@ -7,4 +7,4 @@ create table if not exists T_ETL_FLINK_CHECKPOINT_SYNC
     path         varchar(255) not null comment '检查点路径',
     trigger_time datetime     not null comment '检查点触发时间',
     unique index uk_etl_flink_chk_sync (job_id, chk_id)
-) comment 'Flink 检查点同步表';
+) comment 'Flink检查点同步表';

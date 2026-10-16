@@ -124,8 +124,8 @@ public class GlobalExceptionHandler {
     /**
      * 调度任务异常
      */
-    @ExceptionHandler(ScheduleJobException.class)
-    public ResponseVO<Void> scheduleJobExceptionHandler(ScheduleJobException e) {
+    @ExceptionHandler(ScheduledTaskException.class)
+    public ResponseVO<Void> scheduleJobExceptionHandler(ScheduledTaskException e) {
         return ResponseVO.error(e.getMessage());
     }
 
