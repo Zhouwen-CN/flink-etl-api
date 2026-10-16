@@ -1,10 +1,10 @@
 package com.etl.api.job;
 
+import com.etl.api.domain.entity.EtlFlinkCluster;
 import com.etl.api.domain.entity.EtlJobInstance;
-import com.etl.api.domain.entity.FlinkCluster;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
+import com.etl.api.service.EtlFlinkClusterService;
 import com.etl.api.service.EtlJobInstanceService;
-import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.manager.SendMailManager;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.etl.api.util.LocalDateTimeUtil;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @DisallowConcurrentExecution
 @RequiredArgsConstructor
 public class SyncJobInstanceStatus extends QuartzJobBean {
-    private final FlinkClusterService flinkClusterService;
+    private final EtlFlinkClusterService flinkClusterService;
     private final EtlJobInstanceService etlJobInstanceService;
     private final FlinkApiProvider flinkApiProvider;
     private final ObjectMapper objectMapper;
@@ -43,7 +43,7 @@ public class SyncJobInstanceStatus extends QuartzJobBean {
         log.debug("同步 Flink 作业状态信息");
         val flinkClusterMap = flinkClusterService.list()
                 .stream()
-                .collect(Collectors.toMap(FlinkCluster::getId, item -> item));
+                .collect(Collectors.toMap(EtlFlinkCluster::getId, item -> item));
 
         // 获取还在运行的任务
         val etlJobInstanceList = etlJobInstanceService.queryChain()

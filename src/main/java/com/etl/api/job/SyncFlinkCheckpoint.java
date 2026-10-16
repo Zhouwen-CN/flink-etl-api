@@ -1,13 +1,13 @@
 package com.etl.api.job;
 
+import com.etl.api.domain.entity.EtlFlinkCluster;
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.FlinkCheckpoint;
-import com.etl.api.domain.entity.FlinkCluster;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
+import com.etl.api.service.EtlFlinkClusterService;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.FlinkCheckpointService;
-import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.etl.api.util.LocalDateTimeUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -40,7 +40,7 @@ import static com.mybatisflex.core.query.QueryMethods.max;
 @RequiredArgsConstructor
 public class SyncFlinkCheckpoint extends QuartzJobBean {
     private final EtlJobInstanceService etlJobInstanceService;
-    private final FlinkClusterService flinkClusterService;
+    private final EtlFlinkClusterService flinkClusterService;
     private final FlinkApiProvider flinkApiProvider;
     private final ObjectMapper objectMapper;
     private final FlinkCheckpointService flinkCheckpointService;
@@ -50,7 +50,7 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
         log.debug("同步 Flink 任务检查点列表");
         val flinkClusterMap = flinkClusterService.list()
                 .stream()
-                .collect(Collectors.toMap(FlinkCluster::getId, item -> item));
+                .collect(Collectors.toMap(EtlFlinkCluster::getId, item -> item));
 
         etlJobInstanceService.queryChain()
                 .eq(EtlJobInstance::getJobType, ETLJobTypeEnum.STREAMING.getCode())

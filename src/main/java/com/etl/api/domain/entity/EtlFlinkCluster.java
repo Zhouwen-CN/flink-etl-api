@@ -14,7 +14,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Flink 集群表 实体类。
+ * Flink集群表 实体类。
  *
  * @author chen
  * @since 2026-05-13
@@ -22,8 +22,8 @@ import java.io.Serializable;
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(value = "T_FLINK_CLUSTER", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
-public class FlinkCluster extends BaseEntity implements Serializable {
+@Table(value = "T_ETL_FLINK_CLUSTER", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
+public class EtlFlinkCluster extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

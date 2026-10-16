@@ -2,15 +2,15 @@ package com.etl.api.service.manager;
 
 import com.etl.api.domain.dto.JobConfig;
 import com.etl.api.domain.entity.ClusterUploadedJar;
+import com.etl.api.domain.entity.EtlFlinkCluster;
 import com.etl.api.domain.entity.EtlJobInstance;
-import com.etl.api.domain.entity.FlinkCluster;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.exception.EtlJobException;
 import com.etl.api.service.ClusterUploadedJarService;
+import com.etl.api.service.EtlFlinkClusterService;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
-import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
 import com.etl.api.service.SysVarSettingService;
 import com.etl.api.service.provider.FlinkApiProvider;
@@ -36,7 +36,7 @@ public class EtlJobManager {
     // 服务器时间容忍3分钟误差，通常内网的服务器时间会慢
     private static final Duration UPLOADED_OFFSET = Duration.ofMinutes(3);
     private final EtlJobService etlJobService;
-    private final FlinkClusterService flinkClusterService;
+    private final EtlFlinkClusterService flinkClusterService;
     private final JarPackageService jarPackageService;
     private final ClusterUploadedJarService clusterUploadedJarService;
     private final FlinkApiProvider flinkApiProvider;
@@ -195,7 +195,7 @@ public class EtlJobManager {
 
         val clusterId = etlJobInstance.getClusterId();
         val flinkCluster = flinkClusterService.queryChain()
-                .eq(FlinkCluster::getId, clusterId)
+                .eq(EtlFlinkCluster::getId, clusterId)
                 .one();
 
         if (flinkCluster == null) {

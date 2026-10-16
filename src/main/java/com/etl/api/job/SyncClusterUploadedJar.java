@@ -1,9 +1,9 @@
 package com.etl.api.job;
 
 import com.etl.api.domain.entity.ClusterUploadedJar;
-import com.etl.api.domain.entity.FlinkCluster;
+import com.etl.api.domain.entity.EtlFlinkCluster;
 import com.etl.api.service.ClusterUploadedJarService;
-import com.etl.api.service.FlinkClusterService;
+import com.etl.api.service.EtlFlinkClusterService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,7 +27,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class SyncClusterUploadedJar extends QuartzJobBean {
     private final ObjectMapper objectMapper;
-    private final FlinkClusterService flinkClusterService;
+    private final EtlFlinkClusterService flinkClusterService;
     private final ClusterUploadedJarService clusterUploadedJarService;
     private final FlinkApiProvider flinkApiProvider;
 
@@ -36,7 +36,7 @@ public class SyncClusterUploadedJar extends QuartzJobBean {
         log.debug("同步 Flink 集群已上传的 jar 包列表");
 
         val flinkClusterList = flinkClusterService.list();
-        for (FlinkCluster flinkCluster : flinkClusterList) {
+        for (EtlFlinkCluster flinkCluster : flinkClusterList) {
             // 只有 flink 集群状态开启才同步
             if (flinkCluster.getStatus()) {
                 val clusterId = flinkCluster.getId();

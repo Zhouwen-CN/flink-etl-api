@@ -1,9 +1,9 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.etl.api.domain.convert.EtlFlinkClusterConvert;
 import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.convert.EtlProjectConvert;
-import com.etl.api.domain.convert.FlinkClusterConvert;
 import com.etl.api.domain.convert.JarPackageConvert;
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.vo.DictionaryVO;
@@ -12,10 +12,10 @@ import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
+import com.etl.api.service.EtlFlinkClusterService;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.EtlProjectService;
-import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
 import com.etl.api.service.manager.EtlJobManager;
 import com.mybatisflex.core.paginate.Page;
@@ -39,8 +39,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Objects;
 
+import static com.etl.api.domain.entity.table.EtlFlinkClusterTableDef.ETL_FLINK_CLUSTER;
 import static com.etl.api.domain.entity.table.EtlJobInstanceTableDef.ETL_JOB_INSTANCE;
-import static com.etl.api.domain.entity.table.FlinkClusterTableDef.FLINK_CLUSTER;
 
 @RestController
 @RequestMapping("/instance")
@@ -48,7 +48,7 @@ import static com.etl.api.domain.entity.table.FlinkClusterTableDef.FLINK_CLUSTER
 @RequiredArgsConstructor
 public class EtlJobInstanceController {
     private final EtlJobInstanceService etlJobInstanceService;
-    private final FlinkClusterService flinkClusterService;
+    private final EtlFlinkClusterService flinkClusterService;
     private final EtlJobService etlJobService;
     private final JarPackageService jarPackageService;
     private final EtlJobManager etlJobManager;
@@ -73,7 +73,7 @@ public class EtlJobInstanceController {
                         ETL_JOB_INSTANCE.ID,
                         ETL_JOB_INSTANCE.PROJECT_ID,
                         ETL_JOB_INSTANCE.CLUSTER_ID,
-                        FLINK_CLUSTER.JOB_MANAGER_URL,
+                        ETL_FLINK_CLUSTER.JOB_MANAGER_URL,
                         ETL_JOB_INSTANCE.JAR_ID,
                         ETL_JOB_INSTANCE.JOB_ID,
                         ETL_JOB_INSTANCE.JOB_TYPE,
@@ -83,8 +83,8 @@ public class EtlJobInstanceController {
                         ETL_JOB_INSTANCE.DURATION,
                         ETL_JOB_INSTANCE.UPDATE_TIME
                 )
-                .join(FLINK_CLUSTER)
-                .on(ETL_JOB_INSTANCE.CLUSTER_ID.eq(FLINK_CLUSTER.ID))
+                .join(ETL_FLINK_CLUSTER)
+                .on(ETL_JOB_INSTANCE.CLUSTER_ID.eq(ETL_FLINK_CLUSTER.ID))
                 .like(EtlJobInstance::getId, instanceId, StringUtils.hasText(instanceId))
                 .eq(EtlJobInstance::getProjectId, projectId, Objects.nonNull(projectId))
                 .eq(EtlJobInstance::getClusterId, clusterId, Objects.nonNull(clusterId))
@@ -148,7 +148,7 @@ public class EtlJobInstanceController {
     @Operation(summary = "Flink集群选择器")
     public ResponseVO<List<DictionaryVO>> getClusterSelector() {
         val vos = flinkClusterService.list()
-                .stream().map(FlinkClusterConvert.INSTANCE::convert)
+                .stream().map(EtlFlinkClusterConvert.INSTANCE::convert)
                 .toList();
         return ResponseVO.ok(vos);
     }

@@ -9,7 +9,7 @@ import org.hibernate.validator.constraints.Length;
 
 @Data
 @Schema(description = "新增Flink集群表单")
-public class FlinkClusterCreateForm {
+public class EtlFlinkClusterCreateForm {
 
     @NotBlank
     @Length(max = 30)

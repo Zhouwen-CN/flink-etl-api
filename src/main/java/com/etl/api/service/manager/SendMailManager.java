@@ -2,13 +2,13 @@ package com.etl.api.service.manager;
 
 import com.etl.api.domain.entity.Alert;
 import com.etl.api.domain.entity.AlertJob;
+import com.etl.api.domain.entity.EtlFlinkCluster;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.entity.EtlJobInstance;
-import com.etl.api.domain.entity.FlinkCluster;
 import com.etl.api.service.AlertJobService;
 import com.etl.api.service.AlertService;
+import com.etl.api.service.EtlFlinkClusterService;
 import com.etl.api.service.EtlJobService;
-import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +36,7 @@ public class SendMailManager {
     private final AlertJobService alertJobService;
     private final AlertService alertService;
     private final EtlJobService etlJobService;
-    private final FlinkClusterService flinkClusterService;
+    private final EtlFlinkClusterService flinkClusterService;
     private final FlinkApiProvider flinkApiProvider;
     @Value("${custom.send-mail.silent-time}")
     private Duration silentTime;
@@ -73,7 +73,7 @@ public class SendMailManager {
 
             // 获取 flink 集群
             val flinkCluster = flinkClusterService.queryChain()
-                    .eq(FlinkCluster::getId, etlJob.getClusterId())
+                    .eq(EtlFlinkCluster::getId, etlJob.getClusterId())
                     .one();
             if (flinkCluster == null) {
                 return;

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Flink 集群视图")
-public class FlinkClusterVO {
+public class EtlFlinkClusterVO {
 
     @Schema(description = "自增主键")
     private Long id;
