@@ -7,7 +7,7 @@ import org.hibernate.validator.constraints.Length;
 
 @Data
 @Schema(description = "新增部门表单")
-public class DeptCreateForm {
+public class SysDeptCreateForm {
 
     @NotBlank
     @Length(max = 100)

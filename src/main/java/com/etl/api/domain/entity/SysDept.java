@@ -22,8 +22,8 @@ import java.io.Serializable;
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(value = "T_DEPT", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
-public class Dept extends BaseEntity implements Serializable {
+@Table(value = "T_SYS_DEPT", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
+public class SysDept extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

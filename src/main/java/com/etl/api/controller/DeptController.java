@@ -1,11 +1,11 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.etl.api.domain.form.DeptCreateForm;
-import com.etl.api.domain.form.DeptUpdateForm;
-import com.etl.api.domain.vo.DeptVO;
+import com.etl.api.domain.form.SysDeptCreateForm;
+import com.etl.api.domain.form.SysDeptUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.service.DeptService;
+import com.etl.api.domain.vo.SysDeptVO;
+import com.etl.api.service.SysDeptService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,12 +30,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DeptController {
 
-    private final DeptService deptService;
+    private final SysDeptService deptService;
 
     @SaCheckPermission("dept.select")
     @Operation(summary = "部门树")
     @GetMapping("/tree")
-    public ResponseVO<List<DeptVO>> tree(@RequestParam(value = "name", required = false) @Parameter(description = "部门名称") String name) {
+    public ResponseVO<List<SysDeptVO>> tree(@RequestParam(value = "name", required = false) @Parameter(description = "部门名称") String name) {
         val vos = deptService.listTree(name);
         return ResponseVO.ok(vos);
     }
@@ -43,14 +43,14 @@ public class DeptController {
     @SaCheckPermission("dept.insert")
     @Operation(summary = "新增")
     @PostMapping
-    public ResponseVO<Void> add(@RequestBody @Validated DeptCreateForm form) {
+    public ResponseVO<Void> add(@RequestBody @Validated SysDeptCreateForm form) {
         return deptService.addDept(form);
     }
 
     @SaCheckPermission("dept.update")
     @Operation(summary = "更新")
     @PutMapping
-    public ResponseVO<Void> modify(@RequestBody @Validated DeptUpdateForm form) {
+    public ResponseVO<Void> modify(@RequestBody @Validated SysDeptUpdateForm form) {
         return deptService.modifyDept(form);
     }
 

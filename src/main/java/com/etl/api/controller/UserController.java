@@ -9,13 +9,13 @@ import com.etl.api.domain.entity.SysUserRole;
 import com.etl.api.domain.form.ChangePwdForm;
 import com.etl.api.domain.form.SysUserCreateForm;
 import com.etl.api.domain.form.SysUserUpdateForm;
-import com.etl.api.domain.vo.DeptVO;
 import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.domain.vo.SysDeptVO;
 import com.etl.api.domain.vo.SysUserRoleVO;
 import com.etl.api.domain.vo.SysUserVO;
-import com.etl.api.service.DeptService;
+import com.etl.api.service.SysDeptService;
 import com.etl.api.service.SysRoleService;
 import com.etl.api.service.SysUserRoleService;
 import com.etl.api.service.SysUserService;
@@ -56,7 +56,7 @@ public class UserController {
     private final SysUserService userService;
     private final SysRoleService roleService;
     private final SysUserRoleService userRoleService;
-    private final DeptService deptService;
+    private final SysDeptService deptService;
     @Value("${custom.default-pwd}")
     private String defaultPwd;
 
@@ -132,7 +132,7 @@ public class UserController {
     @SaCheckPermission("user.select")
     @Operation(summary = "部门选择器")
     @GetMapping("/dept/selector")
-    public ResponseVO<List<DeptVO>> deptSelector() {
+    public ResponseVO<List<SysDeptVO>> deptSelector() {
         val vos = deptService.treeSelector();
         return ResponseVO.ok(vos);
     }

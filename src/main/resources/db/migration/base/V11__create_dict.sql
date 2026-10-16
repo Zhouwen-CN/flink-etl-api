@@ -15,6 +15,8 @@ insert into T_DICT_TYPE(id, name, remark, status)
 values (1, 'gender', '性别', 1);
 insert into T_DICT_TYPE(id, name, remark, status)
 values (2, 'job_type', '任务类型', 1);
+insert into T_DICT_TYPE(id, name, remark, status)
+values (3, 'data_scope', '数据范围', 1);
 
 create table T_DICT_DATA
 (
@@ -30,6 +32,7 @@ create table T_DICT_DATA
     unique index uk_dict_type_label (type_id, label)
 ) comment '字典数据表';
 
+-- 性别
 insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (1, 1, '未知', 0, 0);
 insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
@@ -37,7 +40,16 @@ values (2, 1, '男', 1, 1);
 insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (3, 1, '女', 2, 2);
 
+-- 任务类型
 insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (4, 2, 'BATCH', 1, 1);
 insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (5, 2, 'STREAMING', 2, 2);
+
+-- 数据范围
+insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (6, 3, '全部', 1, 1);
+insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (7, 3, '本部门及以下', 2, 2);
+insert into T_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (8, 3, '本部门', 3, 3);

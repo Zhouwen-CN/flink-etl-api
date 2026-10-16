@@ -1,6 +1,6 @@
 package com.etl.api.mapper;
 
-import com.etl.api.domain.entity.Dept;
+import com.etl.api.domain.entity.SysDept;
 import com.mybatisflex.core.BaseMapper;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.BaseMapper;
  * @author chen
  * @since 2026-10-10
  */
-public interface DeptMapper extends BaseMapper<Dept> {
+public interface SysDeptMapper extends BaseMapper<SysDept> {
 
 }

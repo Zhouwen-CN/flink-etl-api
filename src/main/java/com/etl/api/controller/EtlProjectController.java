@@ -5,12 +5,12 @@ import com.etl.api.domain.convert.EtlProjectConvert;
 import com.etl.api.domain.entity.EtlProject;
 import com.etl.api.domain.form.EtlProjectCreateForm;
 import com.etl.api.domain.form.EtlProjectUpdateForm;
-import com.etl.api.domain.vo.DeptVO;
 import com.etl.api.domain.vo.EtlProjectVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.service.DeptService;
+import com.etl.api.domain.vo.SysDeptVO;
 import com.etl.api.service.EtlProjectService;
+import com.etl.api.service.SysDeptService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,7 +39,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EtlProjectController {
     private final EtlProjectService etlProjectService;
-    private final DeptService deptService;
+    private final SysDeptService deptService;
 
     @SaCheckPermission("project.select")
     @Operation(summary = "分页查询")
@@ -81,7 +81,7 @@ public class EtlProjectController {
     @SaCheckPermission("project.select")
     @Operation(summary = "部门选择器")
     @GetMapping("/dept/selector")
-    public ResponseVO<List<DeptVO>> deptSelector() {
+    public ResponseVO<List<SysDeptVO>> deptSelector() {
         val vos = deptService.treeSelector();
         return ResponseVO.ok(vos);
     }

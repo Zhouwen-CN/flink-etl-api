@@ -1,15 +1,15 @@
 package com.etl.api.service.impl;
 
-import com.etl.api.domain.convert.DeptConvert;
-import com.etl.api.domain.entity.Dept;
+import com.etl.api.domain.convert.SysDeptConvert;
+import com.etl.api.domain.entity.SysDept;
 import com.etl.api.domain.entity.SysUser;
-import com.etl.api.domain.form.DeptCreateForm;
-import com.etl.api.domain.form.DeptUpdateForm;
-import com.etl.api.domain.vo.DeptVO;
+import com.etl.api.domain.form.SysDeptCreateForm;
+import com.etl.api.domain.form.SysDeptUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.mapper.DeptMapper;
+import com.etl.api.domain.vo.SysDeptVO;
+import com.etl.api.mapper.SysDeptMapper;
 import com.etl.api.mapper.SysUserMapper;
-import com.etl.api.service.DeptService;
+import com.etl.api.service.SysDeptService;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -36,15 +36,15 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements DeptService {
+public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> implements SysDeptService {
 
     private final SysUserMapper userMapper;
 
     @Override
-    public ResponseVO<Void> addDept(DeptCreateForm form) {
+    public ResponseVO<Void> addDept(SysDeptCreateForm form) {
         String name = form.getName();
         boolean exists = this.queryChain()
-                .eq(Dept::getName, name)
+                .eq(SysDept::getName, name)
                 .exists();
 
         if (exists) {
@@ -55,19 +55,19 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
             return ResponseVO.recordNotFoundError("父部门 id:" + form.getParentId());
         }
 
-        val entity = DeptConvert.INSTANCE.convert(form);
+        val entity = SysDeptConvert.INSTANCE.convert(form);
         this.save(entity);
         return ResponseVO.ok();
     }
 
     @Override
-    public ResponseVO<Void> modifyDept(DeptUpdateForm form) {
+    public ResponseVO<Void> modifyDept(SysDeptUpdateForm form) {
         Long id = form.getId();
         if (id == 1L) {
             return ResponseVO.modifyRootDeptError();
         }
 
-        Dept dept = this.getById(id);
+        SysDept dept = this.getById(id);
         if (dept == null) {
             return ResponseVO.recordNotFoundError("部门 id:" + id);
         }
@@ -78,14 +78,14 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
 
         // 名称唯一性（排除自身）
         boolean nameExists = this.queryChain()
-                .eq(Dept::getName, form.getName())
-                .ne(Dept::getId, id)
+                .eq(SysDept::getName, form.getName())
+                .ne(SysDept::getId, id)
                 .exists();
         if (nameExists) {
             return ResponseVO.recordExistsError(form.getName());
         }
 
-        val entity = DeptConvert.INSTANCE.convert(form);
+        val entity = SysDeptConvert.INSTANCE.convert(form);
         this.updateById(entity);
         return ResponseVO.ok();
     }
@@ -98,7 +98,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
 
         // 存在子部门不允许删除
         boolean childExists = this.queryChain()
-                .eq(Dept::getParentId, id)
+                .eq(SysDept::getParentId, id)
                 .exists();
 
         if (childExists) {
@@ -119,18 +119,18 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     }
 
 
-    private List<DeptVO> listTree(Predicate<Dept> filter, boolean isFilter) {
+    private List<SysDeptVO> listTree(Predicate<SysDept> filter, boolean isFilter) {
         // 全量加载，便于回溯祖先和构建树
-        List<Dept> all = this.list();
-        Map<Long, Dept> deptMap = all.stream()
-                .collect(Collectors.toMap(Dept::getId, d -> d));
+        List<SysDept> all = this.list();
+        Map<Long, SysDept> deptMap = all.stream()
+                .collect(Collectors.toMap(SysDept::getId, d -> d));
 
         Set<Long> selectedIds;
         if (isFilter) {
             // 1. 先查出名称命中的节点
             Set<Long> matchedIds = all.stream()
                     .filter(filter)
-                    .map(Dept::getId)
+                    .map(SysDept::getId)
                     .collect(Collectors.toSet());
             // 2. 再沿 parentId 向上回溯，把全部祖先补进来
             selectedIds = new HashSet<>(matchedIds);
@@ -141,20 +141,20 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
                 }
             });
         } else {
-            selectedIds = all.stream().map(Dept::getId).collect(Collectors.toSet());
+            selectedIds = all.stream().map(SysDept::getId).collect(Collectors.toSet());
         }
 
         // id -> vo
-        Map<Long, DeptVO> voMap = new HashMap<>();
-        for (Dept dept : all) {
+        Map<Long, SysDeptVO> voMap = new HashMap<>();
+        for (SysDept dept : all) {
             if (selectedIds.contains(dept.getId())) {
-                voMap.put(dept.getId(), DeptConvert.INSTANCE.convert(dept));
+                voMap.put(dept.getId(), SysDeptConvert.INSTANCE.convert(dept));
             }
         }
 
-        List<DeptVO> roots = new ArrayList<>();
-        for (Dept dept : all) {
-            DeptVO vo = voMap.get(dept.getId());
+        List<SysDeptVO> roots = new ArrayList<>();
+        for (SysDept dept : all) {
+            SysDeptVO vo = voMap.get(dept.getId());
             if (vo == null) {
                 continue;
             }
@@ -172,12 +172,12 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     }
 
     @Override
-    public List<DeptVO> listTree(String name) {
+    public List<SysDeptVO> listTree(String name) {
         return this.listTree(d -> d.getName().contains(name.trim()), StringUtils.hasText(name));
     }
 
     @Override
-    public List<DeptVO> treeSelector() {
+    public List<SysDeptVO> treeSelector() {
         // 如果数据权限范围是所有 或者 传入的 id 为空，则不进行过滤
         val userInfo = SaSessionUtil.getUserInfo();
         val deptId = userInfo.getDeptId();
@@ -185,10 +185,10 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         return this.listTree(d -> d.getId().equals(deptId), !dataScopeAll && deptId != null);
     }
 
-    private void sortTree(List<DeptVO> list) {
-        list.sort(Comparator.comparing(DeptVO::getSort,
+    private void sortTree(List<SysDeptVO> list) {
+        list.sort(Comparator.comparing(SysDeptVO::getSort,
                 Comparator.nullsLast(Comparator.naturalOrder())));
-        for (DeptVO vo : list) {
+        for (SysDeptVO vo : list) {
             if (vo.getChildren() != null) {
                 sortTree(vo.getChildren());
             }

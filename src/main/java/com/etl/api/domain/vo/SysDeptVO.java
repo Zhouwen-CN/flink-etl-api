@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 @Schema(description = "部门视图")
-public class DeptVO {
+public class SysDeptVO {
 
     @Schema(description = "自增主键")
     private Long id;
@@ -29,5 +29,5 @@ public class DeptVO {
     private LocalDateTime updateTime;
 
     @Schema(description = "子部门")
-    private List<DeptVO> children;
+    private List<SysDeptVO> children;
 }

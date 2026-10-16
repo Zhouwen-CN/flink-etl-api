@@ -2,7 +2,7 @@ package com.etl.api.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.domain.convert.SysUserConvert;
-import com.etl.api.domain.entity.Dept;
+import com.etl.api.domain.entity.SysDept;
 import com.etl.api.domain.entity.SysLoginCaptcha;
 import com.etl.api.domain.entity.SysUser;
 import com.etl.api.domain.entity.SysUserRole;
@@ -16,7 +16,7 @@ import com.etl.api.enumeration.DataScopeEnum;
 import com.etl.api.enumeration.LoginOperationEnum;
 import com.etl.api.job.config.QuartzJobProperties;
 import com.etl.api.mapper.SysUserMapper;
-import com.etl.api.service.DeptService;
+import com.etl.api.service.SysDeptService;
 import com.etl.api.service.SysLoginCaptchaService;
 import com.etl.api.service.SysLoginLogService;
 import com.etl.api.service.SysUserRoleService;
@@ -61,7 +61,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private final SysUserRoleService userRoleService;
     private final SysLoginLogService loginLogService;
     private final QuartzJobProperties quartzJobProperties;
-    private final DeptService deptService;
+    private final SysDeptService deptService;
 
     @Override
     public ResponseVO<TokenVO> login(SysUserLoginForm form, HttpServletRequest request) {
@@ -224,9 +224,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     private Set<Long> collectDeptIds(Long deptId) {
         Set<Long> result = new HashSet<>();
-        List<Dept> deptList = deptService.list();
+        List<SysDept> deptList = deptService.list();
         Map<Long, List<Long>> childrenMap = new HashMap<>();
-        for (Dept dept : deptList) {
+        for (SysDept dept : deptList) {
             if (dept.getParentId() != null) {
                 childrenMap.computeIfAbsent(dept.getParentId(), k -> new ArrayList<>())
                         .add(dept.getId());
