@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Schema(description = "请求日志视图")
-public class RequestLogVO {
+public class SysRequestLogVO {
 
     @Schema(description = "自增主键")
     private Long id;

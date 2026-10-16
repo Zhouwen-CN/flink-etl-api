@@ -1,14 +1,14 @@
 package com.etl.api.job;
 
 import com.etl.api.domain.entity.EtlJobInstance;
-import com.etl.api.domain.entity.HttpExchangeHistory;
 import com.etl.api.domain.entity.SysLoginCaptcha;
+import com.etl.api.domain.entity.SysRequestLog;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.job.config.QuartzJobProperties;
 import com.etl.api.service.EtlJobInstanceService;
-import com.etl.api.service.HttpExchangeHistoryService;
 import com.etl.api.service.SysLoginCaptchaService;
+import com.etl.api.service.SysRequestLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -29,7 +29,7 @@ import java.time.temporal.ChronoUnit;
 public class DeleteExpirationRecord extends QuartzJobBean {
 
     private final SysLoginCaptchaService loginCaptchaService;
-    private final HttpExchangeHistoryService httpExchangeHistoryService;
+    private final SysRequestLogService requestLogService;
     private final EtlJobInstanceService etlJobInstanceService;
     private final QuartzJobProperties quartzJobProperties;
 
@@ -45,8 +45,8 @@ public class DeleteExpirationRecord extends QuartzJobBean {
                 .remove();
 
         // 删除过期的请求历史
-        httpExchangeHistoryService.updateChain()
-                .lt(HttpExchangeHistory::getTimestamp, System.currentTimeMillis() - config.getHttpExchange().toMillis())
+        requestLogService.updateChain()
+                .lt(SysRequestLog::getTimestamp, System.currentTimeMillis() - config.getHttpExchange().toMillis())
                 .remove();
 
         // 删除过期的任务实例

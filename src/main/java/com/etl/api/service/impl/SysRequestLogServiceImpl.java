@@ -1,8 +1,8 @@
 package com.etl.api.service.impl;
 
-import com.etl.api.domain.entity.HttpExchangeHistory;
-import com.etl.api.mapper.HttpExchangeHistoryMapper;
-import com.etl.api.service.HttpExchangeHistoryService;
+import com.etl.api.domain.entity.SysRequestLog;
+import com.etl.api.mapper.SysRequestLogMapper;
+import com.etl.api.service.SysRequestLogService;
 import com.etl.api.util.SaSessionUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -22,14 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * http请求历史表 服务层实现。
+ * 请求日志表 服务层实现。
  *
  * @author chen
  * @since 2026-04-27
  */
 @Service
 @RequiredArgsConstructor
-public class HttpExchangeHistoryServiceImpl extends ServiceImpl<HttpExchangeHistoryMapper, HttpExchangeHistory> implements HttpExchangeHistoryService {
+public class SysRequestLogServiceImpl extends ServiceImpl<SysRequestLogMapper, SysRequestLog> implements SysRequestLogService {
 
     private final ObjectMapper objectMapper;
 
@@ -50,7 +50,7 @@ public class HttpExchangeHistoryServiceImpl extends ServiceImpl<HttpExchangeHist
             return;
         }
 
-        val httpExchangeHistory = HttpExchangeHistory.builder()
+        val requestLog = SysRequestLog.builder()
                 .timestamp(httpExchange.getTimestamp().toEpochMilli())
                 .requestUrl(requestUrl)
                 .requestIp(request.getRemoteAddress())
@@ -62,29 +62,29 @@ public class HttpExchangeHistoryServiceImpl extends ServiceImpl<HttpExchangeHist
                 .createUser(SaSessionUtil.getUserInfo().getUsername())
                 .build();
 
-        this.save(httpExchangeHistory);
+        this.save(requestLog);
     }
 
     @Override
     public List<HttpExchange> getHttpExchangeList(int limit) throws URISyntaxException, JsonProcessingException {
-        val httpExchangeHistoryList = this.queryChain()
-                .orderBy(HttpExchangeHistory::getTimestamp, false)
+        val requestLogList = this.queryChain()
+                .orderBy(SysRequestLog::getTimestamp, false)
                 .limit(limit)
                 .list();
 
         val result = new ArrayList<HttpExchange>();
-        for (HttpExchangeHistory httpExchangeHistory : httpExchangeHistoryList) {
-            val timestamp = Instant.ofEpochMilli(httpExchangeHistory.getTimestamp());
+        for (SysRequestLog requestLog : requestLogList) {
+            val timestamp = Instant.ofEpochMilli(requestLog.getTimestamp());
             val request = new HttpExchange.Request(
-                    new URI(httpExchangeHistory.getRequestUrl()),
-                    httpExchangeHistory.getRequestIp(),
-                    httpExchangeHistory.getRequestMethod(),
-                    objectMapper.readValue(httpExchangeHistory.getRequestHeaders(), new TypeReference<>() {
+                    new URI(requestLog.getRequestUrl()),
+                    requestLog.getRequestIp(),
+                    requestLog.getRequestMethod(),
+                    objectMapper.readValue(requestLog.getRequestHeaders(), new TypeReference<>() {
                     })
             );
             val response = new HttpExchange.Response(
-                    httpExchangeHistory.getResponseStatus(),
-                    objectMapper.readValue(httpExchangeHistory.getResponseHeaders(), new TypeReference<>() {
+                    requestLog.getResponseStatus(),
+                    objectMapper.readValue(requestLog.getResponseHeaders(), new TypeReference<>() {
                     })
             );
             val httpExchange = new HttpExchange(
@@ -93,7 +93,7 @@ public class HttpExchangeHistoryServiceImpl extends ServiceImpl<HttpExchangeHist
                     response,
                     null,
                     null,
-                    Duration.ofMillis(httpExchangeHistory.getTakenTime())
+                    Duration.ofMillis(requestLog.getTakenTime())
             );
 
             result.add(httpExchange);

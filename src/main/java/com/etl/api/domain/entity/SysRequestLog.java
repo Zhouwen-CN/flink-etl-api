@@ -10,15 +10,15 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * http请求历史表 实体类。
+ * 请求日志表 实体类。
  *
  * @author chen
  * @since 2026-06-11
  */
 @Data
 @Builder
-@Table(value = "T_HTTP_EXCHANGE_HISTORY")
-public class HttpExchangeHistory implements Serializable {
+@Table(value = "T_SYS_REQUEST_LOG")
+public class SysRequestLog implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

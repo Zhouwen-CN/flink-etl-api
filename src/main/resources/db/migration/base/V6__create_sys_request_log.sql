@@ -1,4 +1,4 @@
-create table T_HTTP_EXCHANGE_HISTORY
+create table T_SYS_REQUEST_LOG
 (
     id               bigint primary key auto_increment comment '自增主键',
     timestamp        bigint       not null comment '时间戳',
@@ -10,5 +10,5 @@ create table T_HTTP_EXCHANGE_HISTORY
     response_headers text        default null comment '响应头',
     taken_time       bigint       not null comment '花费时间',
     create_user varchar(30) default null comment '创建者',
-    index idx_http_exchange_timestamp (timestamp desc)
-) comment 'http请求历史表';
+    index idx_sys_request_log_timestamp (timestamp desc)
+) comment '请求日志表';
