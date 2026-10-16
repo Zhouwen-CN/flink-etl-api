@@ -3,10 +3,10 @@ package com.etl.api.controller;
 import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.annotation.SaIgnore;
 import com.etl.api.domain.form.SysUserLoginForm;
-import com.etl.api.domain.vo.LoginCaptchaVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.domain.vo.SysLoginCaptchaVO;
 import com.etl.api.domain.vo.TokenVO;
-import com.etl.api.service.LoginCaptchaService;
+import com.etl.api.service.SysLoginCaptchaService;
 import com.etl.api.service.SysUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final SysUserService userService;
-    private final LoginCaptchaService loginCaptchaService;
+    private final SysLoginCaptchaService loginCaptchaService;
 
     @SaIgnore
     @Operation(summary = "用户登入")
@@ -56,7 +56,7 @@ public class AuthController {
     @SaIgnore
     @Operation(summary = "获取验证码")
     @GetMapping("/captcha")
-    public ResponseVO<LoginCaptchaVO> captcha() {
+    public ResponseVO<SysLoginCaptchaVO> captcha() {
         return loginCaptchaService.genCaptcha();
     }
 }

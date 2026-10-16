@@ -1,6 +1,6 @@
 package com.etl.api.mapper;
 
-import com.etl.api.domain.entity.LoginCaptcha;
+import com.etl.api.domain.entity.SysLoginCaptcha;
 import com.mybatisflex.core.BaseMapper;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.BaseMapper;
  * @author chen
  * @since 2026-05-06
  */
-public interface LoginCaptchaMapper extends BaseMapper<LoginCaptcha> {
+public interface SysLoginCaptchaMapper extends BaseMapper<SysLoginCaptcha> {
 
 }

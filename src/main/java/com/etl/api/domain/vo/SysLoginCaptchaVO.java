@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Schema(description = "登入验证码视图")
-public class LoginCaptchaVO {
+public class SysLoginCaptchaVO {
 
     @Schema(description = "UUID")
     private String id;

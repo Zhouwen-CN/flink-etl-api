@@ -3,7 +3,7 @@ package com.etl.api.service.impl;
 import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.domain.convert.SysUserConvert;
 import com.etl.api.domain.entity.Dept;
-import com.etl.api.domain.entity.LoginCaptcha;
+import com.etl.api.domain.entity.SysLoginCaptcha;
 import com.etl.api.domain.entity.SysUser;
 import com.etl.api.domain.entity.SysUserRole;
 import com.etl.api.domain.form.ChangePwdForm;
@@ -17,8 +17,8 @@ import com.etl.api.enumeration.LoginOperationEnum;
 import com.etl.api.job.config.QuartzJobProperties;
 import com.etl.api.mapper.SysUserMapper;
 import com.etl.api.service.DeptService;
-import com.etl.api.service.LoginCaptchaService;
 import com.etl.api.service.LoginLogService;
+import com.etl.api.service.SysLoginCaptchaService;
 import com.etl.api.service.SysUserRoleService;
 import com.etl.api.service.SysUserService;
 import com.etl.api.util.AESUtil;
@@ -57,7 +57,7 @@ import static com.etl.api.domain.entity.table.SysUserRoleTableDef.SYS_USER_ROLE;
 @Service
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
-    private final LoginCaptchaService loginCaptchaService;
+    private final SysLoginCaptchaService loginCaptchaService;
     private final SysUserRoleService userRoleService;
     private final LoginLogService loginLogService;
     private final QuartzJobProperties quartzJobProperties;
@@ -70,9 +70,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         // 验证码校验：id 匹配、code 相等、且未过期，条件全部下推到 where
         val captchaExpiration = quartzJobProperties.getDeleteExpirationRecord().getCaptcha();
         val loginCaptcha = loginCaptchaService.queryChain()
-                .eq(LoginCaptcha::getId, form.getCaptchaId())
-                .eq(LoginCaptcha::getCode, form.getCode())
-                .ge(LoginCaptcha::getCreateTime, LocalDateTime.now().minus(captchaExpiration.toMillis(), ChronoUnit.MILLIS))
+                .eq(SysLoginCaptcha::getId, form.getCaptchaId())
+                .eq(SysLoginCaptcha::getCode, form.getCode())
+                .ge(SysLoginCaptcha::getCreateTime, LocalDateTime.now().minus(captchaExpiration.toMillis(), ChronoUnit.MILLIS))
                 .one();
 
         // 查询不到说明验证码不存在、code错误或已过期

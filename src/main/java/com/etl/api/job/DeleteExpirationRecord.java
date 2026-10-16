@@ -2,13 +2,13 @@ package com.etl.api.job;
 
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.HttpExchangeHistory;
-import com.etl.api.domain.entity.LoginCaptcha;
+import com.etl.api.domain.entity.SysLoginCaptcha;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.job.config.QuartzJobProperties;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.HttpExchangeHistoryService;
-import com.etl.api.service.LoginCaptchaService;
+import com.etl.api.service.SysLoginCaptchaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -28,7 +28,7 @@ import java.time.temporal.ChronoUnit;
 @RequiredArgsConstructor
 public class DeleteExpirationRecord extends QuartzJobBean {
 
-    private final LoginCaptchaService loginCaptchaService;
+    private final SysLoginCaptchaService loginCaptchaService;
     private final HttpExchangeHistoryService httpExchangeHistoryService;
     private final EtlJobInstanceService etlJobInstanceService;
     private final QuartzJobProperties quartzJobProperties;
@@ -41,7 +41,7 @@ public class DeleteExpirationRecord extends QuartzJobBean {
 
         // 删除过期的验证码
         loginCaptchaService.updateChain()
-                .lt(LoginCaptcha::getCreateTime, LocalDateTime.now().minus(config.getCaptcha().toMillis(), ChronoUnit.MILLIS))
+                .lt(SysLoginCaptcha::getCreateTime, LocalDateTime.now().minus(config.getCaptcha().toMillis(), ChronoUnit.MILLIS))
                 .remove();
 
         // 删除过期的请求历史
