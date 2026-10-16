@@ -10,7 +10,7 @@ import java.util.List;
 
 @Data
 @Schema(description = "新增用户表单")
-public class UserCreateForm {
+public class SysUserCreateForm {
     @NotBlank
     @Length(max = 30)
     @Schema(description = "用户名", maxLength = 30)

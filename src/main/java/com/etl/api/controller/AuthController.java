@@ -2,12 +2,12 @@ package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.annotation.SaIgnore;
-import com.etl.api.domain.form.UserLoginForm;
+import com.etl.api.domain.form.SysUserLoginForm;
 import com.etl.api.domain.vo.LoginCaptchaVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.TokenVO;
 import com.etl.api.service.LoginCaptchaService;
-import com.etl.api.service.UserService;
+import com.etl.api.service.SysUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,13 +27,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final UserService userService;
+    private final SysUserService userService;
     private final LoginCaptchaService loginCaptchaService;
 
     @SaIgnore
     @Operation(summary = "用户登入")
     @PostMapping("/login")
-    public ResponseVO<TokenVO> login(@RequestBody @Validated UserLoginForm form, HttpServletRequest request) {
+    public ResponseVO<TokenVO> login(@RequestBody @Validated SysUserLoginForm form, HttpServletRequest request) {
         return userService.login(form, request);
     }
 

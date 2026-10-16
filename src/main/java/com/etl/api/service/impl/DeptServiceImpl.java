@@ -2,13 +2,13 @@ package com.etl.api.service.impl;
 
 import com.etl.api.domain.convert.DeptConvert;
 import com.etl.api.domain.entity.Dept;
-import com.etl.api.domain.entity.User;
+import com.etl.api.domain.entity.SysUser;
 import com.etl.api.domain.form.DeptCreateForm;
 import com.etl.api.domain.form.DeptUpdateForm;
 import com.etl.api.domain.vo.DeptVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.DeptMapper;
-import com.etl.api.mapper.UserMapper;
+import com.etl.api.mapper.SysUserMapper;
 import com.etl.api.service.DeptService;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements DeptService {
 
-    private final UserMapper userMapper;
+    private final SysUserMapper userMapper;
 
     @Override
     public ResponseVO<Void> addDept(DeptCreateForm form) {
@@ -108,7 +108,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         // 存在用户引用不允许删除
         val user = userMapper.selectOneByQuery(
                 QueryWrapper.create()
-                        .eq(User::getDeptId, id)
+                        .eq(SysUser::getDeptId, id)
         );
 
         if (user != null) {

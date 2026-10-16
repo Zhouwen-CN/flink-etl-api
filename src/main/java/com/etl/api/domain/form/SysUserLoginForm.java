@@ -7,7 +7,7 @@ import org.hibernate.validator.constraints.Length;
 
 @Data
 @Schema(description = "用户登入表单")
-public class UserLoginForm {
+public class SysUserLoginForm {
     @NotBlank
     @Length(max = 30)
     @Schema(description = "用户名", maxLength = 30)

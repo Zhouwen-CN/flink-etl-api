@@ -4,21 +4,21 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.domain.convert.RoleConvert;
-import com.etl.api.domain.entity.User;
+import com.etl.api.domain.entity.SysUser;
 import com.etl.api.domain.entity.UserRole;
 import com.etl.api.domain.form.ChangePwdForm;
-import com.etl.api.domain.form.UserCreateForm;
-import com.etl.api.domain.form.UserUpdateForm;
+import com.etl.api.domain.form.SysUserCreateForm;
+import com.etl.api.domain.form.SysUserUpdateForm;
 import com.etl.api.domain.vo.DeptVO;
 import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.domain.vo.SysUserVO;
 import com.etl.api.domain.vo.UserRoleVO;
-import com.etl.api.domain.vo.UserVO;
 import com.etl.api.service.DeptService;
 import com.etl.api.service.RoleService;
+import com.etl.api.service.SysUserService;
 import com.etl.api.service.UserRoleService;
-import com.etl.api.service.UserService;
 import com.etl.api.util.AESUtil;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.paginate.Page;
@@ -53,7 +53,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
+    private final SysUserService userService;
     private final RoleService roleService;
     private final UserRoleService userRoleService;
     private final DeptService deptService;
@@ -63,14 +63,14 @@ public class UserController {
     @SaCheckPermission("user.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<UserVO>> getPage(
+    public ResponseVO<PageVO<SysUserVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "username", required = false) @Parameter(description = "用户名") String username
     ) {
         val page = userService.queryChain()
-                .like(User::getUsername, username, StringUtils.hasText(username))
-                .pageAs(Page.of(currentPage, pageSize), UserVO.class);
+                .like(SysUser::getUsername, username, StringUtils.hasText(username))
+                .pageAs(Page.of(currentPage, pageSize), SysUserVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }
@@ -78,14 +78,14 @@ public class UserController {
     @SaCheckPermission("user.insert")
     @Operation(summary = "新增")
     @PostMapping
-    public ResponseVO<Void> add(@RequestBody @Validated UserCreateForm form) {
+    public ResponseVO<Void> add(@RequestBody @Validated SysUserCreateForm form) {
         return userService.addUser(form);
     }
 
     @SaCheckPermission("user.update")
     @Operation(summary = "更新")
     @PutMapping
-    public ResponseVO<Void> modify(@RequestBody @Validated UserUpdateForm form) {
+    public ResponseVO<Void> modify(@RequestBody @Validated SysUserUpdateForm form) {
         return userService.modifyUser(form);
     }
 
@@ -162,8 +162,8 @@ public class UserController {
             return ResponseVO.modifyAdminError();
         }
         userService.updateChain()
-                .eq(User::getId, id)
-                .set(User::getPassword, AESUtil.encrypt(defaultPwd))
+                .eq(SysUser::getId, id)
+                .set(SysUser::getPassword, AESUtil.encrypt(defaultPwd))
                 .update();
         StpUtil.logout(id);
         return ResponseVO.ok();

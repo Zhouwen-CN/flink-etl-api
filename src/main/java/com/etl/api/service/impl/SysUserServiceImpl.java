@@ -1,26 +1,26 @@
 package com.etl.api.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.etl.api.domain.convert.UserConvert;
+import com.etl.api.domain.convert.SysUserConvert;
 import com.etl.api.domain.entity.Dept;
 import com.etl.api.domain.entity.LoginCaptcha;
-import com.etl.api.domain.entity.User;
+import com.etl.api.domain.entity.SysUser;
 import com.etl.api.domain.entity.UserRole;
 import com.etl.api.domain.form.ChangePwdForm;
-import com.etl.api.domain.form.UserCreateForm;
-import com.etl.api.domain.form.UserLoginForm;
-import com.etl.api.domain.form.UserUpdateForm;
+import com.etl.api.domain.form.SysUserCreateForm;
+import com.etl.api.domain.form.SysUserLoginForm;
+import com.etl.api.domain.form.SysUserUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.TokenVO;
 import com.etl.api.enumeration.DataScopeEnum;
 import com.etl.api.enumeration.LoginOperationEnum;
 import com.etl.api.job.config.QuartzJobProperties;
-import com.etl.api.mapper.UserMapper;
+import com.etl.api.mapper.SysUserMapper;
 import com.etl.api.service.DeptService;
 import com.etl.api.service.LoginCaptchaService;
 import com.etl.api.service.LoginLogService;
+import com.etl.api.service.SysUserService;
 import com.etl.api.service.UserRoleService;
-import com.etl.api.service.UserService;
 import com.etl.api.util.AESUtil;
 import com.etl.api.util.SaSessionUtil;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -55,7 +55,7 @@ import static com.etl.api.domain.entity.table.UserRoleTableDef.USER_ROLE;
  */
 @RequiredArgsConstructor
 @Service
-public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
     private final LoginCaptchaService loginCaptchaService;
     private final UserRoleService userRoleService;
@@ -64,7 +64,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final DeptService deptService;
 
     @Override
-    public ResponseVO<TokenVO> login(UserLoginForm form, HttpServletRequest request) {
+    public ResponseVO<TokenVO> login(SysUserLoginForm form, HttpServletRequest request) {
         val username = form.getUsername();
 
         // 验证码校验：id 匹配、code 相等、且未过期，条件全部下推到 where
@@ -82,8 +82,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         val userOptional = this.queryChain()
-                .eq(User::getUsername, username)
-                .eq(User::getPassword, AESUtil.encrypt(form.getPassword()))
+                .eq(SysUser::getUsername, username)
+                .eq(SysUser::getPassword, AESUtil.encrypt(form.getPassword()))
                 .oneOpt();
 
         if (userOptional.isEmpty()) {
@@ -116,18 +116,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public ResponseVO<Void> addUser(UserCreateForm form) {
+    public ResponseVO<Void> addUser(SysUserCreateForm form) {
         // 用户名称是否存在
         val username = form.getUsername();
         val exists = this.queryChain()
-                .eq(User::getUsername, username)
+                .eq(SysUser::getUsername, username)
                 .exists();
         if (exists) {
             return ResponseVO.recordExistsError(username);
         }
 
         // 新增用户
-        val entity = UserConvert.INSTANCE.convert(form);
+        val entity = SysUserConvert.INSTANCE.convert(form);
         this.save(entity);
 
         this.saveUserRole(entity.getId(), form.getRoleIds(), false);
@@ -135,7 +135,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public ResponseVO<Void> modifyUser(UserUpdateForm form) {
+    public ResponseVO<Void> modifyUser(SysUserUpdateForm form) {
         // admin 不能修改
         val id = form.getId();
         if (id == 1L) {
@@ -143,7 +143,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         // 更新用户
-        val entity = UserConvert.INSTANCE.convert(form);
+        val entity = SysUserConvert.INSTANCE.convert(form);
         this.updateById(entity);
 
         this.saveUserRole(id, form.getRoleIds(), true);
@@ -181,7 +181,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * isDataScopeAll=true（任一角色 data_scope=1 全部）
      * deptIds=可见部门 id 集合（2=本部门及以下，3=本部门）
      */
-    private void initDataScope(User user, SaSessionUtil.SaSessionUserInfo sessionUserInfo) {
+    private void initDataScope(SysUser user, SaSessionUtil.SaSessionUserInfo sessionUserInfo) {
         val sql = QueryWrapper.create()
                 .select(ROLE.DATA_SCOPE)
                 .from(USER_ROLE)
@@ -256,8 +256,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public void revoke(Long id, HttpServletRequest request) {
         val username = this.queryChain()
-                .select(User::getUsername)
-                .eq(User::getId, id)
+                .select(SysUser::getUsername)
+                .eq(SysUser::getId, id)
                 .oneAs(String.class);
         loginLogService.saveLoginLog(request, username, LoginOperationEnum.REVOKE, true, null);
         StpUtil.kickout(id);
@@ -267,8 +267,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public ResponseVO<Void> changePwd(ChangePwdForm form) {
         val id = StpUtil.getLoginIdAsLong();
         val userOptional = this.queryChain()
-                .eq(User::getId, id)
-                .eq(User::getPassword, AESUtil.encrypt(form.getOldPwd()))
+                .eq(SysUser::getId, id)
+                .eq(SysUser::getPassword, AESUtil.encrypt(form.getOldPwd()))
                 .oneOpt();
 
         if (userOptional.isEmpty()) {
@@ -276,8 +276,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         this.updateChain()
-                .eq(User::getId, id)
-                .set(User::getPassword, AESUtil.encrypt(form.getNewPwd()))
+                .eq(SysUser::getId, id)
+                .set(SysUser::getPassword, AESUtil.encrypt(form.getNewPwd()))
                 .update();
 
         StpUtil.logout(id);

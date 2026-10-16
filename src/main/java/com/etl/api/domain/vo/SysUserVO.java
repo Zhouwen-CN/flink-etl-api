@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "用户视图")
-public class UserVO {
+public class SysUserVO {
 
     @Schema(description = "自增主键")
     private Long id;

@@ -1,10 +1,10 @@
 package com.etl.api.service;
 
-import com.etl.api.domain.entity.User;
+import com.etl.api.domain.entity.SysUser;
 import com.etl.api.domain.form.ChangePwdForm;
-import com.etl.api.domain.form.UserCreateForm;
-import com.etl.api.domain.form.UserLoginForm;
-import com.etl.api.domain.form.UserUpdateForm;
+import com.etl.api.domain.form.SysUserCreateForm;
+import com.etl.api.domain.form.SysUserLoginForm;
+import com.etl.api.domain.form.SysUserUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.TokenVO;
 import com.mybatisflex.core.service.IService;
@@ -18,13 +18,13 @@ import java.util.Collection;
  * @author chen
  * @since 2026-04-27
  */
-public interface UserService extends IService<User> {
+public interface SysUserService extends IService<SysUser> {
 
-    ResponseVO<TokenVO> login(UserLoginForm form, HttpServletRequest request);
+    ResponseVO<TokenVO> login(SysUserLoginForm form, HttpServletRequest request);
 
-    ResponseVO<Void> addUser(UserCreateForm form);
+    ResponseVO<Void> addUser(SysUserCreateForm form);
 
-    ResponseVO<Void> modifyUser(UserUpdateForm form);
+    ResponseVO<Void> modifyUser(SysUserUpdateForm form);
 
     ResponseVO<Void> removeUser(Long id);
 

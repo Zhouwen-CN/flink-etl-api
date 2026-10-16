@@ -11,7 +11,7 @@ import java.util.List;
 
 @Data
 @Schema(description = "更新用户表单")
-public class UserUpdateForm {
+public class SysUserUpdateForm {
 
     @NotNull
     @Schema(description = "自增主键")
