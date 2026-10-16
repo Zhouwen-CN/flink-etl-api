@@ -1,14 +1,14 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.etl.api.domain.convert.JobVariableConvert;
-import com.etl.api.domain.entity.JobVariable;
-import com.etl.api.domain.form.JobVariableCreateForm;
-import com.etl.api.domain.form.JobVariableUpdateForm;
-import com.etl.api.domain.vo.JobVariableVO;
+import com.etl.api.domain.convert.SysVarSettingConvert;
+import com.etl.api.domain.entity.SysVarSetting;
+import com.etl.api.domain.form.SysVarSettingCreateForm;
+import com.etl.api.domain.form.SysVarSettingUpdateForm;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.service.JobVariableService;
+import com.etl.api.domain.vo.SysVarSettingVO;
+import com.etl.api.service.SysVarSettingService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,23 +37,23 @@ import java.util.Collection;
 @Tag(name = "任务变量 控制器")
 @RequiredArgsConstructor
 public class JobVariableController {
-    private final JobVariableService jobVariableService;
+    private final SysVarSettingService varSettingService;
 
     @SaCheckPermission("variable.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<JobVariableVO>> getPage(
+    public ResponseVO<PageVO<SysVarSettingVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "searchName", required = false) @Parameter(description = "变量名称") String searchName
     ) {
-        val page = jobVariableService.queryChain()
-                .like(JobVariable::getName, searchName, StringUtils.hasText(searchName))
-                .pageAs(Page.of(currentPage, pageSize), JobVariable.class);
+        val page = varSettingService.queryChain()
+                .like(SysVarSetting::getName, searchName, StringUtils.hasText(searchName))
+                .pageAs(Page.of(currentPage, pageSize), SysVarSetting.class);
 
         val list = page.getRecords()
                 .stream()
-                .map(JobVariableConvert.INSTANCE::convert)
+                .map(SysVarSettingConvert.INSTANCE::convert)
                 .toList();
 
         return ResponseVO.ok(new PageVO<>(list, page.getTotalRow()));
@@ -62,16 +62,16 @@ public class JobVariableController {
     @SaCheckPermission("variable.insert")
     @Operation(summary = "新增")
     @PostMapping
-    public ResponseVO<Void> add(@RequestBody @Validated JobVariableCreateForm form) {
-        return jobVariableService.addJobVar(form);
+    public ResponseVO<Void> add(@RequestBody @Validated SysVarSettingCreateForm form) {
+        return varSettingService.addJobVar(form);
     }
 
     @SaCheckPermission("variable.update")
     @Operation(summary = "更新")
     @PutMapping
-    public ResponseVO<Void> modify(@RequestBody @Validated JobVariableUpdateForm form) {
-        val entity = JobVariableConvert.INSTANCE.convert(form);
-        jobVariableService.updateById(entity);
+    public ResponseVO<Void> modify(@RequestBody @Validated SysVarSettingUpdateForm form) {
+        val entity = SysVarSettingConvert.INSTANCE.convert(form);
+        varSettingService.updateById(entity);
         return ResponseVO.ok();
     }
 
@@ -79,7 +79,7 @@ public class JobVariableController {
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        jobVariableService.removeById(id);
+        varSettingService.removeById(id);
         return ResponseVO.ok();
     }
 
@@ -87,7 +87,7 @@ public class JobVariableController {
     @Operation(summary = "批量删除")
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
-        jobVariableService.removeByIds(ids);
+        varSettingService.removeByIds(ids);
         return ResponseVO.ok();
     }
 }

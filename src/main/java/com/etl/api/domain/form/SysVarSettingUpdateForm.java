@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class JobVariableUpdateForm extends JobVariableCreateForm {
+public class SysVarSettingUpdateForm extends SysVarSettingCreateForm {
 
     @NotNull
     @Schema(description = "自增主键")

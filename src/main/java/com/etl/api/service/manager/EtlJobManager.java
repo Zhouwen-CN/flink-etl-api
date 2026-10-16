@@ -12,7 +12,7 @@ import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.FlinkClusterService;
 import com.etl.api.service.JarPackageService;
-import com.etl.api.service.JobVariableService;
+import com.etl.api.service.SysVarSettingService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.etl.api.util.LocalDateTimeUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -41,7 +41,7 @@ public class EtlJobManager {
     private final ClusterUploadedJarService clusterUploadedJarService;
     private final FlinkApiProvider flinkApiProvider;
     private final EtlJobInstanceService etlJobInstanceService;
-    private final JobVariableService jobVariableService;
+    private final SysVarSettingService varSettingService;
     private final ObjectMapper objectMapper;
 
     private ObjectMapper yamlMapper;
@@ -141,7 +141,7 @@ public class EtlJobManager {
         val config = etlJob.getConfig();
         String replacedConfig;
         try {
-            replacedConfig = jobVariableService.replaceVariable(config).trim();
+            replacedConfig = varSettingService.replaceVariable(config).trim();
         } catch (Exception e) {
             throw new EtlJobException(e);
         }

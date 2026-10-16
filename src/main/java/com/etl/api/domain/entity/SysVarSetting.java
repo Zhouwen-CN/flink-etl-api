@@ -14,7 +14,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * 任务变量表 实体类。
+ * 变量配置表 实体类。
  *
  * @author chen
  * @since 2026-05-28
@@ -22,8 +22,8 @@ import java.io.Serializable;
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(value = "T_JOB_VARIABLE", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
-public class JobVariable extends BaseEntity implements Serializable {
+@Table(value = "T_SYS_VAR_SETTING", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
+public class SysVarSetting extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

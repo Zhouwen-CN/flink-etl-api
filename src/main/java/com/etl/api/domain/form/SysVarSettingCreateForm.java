@@ -8,8 +8,8 @@ import org.hibernate.validator.constraints.Length;
 
 
 @Data
-@Schema(description = "新增任务变量表单")
-public class JobVariableCreateForm {
+@Schema(description = "新增变量配置表单")
+public class SysVarSettingCreateForm {
 
     @NotBlank
     @Length(max = 30)

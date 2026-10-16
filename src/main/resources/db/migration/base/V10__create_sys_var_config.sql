@@ -1,4 +1,4 @@
-create table T_JOB_VARIABLE
+create table T_SYS_VAR_SETTING
 (
     id          bigint primary key auto_increment comment '自增主键',
     name        varchar(30)  not null comment '变量名',
@@ -9,7 +9,7 @@ create table T_JOB_VARIABLE
     update_user varchar(30) default null comment '修改者',
     update_time datetime    default CURRENT_TIMESTAMP comment '更新时间',
     unique index uk_variable_name (name)
-) comment = '任务变量表';
+) comment = '变量配置表';
 
 
 INSERT INTO T_JOB_VARIABLE (id, name, `value`, status)

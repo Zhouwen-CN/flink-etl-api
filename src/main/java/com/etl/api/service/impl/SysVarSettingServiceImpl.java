@@ -1,11 +1,11 @@
 package com.etl.api.service.impl;
 
-import com.etl.api.domain.convert.JobVariableConvert;
-import com.etl.api.domain.entity.JobVariable;
-import com.etl.api.domain.form.JobVariableCreateForm;
+import com.etl.api.domain.convert.SysVarSettingConvert;
+import com.etl.api.domain.entity.SysVarSetting;
+import com.etl.api.domain.form.SysVarSettingCreateForm;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.mapper.JobVariableMapper;
-import com.etl.api.service.JobVariableService;
+import com.etl.api.mapper.SysVarSettingMapper;
+import com.etl.api.service.SysVarSettingService;
 import com.etl.api.util.SPELUtil;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -17,24 +17,24 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * 任务变量表 服务层实现。
+ * 变量配置表 服务层实现。
  *
  * @author chen
  * @since 2026-05-28
  */
 @Slf4j
 @Service
-public class JobVariableServiceImpl extends ServiceImpl<JobVariableMapper, JobVariable> implements JobVariableService {
+public class SysVarSettingServiceImpl extends ServiceImpl<SysVarSettingMapper, SysVarSetting> implements SysVarSettingService {
     private static final Pattern pattern = Pattern.compile("\\$\\{(?<variable>[^}]+)}");
 
     @SuppressWarnings("deprecation")
     @Override
     public String replaceVariable(String config) {
         val variableMap = this.queryChain()
-                .eq(JobVariable::getStatus, true)
+                .eq(SysVarSetting::getStatus, true)
                 .list()
                 .stream()
-                .collect(Collectors.toMap(JobVariable::getName, (item) -> {
+                .collect(Collectors.toMap(SysVarSetting::getName, (item) -> {
                             String value = item.getValue();
                             return SPELUtil.parseExpression(value, String.class, value);
                         })
@@ -52,16 +52,16 @@ public class JobVariableServiceImpl extends ServiceImpl<JobVariableMapper, JobVa
     }
 
     @Override
-    public ResponseVO<Void> addJobVar(JobVariableCreateForm form) {
+    public ResponseVO<Void> addJobVar(SysVarSettingCreateForm form) {
         val name = form.getName();
         val exists = this.queryChain()
-                .eq(JobVariable::getName, name)
+                .eq(SysVarSetting::getName, name)
                 .exists();
         if (exists) {
             return ResponseVO.recordExistsError(name);
         }
 
-        val entity = JobVariableConvert.INSTANCE.convert(form);
+        val entity = SysVarSettingConvert.INSTANCE.convert(form);
         this.save(entity);
         return ResponseVO.ok();
     }

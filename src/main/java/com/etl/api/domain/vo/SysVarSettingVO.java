@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 
 
 @Data
-@Schema(description = "任务变量视图")
-public class JobVariableVO {
+@Schema(description = "变量配置视图")
+public class SysVarSettingVO {
 
     @Schema(description = "自增主键")
     private Long id;
