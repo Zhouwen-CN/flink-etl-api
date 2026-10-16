@@ -1,9 +1,9 @@
 package com.etl.api.job;
 
-import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.etl.api.domain.entity.EtlFlinkCluster;
-import com.etl.api.service.ClusterUploadedJarService;
+import com.etl.api.domain.entity.EtlFlinkJarSync;
 import com.etl.api.service.EtlFlinkClusterService;
+import com.etl.api.service.EtlFlinkJarSyncService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,7 +28,7 @@ import java.util.Optional;
 public class SyncClusterUploadedJar extends QuartzJobBean {
     private final ObjectMapper objectMapper;
     private final EtlFlinkClusterService flinkClusterService;
-    private final ClusterUploadedJarService clusterUploadedJarService;
+    private final EtlFlinkJarSyncService flinkJarSyncService;
     private final FlinkApiProvider flinkApiProvider;
 
     @Override
@@ -49,15 +49,15 @@ public class SyncClusterUploadedJar extends QuartzJobBean {
 
                 Optional.ofNullable(jsonNode)
                         .map(item -> item.get("files"))
-                        .map(files -> objectMapper.convertValue(files, new TypeReference<List<ClusterUploadedJar>>() {
+                        .map(files -> objectMapper.convertValue(files, new TypeReference<List<EtlFlinkJarSync>>() {
                         }))
                         .map(list -> list.stream().peek(item -> item.setClusterId(clusterId)).toList())
                         .ifPresent(entities -> {
-                            clusterUploadedJarService.updateChain()
-                                    .eq(ClusterUploadedJar::getClusterId, clusterId)
+                            flinkJarSyncService.updateChain()
+                                    .eq(EtlFlinkJarSync::getClusterId, clusterId)
                                     .remove();
 
-                            clusterUploadedJarService.saveBatch(entities);
+                            flinkJarSyncService.saveBatch(entities);
                         });
             }
 

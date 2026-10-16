@@ -10,4 +10,4 @@ create table T_ETL_FLINK_CLUSTER
     update_user varchar(30) default null comment '修改者',
     update_time datetime    default CURRENT_TIMESTAMP comment '更新时间',
     unique index uk_etl_flink_cluster_name (name)
-) comment 'Flink集群表';
+) comment 'Flink 集群表';

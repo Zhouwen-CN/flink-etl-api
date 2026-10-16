@@ -1,14 +1,14 @@
 package com.etl.api.service.impl;
 
 import com.etl.api.domain.convert.EtlFlinkClusterConvert;
-import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.etl.api.domain.entity.EtlFlinkCluster;
+import com.etl.api.domain.entity.EtlFlinkJarSync;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.form.EtlFlinkClusterCreateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.EtlFlinkClusterMapper;
-import com.etl.api.service.ClusterUploadedJarService;
 import com.etl.api.service.EtlFlinkClusterService;
+import com.etl.api.service.EtlFlinkJarSyncService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -29,7 +29,7 @@ import java.util.Collection;
 public class EtlFlinkClusterServiceImpl extends ServiceImpl<EtlFlinkClusterMapper, EtlFlinkCluster> implements EtlFlinkClusterService {
     private final FlinkApiProvider flinkApiProvider;
     private final EtlJobService etlJobService;
-    private final ClusterUploadedJarService clusterUploadedJarService;
+    private final EtlFlinkJarSyncService flinkJarSyncService;
 
     @Override
     public ResponseVO<Void> addCluster(EtlFlinkClusterCreateForm form) {
@@ -59,8 +59,8 @@ public class EtlFlinkClusterServiceImpl extends ServiceImpl<EtlFlinkClusterMappe
         }
 
         this.removeById(id);
-        clusterUploadedJarService.updateChain()
-                .eq(ClusterUploadedJar::getClusterId, id)
+        flinkJarSyncService.updateChain()
+                .eq(EtlFlinkJarSync::getClusterId, id)
                 .remove();
         return ResponseVO.ok();
     }
@@ -75,8 +75,8 @@ public class EtlFlinkClusterServiceImpl extends ServiceImpl<EtlFlinkClusterMappe
         }
 
         this.removeByIds(ids);
-        clusterUploadedJarService.updateChain()
-                .in(ClusterUploadedJar::getClusterId, ids)
+        flinkJarSyncService.updateChain()
+                .in(EtlFlinkJarSync::getClusterId, ids)
                 .remove();
         return ResponseVO.ok();
     }

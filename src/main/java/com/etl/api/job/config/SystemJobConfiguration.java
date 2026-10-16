@@ -82,14 +82,14 @@ public class SystemJobConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "custom.job.sync-cluster-uploaded-jar", name = "enable",
             havingValue = "true", matchIfMissing = true)
-    public JobDetail syncClusterUploadedJarJobDetail() {
+    public JobDetail syncFlinkJarJobDetail() {
         return buildJobDetail(SyncClusterUploadedJar.class, properties.getSyncClusterUploadedJar());
     }
 
     @Bean
     @ConditionalOnProperty(prefix = "custom.job.sync-cluster-uploaded-jar", name = "enable",
             havingValue = "true", matchIfMissing = true)
-    public Trigger syncClusterUploadedJarTrigger() {
+    public Trigger syncFlinkJarTrigger() {
         return buildTrigger(properties.getSyncClusterUploadedJar());
     }
 

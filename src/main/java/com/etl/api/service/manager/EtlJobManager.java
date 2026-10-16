@@ -1,14 +1,14 @@
 package com.etl.api.service.manager;
 
 import com.etl.api.domain.dto.JobConfig;
-import com.etl.api.domain.entity.ClusterUploadedJar;
 import com.etl.api.domain.entity.EtlFlinkCluster;
+import com.etl.api.domain.entity.EtlFlinkJarSync;
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.exception.EtlJobException;
-import com.etl.api.service.ClusterUploadedJarService;
 import com.etl.api.service.EtlFlinkClusterService;
+import com.etl.api.service.EtlFlinkJarSyncService;
 import com.etl.api.service.EtlJarPackageService;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
@@ -38,7 +38,7 @@ public class EtlJobManager {
     private final EtlJobService etlJobService;
     private final EtlFlinkClusterService flinkClusterService;
     private final EtlJarPackageService jarPackageService;
-    private final ClusterUploadedJarService clusterUploadedJarService;
+    private final EtlFlinkJarSyncService flinkJarSyncService;
     private final FlinkApiProvider flinkApiProvider;
     private final EtlJobInstanceService etlJobInstanceService;
     private final SysVarSettingService varSettingService;
@@ -96,23 +96,23 @@ public class EtlJobManager {
         }
 
         // jar包同步表信息
-        val clusterUploadedJarList = clusterUploadedJarService.queryChain()
-                .eq(ClusterUploadedJar::getClusterId, clusterId)
-                .eq(ClusterUploadedJar::getJarName, jarPackage.getFileName())
-                .orderBy(ClusterUploadedJar::getUploaded, false)
+        val clusterUploadedJarList = flinkJarSyncService.queryChain()
+                .eq(EtlFlinkJarSync::getClusterId, clusterId)
+                .eq(EtlFlinkJarSync::getJarName, jarPackage.getFileName())
+                .orderBy(EtlFlinkJarSync::getUploaded, false)
                 .list();
 
         // 如果jar包同步表有记录，那么获取最新的一条；如果有多的记录，那么删除
-        ClusterUploadedJar clusterUploadedJar = null;
+        EtlFlinkJarSync clusterUploadedJar = null;
         val size = clusterUploadedJarList.size();
         if (size > 0) {
             for (int i = 0; i < size; i++) {
                 if (i == 0) {
                     clusterUploadedJar = clusterUploadedJarList.get(i);
                 } else {
-                    val deleteClusterUploadedJar = clusterUploadedJarList.get(i);
-                    flinkApiProvider.deleteJar(jobManagerUrl, deleteClusterUploadedJar.getJarId());
-                    clusterUploadedJarService.removeById(deleteClusterUploadedJar.getId());
+                    val deleteEtlFlinkJarSync = clusterUploadedJarList.get(i);
+                    flinkApiProvider.deleteJar(jobManagerUrl, deleteEtlFlinkJarSync.getJarId());
+                    flinkJarSyncService.removeById(deleteEtlFlinkJarSync.getId());
                 }
             }
         }
@@ -120,8 +120,8 @@ public class EtlJobManager {
         if (clusterUploadedJar == null) {
             // 上传jar包，获取jarId，并且插入到同步表
             val flinkJarId = flinkApiProvider.uploadJar(jobManagerUrl, filePath);
-            clusterUploadedJar = new ClusterUploadedJar(clusterId, flinkJarId, jarPackage.getFileName(), System.currentTimeMillis());
-            clusterUploadedJarService.save(clusterUploadedJar);
+            clusterUploadedJar = new EtlFlinkJarSync(clusterId, flinkJarId, jarPackage.getFileName(), System.currentTimeMillis());
+            flinkJarSyncService.save(clusterUploadedJar);
         } else {
             // 如果jar包更新时间 大于 flink jar上传时间 + 5分钟，表示jar包需要更新
             val updateTime = LocalDateTimeUtil.toMs(jarPackage.getUpdateTime());
@@ -132,7 +132,7 @@ public class EtlJobManager {
                 val flinkJarId = flinkApiProvider.uploadJar(jobManagerUrl, filePath);
                 clusterUploadedJar.setJarId(flinkJarId);
                 clusterUploadedJar.setUploaded(System.currentTimeMillis());
-                clusterUploadedJarService.updateById(clusterUploadedJar);
+                flinkJarSyncService.updateById(clusterUploadedJar);
             }
         }
         val flinkJarId = clusterUploadedJar.getJarId();
