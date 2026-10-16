@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Schema(description = "登入日志视图")
-public class LoginLogVO {
+public class SysLoginLogVO {
 
     @Schema(description = "自增主键")
     private Long id;

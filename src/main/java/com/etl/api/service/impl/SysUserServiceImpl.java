@@ -17,8 +17,8 @@ import com.etl.api.enumeration.LoginOperationEnum;
 import com.etl.api.job.config.QuartzJobProperties;
 import com.etl.api.mapper.SysUserMapper;
 import com.etl.api.service.DeptService;
-import com.etl.api.service.LoginLogService;
 import com.etl.api.service.SysLoginCaptchaService;
+import com.etl.api.service.SysLoginLogService;
 import com.etl.api.service.SysUserRoleService;
 import com.etl.api.service.SysUserService;
 import com.etl.api.util.AESUtil;
@@ -59,7 +59,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     private final SysLoginCaptchaService loginCaptchaService;
     private final SysUserRoleService userRoleService;
-    private final LoginLogService loginLogService;
+    private final SysLoginLogService loginLogService;
     private final QuartzJobProperties quartzJobProperties;
     private final DeptService deptService;
 

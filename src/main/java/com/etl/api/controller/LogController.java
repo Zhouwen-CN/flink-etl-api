@@ -4,15 +4,15 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.domain.convert.LogConvert;
 import com.etl.api.domain.entity.ErrorLog;
 import com.etl.api.domain.entity.HttpExchangeHistory;
-import com.etl.api.domain.entity.LoginLog;
+import com.etl.api.domain.entity.SysLoginLog;
 import com.etl.api.domain.vo.ErrorLogVO;
-import com.etl.api.domain.vo.LoginLogVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.RequestLogVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.domain.vo.SysLoginLogVO;
 import com.etl.api.service.ErrorLogService;
 import com.etl.api.service.HttpExchangeHistoryService;
-import com.etl.api.service.LoginLogService;
+import com.etl.api.service.SysLoginLogService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,22 +33,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class LogController {
 
-    private final LoginLogService loginLogService;
+    private final SysLoginLogService loginLogService;
     private final ErrorLogService errorLogService;
     private final HttpExchangeHistoryService httpExchangeHistoryService;
 
     @SaCheckPermission("login-log.select")
     @Operation(summary = "登入日志分页查询")
     @GetMapping("/login")
-    public ResponseVO<PageVO<LoginLogVO>> getLoginLogPage(
+    public ResponseVO<PageVO<SysLoginLogVO>> getSysLoginLogPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "username", required = false) @Parameter(description = "用户名") String username
     ) {
         val page = loginLogService.queryChain()
-                .like(LoginLog::getUsername, username, StringUtils.hasText(username))
-                .orderBy(LoginLog::getCreateTime, false)
-                .pageAs(Page.of(currentPage, pageSize), LoginLogVO.class);
+                .like(SysLoginLog::getUsername, username, StringUtils.hasText(username))
+                .orderBy(SysLoginLog::getCreateTime, false)
+                .pageAs(Page.of(currentPage, pageSize), SysLoginLogVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }

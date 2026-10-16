@@ -1,6 +1,6 @@
 package com.etl.api.mapper;
 
-import com.etl.api.domain.entity.LoginLog;
+import com.etl.api.domain.entity.SysLoginLog;
 import com.mybatisflex.core.BaseMapper;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.BaseMapper;
  * @author chen
  * @since 2026-04-28
  */
-public interface LoginLogMapper extends BaseMapper<LoginLog> {
+public interface SysLoginLogMapper extends BaseMapper<SysLoginLog> {
 
 }
