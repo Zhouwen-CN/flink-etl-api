@@ -3,6 +3,7 @@ create table T_ETL_PROJECT
     id          bigint primary key auto_increment comment '自增主键',
     name        varchar(50) not null comment '项目名称',
     description varchar(100) default null comment '项目描述',
+    dept_id bigint not null comment '归属部门id',
     create_user varchar(30)  default null comment '创建者',
     create_time datetime     default CURRENT_TIMESTAMP comment '创建时间',
     update_user varchar(30)  default null comment '修改者',

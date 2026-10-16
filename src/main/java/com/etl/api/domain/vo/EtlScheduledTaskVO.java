@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Schema(description = "定时任务视图")
-public class ScheduleJobVO {
+public class EtlScheduledTaskVO {
 
     @Schema(description = "自增主键")
     private Long id;

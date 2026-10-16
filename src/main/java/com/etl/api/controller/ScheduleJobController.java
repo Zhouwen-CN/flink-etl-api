@@ -4,17 +4,17 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.aop.IgnoreTenant;
 import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.entity.EtlJob;
-import com.etl.api.domain.entity.ScheduleJob;
-import com.etl.api.domain.form.ScheduleJobCreateForm;
-import com.etl.api.domain.form.ScheduleJobStatusChangeForm;
-import com.etl.api.domain.form.ScheduleJobUpdateForm;
+import com.etl.api.domain.entity.EtlScheduledTask;
+import com.etl.api.domain.form.EtlScheduledTaskCreateForm;
+import com.etl.api.domain.form.EtlScheduledTaskStatusChangeForm;
+import com.etl.api.domain.form.EtlScheduledTaskUpdateForm;
 import com.etl.api.domain.vo.DictionaryVO;
+import com.etl.api.domain.vo.EtlScheduledTaskVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.domain.vo.ScheduleJobVO;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.service.EtlJobService;
-import com.etl.api.service.ScheduleJobService;
+import com.etl.api.service.EtlScheduledTaskService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,21 +45,21 @@ import java.util.List;
 @Tag(name = "定时任务 控制器")
 @RequiredArgsConstructor
 public class ScheduleJobController {
-    private final ScheduleJobService scheduleJobService;
+    private final EtlScheduledTaskService scheduledTaskService;
     private final EtlJobService etlJobService;
 
     @SaCheckPermission("schedule.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<ScheduleJobVO>> getPage(
+    public ResponseVO<PageVO<EtlScheduledTaskVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "searchName", required = false) @Parameter(description = "任务名称") String searchName
     ) {
 
-        val page = scheduleJobService.queryChain()
-                .like(ScheduleJob::getName, searchName, StringUtils.hasText(searchName))
-                .pageAs(Page.of(currentPage, pageSize), ScheduleJobVO.class);
+        val page = scheduledTaskService.queryChain()
+                .like(EtlScheduledTask::getName, searchName, StringUtils.hasText(searchName))
+                .pageAs(Page.of(currentPage, pageSize), EtlScheduledTaskVO.class);
         return ResponseVO.ok(PageVO.from(page));
     }
 
@@ -80,8 +80,8 @@ public class ScheduleJobController {
     @SaCheckPermission("schedule.insert")
     @Operation(summary = "新增")
     @PostMapping
-    public ResponseVO<Void> add(@RequestBody @Validated ScheduleJobCreateForm form) {
-        return scheduleJobService.addScheduleJob(form);
+    public ResponseVO<Void> add(@RequestBody @Validated EtlScheduledTaskCreateForm form) {
+        return scheduledTaskService.addScheduleJob(form);
     }
 
 
@@ -89,28 +89,28 @@ public class ScheduleJobController {
     @SaCheckPermission("schedule.update")
     @Operation(summary = "更新")
     @PutMapping
-    public ResponseVO<Void> modify(@RequestBody @Validated ScheduleJobUpdateForm form) {
-        return scheduleJobService.modifyScheduleJob(form);
+    public ResponseVO<Void> modify(@RequestBody @Validated EtlScheduledTaskUpdateForm form) {
+        return scheduledTaskService.modifyScheduleJob(form);
     }
 
     @SaCheckPermission("schedule.update")
     @Operation(summary = "更新状态")
     @PatchMapping
-    public ResponseVO<Void> changeStatus(@RequestBody @Validated ScheduleJobStatusChangeForm form) {
-        return scheduleJobService.changeStatus(form);
+    public ResponseVO<Void> changeStatus(@RequestBody @Validated EtlScheduledTaskStatusChangeForm form) {
+        return scheduledTaskService.changeStatus(form);
     }
 
     @SaCheckPermission("schedule.delete")
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        return scheduleJobService.removeScheduleJob(id);
+        return scheduledTaskService.removeScheduleJob(id);
     }
 
     @SaCheckPermission("schedule.delete")
     @Operation(summary = "批量删除")
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
-        return scheduleJobService.removeScheduleJobBatch(ids);
+        return scheduledTaskService.removeScheduleJobBatch(ids);
     }
 }

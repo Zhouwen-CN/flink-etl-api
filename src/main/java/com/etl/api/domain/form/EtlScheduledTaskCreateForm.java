@@ -9,7 +9,7 @@ import org.hibernate.validator.constraints.Length;
 
 @Data
 @Schema(description = "新增定时任务表单")
-public class ScheduleJobCreateForm {
+public class EtlScheduledTaskCreateForm {
 
     @NotBlank
     @Length(max = 30)

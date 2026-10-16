@@ -8,7 +8,7 @@ create table T_SYS_VAR_SETTING
     create_time datetime    default CURRENT_TIMESTAMP comment '创建时间',
     update_user varchar(30) default null comment '修改者',
     update_time datetime    default CURRENT_TIMESTAMP comment '更新时间',
-    unique index uk_variable_name (name)
+    unique index uk_sys_var_setting_name (name)
 ) comment = '变量配置表';
 
 

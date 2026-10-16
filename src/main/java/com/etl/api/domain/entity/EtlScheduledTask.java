@@ -23,8 +23,8 @@ import java.io.Serializable;
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(value = "T_SCHEDULE_JOB", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
-public class ScheduleJob extends BaseEntity implements Serializable {
+@Table(value = "T_ETL_SCHEDULED_TASK", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
+public class EtlScheduledTask extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

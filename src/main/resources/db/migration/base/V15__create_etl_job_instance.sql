@@ -10,6 +10,7 @@ create table T_ETL_JOB_INSTANCE
     start_time  datetime    default null comment '任务开始时间',
     end_time    datetime    default null comment '任务结束时间',
     duration    bigint      default null comment '持续时间',
+    dept_id     bigint not null comment '归属部门id',
     create_user varchar(30) default null comment '创建者',
     create_time datetime    default CURRENT_TIMESTAMP comment '创建时间',
     update_user varchar(30) default null comment '修改者',

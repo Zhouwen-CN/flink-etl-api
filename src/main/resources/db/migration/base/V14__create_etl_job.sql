@@ -10,6 +10,7 @@ create table T_ETL_JOB
     parallelism         tinyint      not null comment '任务并行度',
     checkpoint_interval int          default null comment '检查点间隔',
     config              text         not null comment 'json配置',
+    dept_id bigint not null comment '归属部门id',
     create_user         varchar(30)  default null comment '创建者',
     create_time         datetime     default CURRENT_TIMESTAMP comment '创建时间',
     update_user         varchar(30)  default null comment '修改者',

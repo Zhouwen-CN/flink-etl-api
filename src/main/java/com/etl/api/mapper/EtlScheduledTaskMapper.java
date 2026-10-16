@@ -1,6 +1,6 @@
 package com.etl.api.mapper;
 
-import com.etl.api.domain.entity.ScheduleJob;
+import com.etl.api.domain.entity.EtlScheduledTask;
 import com.mybatisflex.core.BaseMapper;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.BaseMapper;
  * @author chen
  * @since 2026-05-15
  */
-public interface ScheduleJobMapper extends BaseMapper<ScheduleJob> {
+public interface EtlScheduledTaskMapper extends BaseMapper<EtlScheduledTask> {
 
 }

@@ -1,17 +1,17 @@
 package com.etl.api.service.impl;
 
-import com.etl.api.domain.convert.ScheduleJobConvert;
+import com.etl.api.domain.convert.EtlScheduledTaskConvert;
 import com.etl.api.domain.entity.EtlJob;
-import com.etl.api.domain.entity.ScheduleJob;
-import com.etl.api.domain.form.ScheduleJobCreateForm;
-import com.etl.api.domain.form.ScheduleJobStatusChangeForm;
-import com.etl.api.domain.form.ScheduleJobUpdateForm;
+import com.etl.api.domain.entity.EtlScheduledTask;
+import com.etl.api.domain.form.EtlScheduledTaskCreateForm;
+import com.etl.api.domain.form.EtlScheduledTaskStatusChangeForm;
+import com.etl.api.domain.form.EtlScheduledTaskUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.exception.ScheduleJobException;
-import com.etl.api.mapper.ScheduleJobMapper;
+import com.etl.api.mapper.EtlScheduledTaskMapper;
 import com.etl.api.service.EtlJobService;
-import com.etl.api.service.ScheduleJobService;
+import com.etl.api.service.EtlScheduledTaskService;
 import com.etl.api.service.manager.ScheduleJobManager;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 
-import static com.etl.api.domain.entity.table.ScheduleJobTableDef.SCHEDULE_JOB;
+import static com.etl.api.domain.entity.table.EtlScheduledTaskTableDef.ETL_SCHEDULED_TASK;
 
 /**
  * 定时任务表 服务层实现。
@@ -31,16 +31,16 @@ import static com.etl.api.domain.entity.table.ScheduleJobTableDef.SCHEDULE_JOB;
  */
 @Service
 @RequiredArgsConstructor
-public class ScheduleJobServiceImpl extends ServiceImpl<ScheduleJobMapper, ScheduleJob> implements ScheduleJobService {
+public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMapper, EtlScheduledTask> implements EtlScheduledTaskService {
     private final EtlJobService etlJobService;
     private final ScheduleJobManager scheduleJobManager;
 
     @Override
-    public ResponseVO<Void> addScheduleJob(ScheduleJobCreateForm form) {
+    public ResponseVO<Void> addScheduleJob(EtlScheduledTaskCreateForm form) {
         val name = form.getName();
         val etlJobId = form.getEtlJobId();
         boolean exists = this.queryChain()
-                .where(SCHEDULE_JOB.NAME.eq(name).or(SCHEDULE_JOB.ETL_JOB_ID.eq(etlJobId)))
+                .where(ETL_SCHEDULED_TASK.NAME.eq(name).or(ETL_SCHEDULED_TASK.ETL_JOB_ID.eq(etlJobId)))
                 .exists();
         if (exists) {
             return ResponseVO.recordExistsError(name + ":" + etlJobId);
@@ -54,7 +54,7 @@ public class ScheduleJobServiceImpl extends ServiceImpl<ScheduleJobMapper, Sched
             return ResponseVO.error("Etl任务未找到 或 任务不是BATCH 模式: " + etlJobId);
         }
 
-        val entity = ScheduleJobConvert.INSTANCE.convert(form);
+        val entity = EtlScheduledTaskConvert.INSTANCE.convert(form);
         // 定时任务继承任务部门（数据权限）
         entity.setDeptId(etlJob.getDeptId());
         this.save(entity);
@@ -76,7 +76,7 @@ public class ScheduleJobServiceImpl extends ServiceImpl<ScheduleJobMapper, Sched
     @Override
     public ResponseVO<Void> removeScheduleJob(Long id) {
         val scheduleJob = this.queryChain()
-                .eq(ScheduleJob::getId, id)
+                .eq(EtlScheduledTask::getId, id)
                 .one();
 
         if (scheduleJob == null) {
@@ -100,10 +100,10 @@ public class ScheduleJobServiceImpl extends ServiceImpl<ScheduleJobMapper, Sched
     @Override
     public ResponseVO<Void> removeScheduleJobBatch(Collection<Long> ids) {
         val enabled = this.queryChain()
-                .in(ScheduleJob::getId, ids)
+                .in(EtlScheduledTask::getId, ids)
                 .list()
                 .stream()
-                .anyMatch(ScheduleJob::getJobEnable);
+                .anyMatch(EtlScheduledTask::getJobEnable);
 
         if (enabled) {
             return ResponseVO.error("删除失败，尚有任务在运行中");
@@ -121,7 +121,7 @@ public class ScheduleJobServiceImpl extends ServiceImpl<ScheduleJobMapper, Sched
     }
 
     @Override
-    public ResponseVO<Void> modifyScheduleJob(ScheduleJobUpdateForm form) {
+    public ResponseVO<Void> modifyScheduleJob(EtlScheduledTaskUpdateForm form) {
         val etlJobId = form.getEtlJobId();
         val etlJob = etlJobService.queryChain()
                 .eq(EtlJob::getId, etlJobId)
@@ -130,7 +130,7 @@ public class ScheduleJobServiceImpl extends ServiceImpl<ScheduleJobMapper, Sched
         if (etlJob == null) {
             return ResponseVO.error("Etl任务未找到 或 任务不是BATCH 模式: " + etlJobId);
         }
-        val entity = ScheduleJobConvert.INSTANCE.convert(form);
+        val entity = EtlScheduledTaskConvert.INSTANCE.convert(form);
         // 定时任务继承任务部门（数据权限）
         entity.setDeptId(etlJob.getDeptId());
         this.updateById(entity);
@@ -150,13 +150,13 @@ public class ScheduleJobServiceImpl extends ServiceImpl<ScheduleJobMapper, Sched
     }
 
     @Override
-    public ResponseVO<Void> changeStatus(ScheduleJobStatusChangeForm form) {
+    public ResponseVO<Void> changeStatus(EtlScheduledTaskStatusChangeForm form) {
 
         val id = form.getId();
         val jobEnable = form.getJobEnable();
         this.updateChain()
-                .eq(ScheduleJob::getId, id)
-                .set(ScheduleJob::getJobEnable, form.getJobEnable())
+                .eq(EtlScheduledTask::getId, id)
+                .set(EtlScheduledTask::getJobEnable, form.getJobEnable())
                 .update();
 
         try {

@@ -1,7 +1,7 @@
 package com.etl.api.service.handler;
 
-import com.etl.api.domain.entity.ScheduleJob;
-import com.etl.api.service.ScheduleJobService;
+import com.etl.api.domain.entity.EtlScheduledTask;
+import com.etl.api.service.EtlScheduledTaskService;
 import com.etl.api.service.manager.EtlJobManager;
 import com.etl.api.service.manager.ScheduleJobManager;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import org.springframework.scheduling.quartz.QuartzJobBean;
 public class ScheduleJobHandler extends QuartzJobBean {
 
     private final EtlJobManager etlJobManager;
-    private final ScheduleJobService scheduleJobService;
+    private final EtlScheduledTaskService scheduledTaskService;
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
@@ -34,7 +34,7 @@ public class ScheduleJobHandler extends QuartzJobBean {
         try {
             // 更新时间
             val scheduleId = Long.parseLong(context.getJobDetail().getKey().getName());
-            scheduleJobService.updateById(ScheduleJob.builder().id(scheduleId).build());
+            scheduledTaskService.updateById(EtlScheduledTask.builder().id(scheduleId).build());
         } catch (Exception e) {
             // do nothing
         }

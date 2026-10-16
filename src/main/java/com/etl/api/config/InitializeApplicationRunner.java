@@ -1,9 +1,9 @@
 package com.etl.api.config;
 
-import com.etl.api.domain.entity.ScheduleJob;
+import com.etl.api.domain.entity.EtlScheduledTask;
 import com.etl.api.job.config.QuartzJobProperties;
 import com.etl.api.job.config.SystemJobConfiguration;
-import com.etl.api.service.ScheduleJobService;
+import com.etl.api.service.EtlScheduledTaskService;
 import com.etl.api.service.manager.ScheduleJobManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ import java.util.List;
 public class InitializeApplicationRunner implements ApplicationRunner {
 
     private final ScheduleJobManager scheduleJobManager;
-    private final ScheduleJobService scheduleJobService;
+    private final EtlScheduledTaskService scheduledTaskService;
     private final Scheduler scheduler;
     private final QuartzJobProperties properties;
 
@@ -69,8 +69,8 @@ public class InitializeApplicationRunner implements ApplicationRunner {
     private void initQuartzJob() throws SchedulerException {
         // this.removeSystemQuartzJob();
 
-        val scheduleJobList = scheduleJobService.list();
-        for (ScheduleJob scheduleJob : scheduleJobList) {
+        val scheduleJobList = scheduledTaskService.list();
+        for (EtlScheduledTask scheduleJob : scheduleJobList) {
             scheduleJobManager.addJob(
                     scheduleJob.getId(),
                     scheduleJob.getName(),
