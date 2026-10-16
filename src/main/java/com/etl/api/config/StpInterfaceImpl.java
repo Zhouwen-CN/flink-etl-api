@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.etl.api.domain.entity.table.PermissionTableDef.PERMISSION;
-import static com.etl.api.domain.entity.table.RolePermissionTableDef.ROLE_PERMISSION;
+import static com.etl.api.domain.entity.table.SysPermissionTableDef.SYS_PERMISSION;
+import static com.etl.api.domain.entity.table.SysRolePermissionTableDef.SYS_ROLE_PERMISSION;
 import static com.etl.api.domain.entity.table.SysRoleTableDef.SYS_ROLE;
 import static com.etl.api.domain.entity.table.SysUserRoleTableDef.SYS_USER_ROLE;
 
@@ -28,14 +28,14 @@ public class StpInterfaceImpl implements StpInterface {
     @Override
     public List<String> getPermissionList(Object loginId, String loginType) {
         val queryWrapper = QueryWrapper.create()
-                .select(PERMISSION.CODE)
+                .select(SYS_PERMISSION.CODE)
                 .from(SYS_USER_ROLE)
-                .join(ROLE_PERMISSION)
-                .on(SYS_USER_ROLE.ROLE_ID.eq(ROLE_PERMISSION.ROLE_ID))
-                .join(PERMISSION)
-                .on(ROLE_PERMISSION.PERMISSION_ID.eq(PERMISSION.ID))
+                .join(SYS_ROLE_PERMISSION)
+                .on(SYS_USER_ROLE.ROLE_ID.eq(SYS_ROLE_PERMISSION.ROLE_ID))
+                .join(SYS_PERMISSION)
+                .on(SYS_ROLE_PERMISSION.PERMISSION_ID.eq(SYS_PERMISSION.ID))
                 .where(SYS_USER_ROLE.USER_ID.eq(loginId))
-                .groupBy(PERMISSION.CODE);
+                .groupBy(SYS_PERMISSION.CODE);
 
         return userRoleService.listAs(queryWrapper, String.class);
     }

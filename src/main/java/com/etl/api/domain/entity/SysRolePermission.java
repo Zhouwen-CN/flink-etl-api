@@ -14,16 +14,16 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * 权限表 实体类。
+ * 实体类。
  *
  * @author chen
- * @since 2026-05-07
+ * @since 2026-04-28
  */
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = true)
-@Table(value = "T_PERMISSION", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
-public class Permission extends BaseEntity implements Serializable {
+@Table(value = "T_SYS_ROLE_PERMISSION", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
+public class SysRolePermission extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -35,18 +35,13 @@ public class Permission extends BaseEntity implements Serializable {
     private Long id;
 
     /**
-     * 权限名称
+     * 角色id
      */
-    private String name;
+    private Long roleId;
 
     /**
-     * 权限标识符
+     * 权限id
      */
-    private String code;
-
-    /**
-     * 类型(0按钮 1管理员)
-     */
-    private Integer type;
+    private Long permissionId;
 
 }

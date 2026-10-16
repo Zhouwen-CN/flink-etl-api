@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Schema(description = "更新权限表单")
-public class PermissionUpdateForm extends PermissionCreateForm {
+public class SysPermissionUpdateForm extends SysPermissionCreateForm {
 
     @NotNull
     @Schema(description = "自增主键")

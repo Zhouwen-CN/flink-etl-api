@@ -8,7 +8,7 @@ import org.hibernate.validator.constraints.Length;
 
 @Data
 @Schema(description = "新增权限表单")
-public class PermissionCreateForm {
+public class SysPermissionCreateForm {
 
     @NotBlank
     @Length(max = 30)

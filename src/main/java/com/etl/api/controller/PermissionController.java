@@ -1,15 +1,15 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.etl.api.domain.convert.PermissionConvert;
-import com.etl.api.domain.entity.Permission;
-import com.etl.api.domain.form.PermissionCreateForm;
-import com.etl.api.domain.form.PermissionUpdateForm;
+import com.etl.api.domain.convert.SysPermissionConvert;
+import com.etl.api.domain.entity.SysPermission;
+import com.etl.api.domain.form.SysPermissionCreateForm;
+import com.etl.api.domain.form.SysPermissionUpdateForm;
 import com.etl.api.domain.vo.PageVO;
-import com.etl.api.domain.vo.PermissionVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.domain.vo.SysPermissionVO;
 import com.etl.api.enumeration.PermissionTypeEnum;
-import com.etl.api.service.PermissionService;
+import com.etl.api.service.SysPermissionService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,12 +39,12 @@ import java.util.Collection;
 @RequiredArgsConstructor
 public class PermissionController {
 
-    private final PermissionService permissionService;
+    private final SysPermissionService permissionService;
 
     @SaCheckPermission("permission.select")
     @Operation(summary = "分页查询")
     @GetMapping
-    public ResponseVO<PageVO<PermissionVO>> getPage(
+    public ResponseVO<PageVO<SysPermissionVO>> getPage(
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
             @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
             @RequestParam(value = "routeName", required = false) @Parameter(description = "路由名称") String routeName,
@@ -55,10 +55,10 @@ public class PermissionController {
             routeName = routeName.toLowerCase();
         }
         val page = permissionService.queryChain()
-                .eq(Permission::getType, PermissionTypeEnum.BUTTON.getCode())
-                .like(Permission::getCode, code, StringUtils.hasText(code))
-                .likeLeft(Permission::getCode, routeName, hasText)
-                .pageAs(Page.of(currentPage, pageSize), PermissionVO.class);
+                .eq(SysPermission::getType, PermissionTypeEnum.BUTTON.getCode())
+                .like(SysPermission::getCode, code, StringUtils.hasText(code))
+                .likeLeft(SysPermission::getCode, routeName, hasText)
+                .pageAs(Page.of(currentPage, pageSize), SysPermissionVO.class);
 
         return ResponseVO.ok(PageVO.from(page));
     }
@@ -66,19 +66,19 @@ public class PermissionController {
     @SaCheckPermission("permission.insert")
     @Operation(summary = "新增")
     @PostMapping
-    public ResponseVO<Void> add(@RequestBody @Validated PermissionCreateForm form) {
+    public ResponseVO<Void> add(@RequestBody @Validated SysPermissionCreateForm form) {
         return permissionService.addPermission(form);
     }
 
     @SaCheckPermission("permission.update")
     @Operation(summary = "更新")
     @PutMapping
-    public ResponseVO<Void> modify(@RequestBody @Validated PermissionUpdateForm form) {
+    public ResponseVO<Void> modify(@RequestBody @Validated SysPermissionUpdateForm form) {
         val id = form.getId();
         if (id == 1L) {
             return ResponseVO.modifyAdminError();
         }
-        val entity = PermissionConvert.INSTANCE.convert(form);
+        val entity = SysPermissionConvert.INSTANCE.convert(form);
         permissionService.updateById(entity);
         return ResponseVO.ok();
     }

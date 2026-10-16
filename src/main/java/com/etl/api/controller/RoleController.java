@@ -1,15 +1,15 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.etl.api.domain.entity.RolePermission;
+import com.etl.api.domain.entity.SysRolePermission;
 import com.etl.api.domain.form.SysRoleCreateForm;
 import com.etl.api.domain.form.SysRoleUpdateForm;
 import com.etl.api.domain.vo.PageVO;
-import com.etl.api.domain.vo.PermissionSelectorVO;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.domain.vo.SysPermissionSelectorVO;
 import com.etl.api.domain.vo.SysRoleVO;
-import com.etl.api.service.PermissionService;
-import com.etl.api.service.RolePermissionService;
+import com.etl.api.service.SysPermissionService;
+import com.etl.api.service.SysRolePermissionService;
 import com.etl.api.service.SysRoleService;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,8 +44,8 @@ import static com.etl.api.domain.entity.table.SysRoleTableDef.SYS_ROLE;
 public class RoleController {
 
     private final SysRoleService roleService;
-    private final RolePermissionService rolePermissionService;
-    private final PermissionService permissionService;
+    private final SysRolePermissionService rolePermissionService;
+    private final SysPermissionService permissionService;
 
     @SaCheckPermission("role.select")
     @Operation(summary = "分页查询")
@@ -93,14 +93,14 @@ public class RoleController {
     @SaCheckPermission("role.select")
     @Operation(summary = "权限选择器查询")
     @GetMapping("/permission/selector")
-    public ResponseVO<List<PermissionSelectorVO>> selector() {
+    public ResponseVO<List<SysPermissionSelectorVO>> selector() {
         val vos = permissionService.list()
                 .stream()
                 .map(item -> {
                     val code = item.getCode();
                     val split = code.split("\\.");
                     if (split.length == 2) {
-                        return PermissionSelectorVO.builder()
+                        return SysPermissionSelectorVO.builder()
                                 .id(item.getId())
                                 .name(item.getName())
                                 .routeName(split[0])
@@ -120,8 +120,8 @@ public class RoleController {
     @GetMapping("/permission/{id}")
     public ResponseVO<List<Long>> getPermissionByRoleId(@PathVariable @Parameter(description = "角色ID") Long id) {
         val permissionIds = rolePermissionService.queryChain()
-                .select(RolePermission::getPermissionId)
-                .eq(RolePermission::getRoleId, id)
+                .select(SysRolePermission::getPermissionId)
+                .eq(SysRolePermission::getRoleId, id)
                 .listAs(Long.class);
         return ResponseVO.ok(permissionIds);
     }

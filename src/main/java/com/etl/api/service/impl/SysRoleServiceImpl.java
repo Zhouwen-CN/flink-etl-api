@@ -1,13 +1,13 @@
 package com.etl.api.service.impl;
 
 import com.etl.api.domain.convert.SysRoleConvert;
-import com.etl.api.domain.entity.RolePermission;
 import com.etl.api.domain.entity.SysRole;
+import com.etl.api.domain.entity.SysRolePermission;
 import com.etl.api.domain.form.SysRoleCreateForm;
 import com.etl.api.domain.form.SysRoleUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.SysRoleMapper;
-import com.etl.api.service.RolePermissionService;
+import com.etl.api.service.SysRolePermissionService;
 import com.etl.api.service.SysRoleService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> implements SysRoleService {
 
-    private final RolePermissionService rolePermissionService;
+    private final SysRolePermissionService rolePermissionService;
 
     @Override
     public ResponseVO<Void> addRole(SysRoleCreateForm form) {
@@ -67,7 +67,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         }
         this.removeById(id);
         rolePermissionService.updateChain()
-                .eq(RolePermission::getRoleId, id)
+                .eq(SysRolePermission::getRoleId, id)
                 .remove();
         return ResponseVO.ok();
     }
@@ -79,14 +79,14 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         }
         this.removeByIds(ids);
         rolePermissionService.updateChain()
-                .in(RolePermission::getRoleId, ids)
+                .in(SysRolePermission::getRoleId, ids)
                 .remove();
         return ResponseVO.ok();
     }
 
     private void saveRolePermission(Long roleId, List<Long> permissionIds, boolean isUpdate) {
         val rolePermissionList = permissionIds
-                .stream().map(permissionId -> RolePermission.builder()
+                .stream().map(permissionId -> SysRolePermission.builder()
                         .roleId(roleId)
                         .permissionId(permissionId)
                         .build())
@@ -94,7 +94,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 
         if (isUpdate) {
             rolePermissionService.updateChain()
-                    .eq(RolePermission::getRoleId, roleId)
+                    .eq(SysRolePermission::getRoleId, roleId)
                     .remove();
         }
 

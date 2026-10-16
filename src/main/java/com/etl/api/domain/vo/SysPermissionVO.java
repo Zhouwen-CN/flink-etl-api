@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Schema(description = "权限视图")
-public class PermissionVO {
+public class SysPermissionVO {
 
     @Schema(description = "自增主键")
     private Long id;

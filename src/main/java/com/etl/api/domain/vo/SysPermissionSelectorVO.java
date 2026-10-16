@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 @Builder
 @Schema(description = "权限选择器视图")
-public class PermissionSelectorVO {
+public class SysPermissionSelectorVO {
     @Schema(description = "自增主键")
     private Long id;
 

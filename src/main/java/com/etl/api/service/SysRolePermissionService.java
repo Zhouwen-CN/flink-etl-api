@@ -1,6 +1,6 @@
 package com.etl.api.service;
 
-import com.etl.api.domain.entity.RolePermission;
+import com.etl.api.domain.entity.SysRolePermission;
 import com.mybatisflex.core.service.IService;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.service.IService;
  * @author chen
  * @since 2026-04-28
  */
-public interface RolePermissionService extends IService<RolePermission> {
+public interface SysRolePermissionService extends IService<SysRolePermission> {
 
 }

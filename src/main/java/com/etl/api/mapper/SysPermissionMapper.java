@@ -1,6 +1,6 @@
 package com.etl.api.mapper;
 
-import com.etl.api.domain.entity.Permission;
+import com.etl.api.domain.entity.SysPermission;
 import com.mybatisflex.core.BaseMapper;
 
 /**
@@ -9,6 +9,6 @@ import com.mybatisflex.core.BaseMapper;
  * @author chen
  * @since 2026-04-28
  */
-public interface PermissionMapper extends BaseMapper<Permission> {
+public interface SysPermissionMapper extends BaseMapper<SysPermission> {
 
 }
