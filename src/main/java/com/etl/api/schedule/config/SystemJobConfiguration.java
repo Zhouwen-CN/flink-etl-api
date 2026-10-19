@@ -80,17 +80,17 @@ public class SystemJobConfiguration {
      * 同步 Flink 集群已上传的 jar 包列表
      */
     @Bean
-    @ConditionalOnProperty(prefix = "custom.job.sync-cluster-uploaded-jar", name = "enable",
+    @ConditionalOnProperty(prefix = "custom.job.sync-flink-jar-package", name = "enable",
             havingValue = "true", matchIfMissing = true)
     public JobDetail syncFlinkJarJobDetail() {
-        return buildJobDetail(SyncFlinkJarPackage.class, properties.getSyncClusterUploadedJar());
+        return buildJobDetail(SyncFlinkJarPackage.class, properties.getSyncFlinkJarPackage());
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "custom.job.sync-cluster-uploaded-jar", name = "enable",
+    @ConditionalOnProperty(prefix = "custom.job.sync-flink-jar-package", name = "enable",
             havingValue = "true", matchIfMissing = true)
     public Trigger syncFlinkJarTrigger() {
-        return buildTrigger(properties.getSyncClusterUploadedJar());
+        return buildTrigger(properties.getSyncFlinkJarPackage());
     }
 
     /**
@@ -114,16 +114,16 @@ public class SystemJobConfiguration {
      * 同步 Flink 作业状态信息
      */
     @Bean
-    @ConditionalOnProperty(prefix = "custom.job.sync-job-instance-status", name = "enable",
+    @ConditionalOnProperty(prefix = "custom.job.sync-flink-job-status", name = "enable",
             havingValue = "true", matchIfMissing = true)
     public JobDetail syncJobInstanceStatusJobDetail() {
-        return buildJobDetail(SyncFlinkJobStatus.class, properties.getSyncJobInstanceStatus());
+        return buildJobDetail(SyncFlinkJobStatus.class, properties.getSyncFlinkJobStatus());
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "custom.job.sync-job-instance-status", name = "enable",
+    @ConditionalOnProperty(prefix = "custom.job.sync-flink-job-status", name = "enable",
             havingValue = "true", matchIfMissing = true)
     public Trigger syncJobInstanceStatusTrigger() {
-        return buildTrigger(properties.getSyncJobInstanceStatus());
+        return buildTrigger(properties.getSyncFlinkJobStatus());
     }
 }

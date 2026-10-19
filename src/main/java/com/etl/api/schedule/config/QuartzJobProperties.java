@@ -26,20 +26,20 @@ public class QuartzJobProperties {
     /**
      * 同步 Flink 集群已上传的 jar 包列表
      */
-    private ScheduleConfig syncClusterUploadedJar = new ScheduleConfig(
-            "syncClusterUploadedJar", "同步 Flink 集群已上传的 jar 包列表", true, "0 * * * * ?");
+    private ScheduleConfig syncFlinkJarPackage = new ScheduleConfig(
+            "syncFlinkJarPackage", "同步Flink Jar包", true, "0 * * * * ?");
 
     /**
      * 同步 Flink 任务检查点列表
      */
     private ScheduleConfig syncFlinkCheckpoint = new ScheduleConfig(
-            "syncFlinkCheckpoint", "同步 Flink 任务检查点列表", true, "0/5 * * * * ?");
+            "syncFlinkCheckpoint", "同步Flink检查点", true, "0/5 * * * * ?");
 
     /**
      * 同步 Flink 作业状态信息
      */
-    private ScheduleConfig syncJobInstanceStatus = new ScheduleConfig(
-            "syncJobInstanceStatus", "同步 Flink 作业状态信息", true, "0/5 * * * * ?");
+    private ScheduleConfig syncFlinkJobStatus = new ScheduleConfig(
+            "syncFlinkJobStatus", "同步Flink任务状态", true, "0/5 * * * * ?");
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -80,12 +80,17 @@ public class QuartzJobProperties {
         /**
          * http 请求数据过期时间
          */
-        private Duration httpExchange = Duration.ofDays(3);
+        private Duration httpExchange = Duration.ofDays(7);
 
         /**
          * 任务实例数据过期时间
          */
-        private Duration jobInstance = Duration.ofDays(3);
+        private Duration jobInstance = Duration.ofDays(7);
+
+        /**
+         * 检查点数据过期时间
+         */
+        private Duration checkpoint = Duration.ofDays(7);
 
         public DeleteExpirationRecordConfig() {
             super("deleteExpirationRecord", "删除过期数据（验证码、请求历史、任务实例）", true, "0 0 * * * ?");

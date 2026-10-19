@@ -1,11 +1,13 @@
 package com.etl.api.schedule;
 
+import com.etl.api.domain.entity.EtlFlinkCheckpointSync;
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.SysLoginCaptcha;
 import com.etl.api.domain.entity.SysRequestLog;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.schedule.config.QuartzJobProperties;
+import com.etl.api.service.EtlFlinkCheckpointSyncService;
 import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.SysLoginCaptchaService;
 import com.etl.api.service.SysRequestLogService;
@@ -31,6 +33,7 @@ public class DeleteExpirationRecord extends QuartzJobBean {
     private final SysLoginCaptchaService loginCaptchaService;
     private final SysRequestLogService requestLogService;
     private final EtlJobInstanceService etlJobInstanceService;
+    private final EtlFlinkCheckpointSyncService flinkCheckpointSyncService;
     private final QuartzJobProperties quartzJobProperties;
 
     @Override
@@ -54,6 +57,11 @@ public class DeleteExpirationRecord extends QuartzJobBean {
                 .eq(EtlJobInstance::getJobType, ETLJobTypeEnum.BATCH.getCode())
                 .notIn(EtlJobInstance::getStatus, FlinkJobStatusEnum.getProcessingStatus())
                 .lt(EtlJobInstance::getEndTime, LocalDateTime.now().minus(config.getJobInstance().toMillis(), ChronoUnit.MILLIS))
+                .remove();
+
+        // 删除过期的检查点
+        flinkCheckpointSyncService.updateChain()
+                .lt(EtlFlinkCheckpointSync::getTriggerTime, LocalDateTime.now().minus(config.getCheckpoint().toMillis(), ChronoUnit.MILLIS))
                 .remove();
     }
 
