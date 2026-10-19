@@ -2,7 +2,6 @@ create table T_ETL_JOB
 (
     id                  bigint primary key auto_increment comment '自增主键',
     name                varchar(100) not null comment '任务名称',
-    description         varchar(100) default null comment '任务描述',
     type                tinyint      not null comment '任务类型(1batch 2streaming)',
     project_id          bigint       default null comment '项目id',
     cluster_id          bigint       not null comment 'flink集群id',
