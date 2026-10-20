@@ -141,7 +141,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
                     entity.getName(),
                     entity.getEtlJobId(),
                     entity.getCronExpression(),
-                    false
+                    entity.getJobEnable()
             );
         } catch (SchedulerException e) {
             throw new ScheduledTaskException("修改定时任务异常", e);
