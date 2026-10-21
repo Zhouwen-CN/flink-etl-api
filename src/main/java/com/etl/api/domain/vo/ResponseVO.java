@@ -56,6 +56,6 @@ public final class ResponseVO<T> {
     }
 
     public static <T> ResponseVO<T> modifyRootDeptError() {
-        return error("部门根节点 禁止修改和删除");
+        return error("部门根节点 禁止新增、修改和删除");
     }
 }

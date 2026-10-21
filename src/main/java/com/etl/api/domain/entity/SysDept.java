@@ -49,4 +49,10 @@ public class SysDept extends BaseEntity implements Serializable {
      */
     private Long parentId;
 
+    /**
+     * 物化路径：根到自身的 id 链，如 /1/5/12/（含自身）；
+     * 子树查询用前缀匹配：parent_path LIKE '/1/5/%'
+     */
+    private String parentPath;
+
 }

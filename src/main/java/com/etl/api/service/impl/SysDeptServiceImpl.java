@@ -42,41 +42,55 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
 
     @Override
     public ResponseVO<Void> addDept(SysDeptCreateForm form) {
+        // 不能新增根节点
+        Long parentId = form.getParentId();
+        if (parentId == null) {
+            return ResponseVO.modifyRootDeptError();
+        }
+
+        // 名称是否存在
         String name = form.getName();
         boolean exists = this.queryChain()
                 .eq(SysDept::getName, name)
                 .exists();
-
         if (exists) {
             return ResponseVO.recordExistsError(name);
         }
 
-        if (validateParent(form.getParentId())) {
+        // 父部门不存在
+        SysDept parentDept = this.getById(parentId);
+        if (parentDept == null) {
             return ResponseVO.recordNotFoundError("父部门 id:" + form.getParentId());
         }
 
-        val entity = SysDeptConvert.INSTANCE.convert(form);
+        // 新增（ID回填）
+        SysDept entity = SysDeptConvert.INSTANCE.convert(form);
         this.save(entity);
+
+        // 更新物化路径
+        String parentPath = parentDept.getParentPath() + entity.getId() + "/";
+        this.updateChain()
+                .set(SysDept::getParentPath, parentPath)
+                .eq(SysDept::getId, entity.getId())
+                .update();
         return ResponseVO.ok();
     }
 
     @Override
     public ResponseVO<Void> modifyDept(SysDeptUpdateForm form) {
+        // 不能修改根节点
         Long id = form.getId();
         if (id == 1L) {
             return ResponseVO.modifyRootDeptError();
         }
 
+        // 更新ID是否存在
         SysDept dept = this.getById(id);
         if (dept == null) {
             return ResponseVO.recordNotFoundError("部门 id:" + id);
         }
 
-        if (validateParent(form.getParentId())) {
-            return ResponseVO.recordNotFoundError("父部门 id:" + form.getParentId());
-        }
-
-        // 名称唯一性（排除自身）
+        // 更新名称是否存在
         boolean nameExists = this.queryChain()
                 .eq(SysDept::getName, form.getName())
                 .ne(SysDept::getId, id)
@@ -85,6 +99,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
             return ResponseVO.recordExistsError(form.getName());
         }
 
+        // 更新
         val entity = SysDeptConvert.INSTANCE.convert(form);
         this.updateById(entity);
         return ResponseVO.ok();
@@ -117,7 +132,6 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         this.removeById(id);
         return ResponseVO.ok();
     }
-
 
     private List<SysDeptVO> listTree(Predicate<SysDept> filter, boolean isFilter) {
         // 全量加载，便于回溯祖先和构建树
@@ -193,9 +207,5 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
                 sortTree(vo.getChildren());
             }
         }
-    }
-
-    private boolean validateParent(Long parentId) {
-        return parentId != null && this.getById(parentId) == null;
     }
 }

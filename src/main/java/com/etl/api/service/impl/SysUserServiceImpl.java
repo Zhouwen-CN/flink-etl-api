@@ -33,14 +33,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -182,13 +178,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * deptIds=可见部门 id 集合（2=本部门及以下，3=本部门）
      */
     private void initDataScope(SysUser user, SaSessionUtil.SaSessionUserInfo sessionUserInfo) {
-        val sql = QueryWrapper.create()
+        QueryWrapper queryWrapper = QueryWrapper.create()
                 .select(SYS_ROLE.DATA_SCOPE)
                 .from(SYS_USER_ROLE)
                 .join(SYS_ROLE)
                 .on(SYS_USER_ROLE.ROLE_ID.eq(SYS_ROLE.ID))
                 .where(SYS_USER_ROLE.USER_ID.eq(user.getId()));
-        Set<Integer> dataScopes = new HashSet<>(userRoleService.listAs(sql, Integer.class));
+        Set<Integer> dataScopes = new HashSet<>(userRoleService.listAs(queryWrapper, Integer.class));
 
         boolean isAll = false;
         Long userDeptId = user.getDeptId();
@@ -209,40 +205,21 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 visibleDeptIds.add(userDeptId);
             }
 
-            // 本部门及以下：递归收集子树 id
+            // 本部门及以下
             if (Objects.equals(scope, DataScopeEnum.SELF_DEPT_AND_CHILDREN.getCode()) && userDeptId != null) {
-                visibleDeptIds.addAll(collectDeptIds(userDeptId));
+                SysDept dept = deptService.getById(userDeptId);
+                if (dept != null && dept.getParentPath() != null) {
+                    List<Long> deptIdList = deptService.queryChain()
+                            .select(SysDept::getId)
+                            .likeLeft(SysDept::getParentPath, dept.getParentPath())
+                            .listAs(Long.class);
+                    visibleDeptIds.addAll(deptIdList);
+                }
             }
         }
 
         sessionUserInfo.setDataScopeAll(isAll);
         sessionUserInfo.setDataScopeDeptIds(new ArrayList<>(visibleDeptIds));
-    }
-
-    /**
-     * 收集 deptId 及所有后代部门 id（BFS）
-     */
-    private Set<Long> collectDeptIds(Long deptId) {
-        Set<Long> result = new HashSet<>();
-        List<SysDept> deptList = deptService.list();
-        Map<Long, List<Long>> childrenMap = new HashMap<>();
-        for (SysDept dept : deptList) {
-            if (dept.getParentId() != null) {
-                childrenMap.computeIfAbsent(dept.getParentId(), k -> new ArrayList<>())
-                        .add(dept.getId());
-            }
-        }
-        ArrayDeque<Long> queue = new ArrayDeque<>();
-        queue.push(deptId);
-        while (!queue.isEmpty()) {
-            Long current = queue.poll();
-            if (!result.add(current)) {
-                continue;
-            }
-            List<Long> children = childrenMap.getOrDefault(current, Collections.emptyList());
-            queue.addAll(children);
-        }
-        return result;
     }
 
     @Override
