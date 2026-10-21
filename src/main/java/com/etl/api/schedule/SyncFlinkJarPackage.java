@@ -16,8 +16,11 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 同步 Flink 集群已上传的 jar 包列表
@@ -36,6 +39,15 @@ public class SyncFlinkJarPackage extends QuartzJobBean {
         log.debug("同步 Flink 集群已上传的 jar 包列表");
 
         val flinkClusterList = flinkClusterService.list();
+        val clusterJarMap = flinkJarSyncService.list()
+                .stream().collect(Collectors.groupingBy(
+                        EtlFlinkJarSync::getClusterId,
+                        Collectors.toMap(
+                                EtlFlinkJarSync::getJarId,
+                                item -> item
+                        )
+                ));
+
         for (EtlFlinkCluster flinkCluster : flinkClusterList) {
             // 只有 flink 集群状态开启才同步
             if (flinkCluster.getStatus()) {
@@ -47,17 +59,35 @@ public class SyncFlinkJarPackage extends QuartzJobBean {
                     log.error(e.getMessage());
                 }
 
+                // 获取 jar map
+                val jarMap = clusterJarMap.getOrDefault(clusterId, Collections.emptyMap());
+
                 Optional.ofNullable(jsonNode)
                         .map(item -> item.get("files"))
                         .map(files -> objectMapper.convertValue(files, new TypeReference<List<EtlFlinkJarSync>>() {
                         }))
-                        .map(list -> list.stream().peek(item -> item.setClusterId(clusterId)).toList())
                         .ifPresent(entities -> {
-                            flinkJarSyncService.updateChain()
-                                    .eq(EtlFlinkJarSync::getClusterId, clusterId)
-                                    .remove();
+                            val insertList = new ArrayList<EtlFlinkJarSync>();
+                            for (EtlFlinkJarSync entity : entities) {
+                                val jarId = entity.getJarId();
+                                // 如果不存在，加入到 insert 列表
+                                val etlFlinkJarSync = jarMap.remove(jarId);
+                                if (etlFlinkJarSync == null) {
+                                    entity.setClusterId(clusterId);
+                                    insertList.add(entity);
+                                }
+                            }
 
-                            flinkJarSyncService.saveBatch(entities);
+                            if (!insertList.isEmpty()) {
+                                flinkJarSyncService.saveBatch(insertList);
+                            }
+
+                            // 剩下的需要删除
+                            val removeList = jarMap.values();
+                            if (!removeList.isEmpty()) {
+                                val ids = removeList.stream().map(EtlFlinkJarSync::getId).toList();
+                                flinkJarSyncService.removeByIds(ids);
+                            }
                         });
             }
 

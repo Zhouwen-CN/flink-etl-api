@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 public class SysVarSettingServiceImpl extends ServiceImpl<SysVarSettingMapper, SysVarSetting> implements SysVarSettingService {
     private static final Pattern pattern = Pattern.compile("\\$\\{(?<variable>[^}]+)}");
 
-    @SuppressWarnings("deprecation")
     @Override
     public String replaceVariable(String config) {
         val variableMap = this.queryChain()

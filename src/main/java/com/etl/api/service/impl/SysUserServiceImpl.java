@@ -229,7 +229,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         StpUtil.logout(id);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void revoke(Long id, HttpServletRequest request) {
         val username = this.queryChain()

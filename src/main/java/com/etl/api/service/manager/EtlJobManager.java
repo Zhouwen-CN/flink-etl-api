@@ -96,24 +96,22 @@ public class EtlJobManager {
         }
 
         // jar包同步表信息
-        val clusterUploadedJarList = flinkJarSyncService.queryChain()
+        val flinkJarSyncList = flinkJarSyncService.queryChain()
                 .eq(EtlFlinkJarSync::getClusterId, clusterId)
                 .eq(EtlFlinkJarSync::getJarName, jarPackage.getFileName())
                 .orderBy(EtlFlinkJarSync::getUploaded, false)
                 .list();
 
-        // 如果jar包同步表有记录，那么获取最新的一条；如果有多的记录，那么删除
+        // 如果jar包同步表有记录，那么获取最新的一条；如果有多的记录，那么删除多余的
         EtlFlinkJarSync clusterUploadedJar = null;
-        val size = clusterUploadedJarList.size();
-        if (size > 0) {
-            for (int i = 0; i < size; i++) {
-                if (i == 0) {
-                    clusterUploadedJar = clusterUploadedJarList.get(i);
-                } else {
-                    val deleteEtlFlinkJarSync = clusterUploadedJarList.get(i);
-                    flinkApiProvider.deleteJar(jobManagerUrl, deleteEtlFlinkJarSync.getJarId());
-                    flinkJarSyncService.removeById(deleteEtlFlinkJarSync.getId());
-                }
+        val size = flinkJarSyncList.size();
+        for (int i = 0; i < size; i++) {
+            if (i == 0) {
+                clusterUploadedJar = flinkJarSyncList.get(i);
+            } else {
+                val deleteEtlFlinkJarSync = flinkJarSyncList.get(i);
+                flinkApiProvider.deleteJar(jobManagerUrl, deleteEtlFlinkJarSync.getJarId());
+                flinkJarSyncService.removeById(deleteEtlFlinkJarSync.getId());
             }
         }
 
@@ -123,7 +121,7 @@ public class EtlJobManager {
             clusterUploadedJar = new EtlFlinkJarSync(clusterId, flinkJarId, jarPackage.getFileName(), System.currentTimeMillis());
             flinkJarSyncService.save(clusterUploadedJar);
         } else {
-            // 如果jar包更新时间 大于 flink jar上传时间 + 5分钟，表示jar包需要更新
+            // 如果jar包更新时间 大于 flink jar上传时间 + 3分钟，表示jar包需要更新
             val updateTime = LocalDateTimeUtil.toMs(jarPackage.getUpdateTime());
             val uploaded = clusterUploadedJar.getUploaded();
             if (updateTime > uploaded + UPLOADED_OFFSET.toMillis()) {

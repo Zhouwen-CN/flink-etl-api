@@ -117,7 +117,6 @@ public class SysUserController {
         return ResponseVO.ok(userRoleVO);
     }
 
-    @SuppressWarnings("unchecked")
     @SaCheckPermission("user.select")
     @Operation(summary = "用户角色信息")
     @GetMapping("/role/{id}")
