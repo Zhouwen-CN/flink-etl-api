@@ -59,8 +59,8 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
                 .forEach(etlJobInstance -> {
                     val flinkJobId = etlJobInstance.getId();
                     val flinkCluster = flinkClusterMap.get(etlJobInstance.getClusterId());
-                    // 只有 flink 集群状态开启才同步
-                    if (flinkCluster != null && flinkCluster.getStatus()) {
+                    // flink 集群只要存在就同步，不需要判断集群状态
+                    if (flinkCluster != null) {
                         JsonNode jsonNode = null;
                         try {
                             jsonNode = flinkApiProvider.getCheckpointHistory(flinkCluster.getJobManagerUrl(), flinkJobId);
@@ -77,17 +77,14 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
                                     val maxChkId = flinkCheckpointSyncService.queryChain()
                                             .select(max(ETL_FLINK_CHECKPOINT_SYNC.CHK_ID))
                                             .eq(EtlFlinkCheckpointSync::getJobId, flinkJobId)
-                                            .oneAs(Long.class);
+                                            .oneAsOpt(Long.class)
+                                            .orElse(0L);
 
                                     // 只获取完成的 checkpoint
-                                    if (maxChkId != null) {
-                                        list = list.stream()
-                                                .filter(item ->
-                                                        item.getId() > maxChkId && "COMPLETED".equals(item.getStatus())
-                                                ).toList();
-                                    }
-
-                                    val flinkCheckpointList = list.stream().map(item -> item.toCheckPoint(flinkJobId)).toList();
+                                    val flinkCheckpointList = list.stream()
+                                            .filter(item -> item.getId() > maxChkId && "COMPLETED".equals(item.getStatus()))
+                                            .map(item -> item.toCheckPoint(flinkJobId))
+                                            .toList();
                                     flinkCheckpointSyncService.saveBatch(flinkCheckpointList);
                                 });
                     }

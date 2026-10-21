@@ -18,8 +18,11 @@ public interface SysDeptConvert {
     @Mapping(target = "children", expression = "java(new ArrayList<>())")
     SysDeptVO convert(SysDept entity);
 
+    @Mapping(target = "parentPath", ignore = true)
     @Mapping(target = "id", ignore = true)
     SysDept convert(SysDeptCreateForm form);
 
+    @Mapping(target = "parentPath", ignore = true)
+    @Mapping(target = "parentId", ignore = true)
     SysDept convert(SysDeptUpdateForm form);
 }
