@@ -1,7 +1,6 @@
 package com.etl.api.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.etl.api.aop.IgnoreTenant;
 import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.entity.EtlScheduledTask;
@@ -81,16 +80,14 @@ public class EtlScheduledTaskController {
     @Operation(summary = "新增")
     @PostMapping
     public ResponseVO<Void> add(@RequestBody @Validated EtlScheduledTaskCreateForm form) {
-        return scheduledTaskService.addScheduleJob(form);
+        return scheduledTaskService.addScheduledTask(form);
     }
 
-
-    @IgnoreTenant
     @SaCheckPermission("schedule.update")
     @Operation(summary = "更新")
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated EtlScheduledTaskUpdateForm form) {
-        return scheduledTaskService.modifyScheduleJob(form);
+        return scheduledTaskService.modifyScheduledTask(form);
     }
 
     @SaCheckPermission("schedule.update")
@@ -104,13 +101,13 @@ public class EtlScheduledTaskController {
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        return scheduledTaskService.removeScheduleJob(id);
+        return scheduledTaskService.removeScheduledTask(id);
     }
 
     @SaCheckPermission("schedule.delete")
     @Operation(summary = "批量删除")
     @DeleteMapping
     public ResponseVO<Void> removeBatch(@RequestParam("ids") @Parameter(description = "ID列表") @Size(min = 1, max = 50) Collection<Long> ids) {
-        return scheduledTaskService.removeScheduleJobBatch(ids);
+        return scheduledTaskService.removeScheduledTaskBatch(ids);
     }
 }

@@ -17,13 +17,13 @@ import java.util.Collection;
  */
 public interface EtlScheduledTaskService extends IService<EtlScheduledTask> {
 
-    ResponseVO<Void> addScheduleJob(EtlScheduledTaskCreateForm form);
+    ResponseVO<Void> addScheduledTask(EtlScheduledTaskCreateForm form);
 
-    ResponseVO<Void> removeScheduleJob(Long id);
+    ResponseVO<Void> removeScheduledTask(Long id);
 
-    ResponseVO<Void> removeScheduleJobBatch(Collection<Long> ids);
+    ResponseVO<Void> removeScheduledTaskBatch(Collection<Long> ids);
 
-    ResponseVO<Void> modifyScheduleJob(EtlScheduledTaskUpdateForm form);
+    ResponseVO<Void> modifyScheduledTask(EtlScheduledTaskUpdateForm form);
 
     ResponseVO<Void> changeStatus(EtlScheduledTaskStatusChangeForm form);
 }

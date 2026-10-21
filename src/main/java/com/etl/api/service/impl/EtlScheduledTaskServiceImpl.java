@@ -36,7 +36,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
     private final ScheduledTaskManager scheduledTaskManager;
 
     @Override
-    public ResponseVO<Void> addScheduleJob(EtlScheduledTaskCreateForm form) {
+    public ResponseVO<Void> addScheduledTask(EtlScheduledTaskCreateForm form) {
         val name = form.getName();
         val etlJobId = form.getEtlJobId();
         boolean exists = this.queryChain()
@@ -74,13 +74,13 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
     }
 
     @Override
-    public ResponseVO<Void> removeScheduleJob(Long id) {
+    public ResponseVO<Void> removeScheduledTask(Long id) {
         val scheduleJob = this.queryChain()
                 .eq(EtlScheduledTask::getId, id)
                 .one();
 
         if (scheduleJob == null) {
-            return ResponseVO.recordNotFoundError("scheduleJobId:" + id);
+            return ResponseVO.recordNotFoundError("scheduleTaskId:" + id);
         }
 
         if (scheduleJob.getJobEnable()) {
@@ -98,7 +98,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
     }
 
     @Override
-    public ResponseVO<Void> removeScheduleJobBatch(Collection<Long> ids) {
+    public ResponseVO<Void> removeScheduledTaskBatch(Collection<Long> ids) {
         val enabled = this.queryChain()
                 .in(EtlScheduledTask::getId, ids)
                 .list()
@@ -121,7 +121,13 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
     }
 
     @Override
-    public ResponseVO<Void> modifyScheduleJob(EtlScheduledTaskUpdateForm form) {
+    public ResponseVO<Void> modifyScheduledTask(EtlScheduledTaskUpdateForm form) {
+        val id = form.getId();
+        val etlScheduledTask = this.getById(id);
+        if (etlScheduledTask == null) {
+            return ResponseVO.recordNotFoundError("scheduleTaskId:" + id);
+        }
+
         val etlJobId = form.getEtlJobId();
         val etlJob = jobService.queryChain()
                 .eq(EtlJob::getId, etlJobId)
@@ -131,7 +137,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
             return ResponseVO.error("Etl任务未找到 或 任务不是BATCH 模式: " + etlJobId);
         }
         val entity = EtlScheduledTaskConvert.INSTANCE.convert(form);
-        // 定时任务继承任务部门（数据权限）
+        // 定时任务继承任务部门（数据权限），手动设置了，mybatis flex 就不会注入覆盖
         entity.setDeptId(etlJob.getDeptId());
         this.updateById(entity);
 
@@ -141,7 +147,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
                     entity.getName(),
                     entity.getEtlJobId(),
                     entity.getCronExpression(),
-                    entity.getJobEnable()
+                    etlScheduledTask.getJobEnable()
             );
         } catch (SchedulerException e) {
             throw new ScheduledTaskException("修改定时任务异常", e);
