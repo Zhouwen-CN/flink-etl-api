@@ -221,31 +221,27 @@ custom:
     silent-time: 6h #邮件发送静默时间
   # 系统内置定时任务（Quartz 集群调度，多节点部署时同一任务仅一个节点执行；参考：SystemJobConfiguration）
   job:
-    # 删除过期数据（验证码、请求历史、任务实例）
     delete-expiration-record:
       name: deleteExpirationRecord #任务标识（勿随意修改）
       desc: 删除过期数据
       enable: true
-      cron: "0 0 0 1/1 * ?" #每天执行一次
+      cron: "0 0 0 1/1 * ?"
       captcha: 3m #验证码数据过期时间（同时作为登录时验证码的有效时长）
       http-exchange: 7d #http请求数据过期时间
       job-instance: 7d #任务实例数据过期时间
       checkpoint: 7d #检查点数据过期时间
-    # 同步 Flink 集群已上传的 jar 包列表
     sync-flink-jar-package:
-      name: syncClusterUploadedJar #任务标识（勿随意修改）
-      desc: 同步Flink集群jar包 #任务描述
+      name: syncFlinkJarPackage
+      desc: 同步Flink Jar包
       enable: true
-      cron: "0 * * * * ?" #每分钟执行一次
-    # 同步 Flink 任务检查点列表
+      cron: "0 * * * * ?"
     sync-flink-checkpoint:
-      name: syncFlinkCheckpoint #任务标识（勿随意修改）
-      desc: 同步Flink任务检查点 #任务描述
+      name: syncFlinkCheckpoint
+      desc: 同步Flink检查点
       enable: true
-      cron: "0/5 * * * * ?" #每 5 秒执行一次
-    # 同步 Flink 作业状态信息
+      cron: "0/5 * * * * ?"
     sync-flink-job-status:
-      name: syncJobInstanceStatus #任务标识（勿随意修改）
-      desc: 同步Flink任务状态 #任务描述
+      name: syncFlinkJobStatus
+      desc: 同步Flink任务状态
       enable: true
-      cron: "0/5 * * * * ?" #每 5 秒执行一次
+      cron: "0/5 * * * * ?"

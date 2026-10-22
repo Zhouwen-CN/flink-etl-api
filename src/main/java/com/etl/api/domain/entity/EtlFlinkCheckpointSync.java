@@ -31,14 +31,19 @@ public class EtlFlinkCheckpointSync implements Serializable {
     private Long id;
 
     /**
-     * flink任务id
+     * 任务id
      */
-    private String jobId;
+    private Long jobId;
 
     /**
      * 检查点 id
      */
-    private Long chkId;
+    private Integer chkId;
+
+    /**
+     * 检查点大小
+     */
+    private Long chkSize;
 
     /**
      * 类型(0检查点 1保存点)

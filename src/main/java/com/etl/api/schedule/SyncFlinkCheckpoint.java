@@ -11,7 +11,6 @@ import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.provider.FlinkApiProvider;
 import com.etl.api.util.LocalDateTimeUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -24,12 +23,8 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static com.etl.api.domain.entity.table.EtlFlinkCheckpointSyncTableDef.ETL_FLINK_CHECKPOINT_SYNC;
-import static com.mybatisflex.core.query.QueryMethods.max;
 
 
 /**
@@ -68,25 +63,14 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
                             log.error(e.getMessage());
                         }
 
-                        Optional.ofNullable(jsonNode)
-                                .map(item -> item.get("history"))
-                                .filter(JsonNode::isArray)
-                                .map(item -> objectMapper.convertValue(item, new TypeReference<List<CheckpointHistoryDTO>>() {
-                                }))
-                                .ifPresent(list -> {
-                                    val maxChkId = flinkCheckpointSyncService.queryChain()
-                                            .select(max(ETL_FLINK_CHECKPOINT_SYNC.CHK_ID))
-                                            .eq(EtlFlinkCheckpointSync::getJobId, flinkJobId)
-                                            .oneAsOpt(Long.class)
-                                            .orElse(0L);
-
-                                    // 只获取完成的 checkpoint
-                                    val flinkCheckpointList = list.stream()
-                                            .filter(item -> item.getId() > maxChkId && "COMPLETED".equals(item.getStatus()))
-                                            .map(item -> item.toCheckPoint(flinkJobId))
-                                            .toList();
-                                    flinkCheckpointSyncService.saveBatch(flinkCheckpointList);
-                                });
+                        // 保存检查点
+                        val latestOptional = Optional.ofNullable(jsonNode)
+                                .map(item -> item.get("latest"));
+                        val jobId = etlJobInstance.getJobId();
+                        latestOptional.map(item -> item.get("completed"))
+                                .ifPresent(item -> this.saveCheckpoint(item, jobId));
+                        latestOptional.map(item -> item.get("savepoint"))
+                                .ifPresent(item -> this.saveCheckpoint(item, jobId));
                     }
                 });
     }
@@ -95,7 +79,9 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
     @Setter
     public static class CheckpointHistoryDTO {
         @JsonProperty("id")
-        private Long id;
+        private Integer id;
+        @JsonProperty("checkpointed_size")
+        private Long checkpointedSize;
         @JsonProperty("status")
         private String status;
         @JsonProperty("is_savepoint")
@@ -105,14 +91,34 @@ public class SyncFlinkCheckpoint extends QuartzJobBean {
         @JsonProperty("external_path")
         private String externalPath;
 
-        public EtlFlinkCheckpointSync toCheckPoint(String flinkJobId) {
+        public EtlFlinkCheckpointSync toCheckPoint(Long jobId) {
             return EtlFlinkCheckpointSync.builder()
-                    .jobId(flinkJobId)
+                    .jobId(jobId)
                     .chkId(this.id)
+                    .chkSize(this.checkpointedSize)
                     .type(this.savepoint)
                     .path(this.externalPath)
                     .triggerTime(LocalDateTimeUtil.fromMs(this.triggerTimestamp))
                     .build();
+        }
+    }
+
+    private void saveCheckpoint(JsonNode jsonNode, Long jobId) {
+        if (jsonNode.isNull()) {
+            return;
+        }
+
+        val checkpointHistoryDTO = objectMapper.convertValue(jsonNode, CheckpointHistoryDTO.class);
+        val checkpoint = checkpointHistoryDTO.toCheckPoint(jobId);
+        val flinkCheckpointSync = flinkCheckpointSyncService.queryChain()
+                .eq(EtlFlinkCheckpointSync::getJobId, checkpoint.getJobId())
+                .eq(EtlFlinkCheckpointSync::getChkId, checkpoint.getChkId())
+                .one();
+        if (flinkCheckpointSync == null) {
+            flinkCheckpointSyncService.save(checkpoint);
+        } else {
+            checkpoint.setId(flinkCheckpointSync.getId());
+            flinkCheckpointSyncService.updateById(checkpoint);
         }
     }
 }

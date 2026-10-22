@@ -8,7 +8,6 @@ import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.convert.EtlProjectConvert;
 import com.etl.api.domain.entity.EtlFlinkCheckpointSync;
 import com.etl.api.domain.entity.EtlJob;
-import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.form.EtlJobCreateForm;
 import com.etl.api.domain.form.EtlJobSubmitForm;
 import com.etl.api.domain.form.EtlJobUpdateForm;
@@ -19,7 +18,6 @@ import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.service.EtlFlinkCheckpointSyncService;
 import com.etl.api.service.EtlFlinkClusterService;
 import com.etl.api.service.EtlJarPackageService;
-import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.EtlProjectService;
 import com.etl.api.service.manager.EtlJobManager;
@@ -58,7 +56,6 @@ public class EtlJobController {
     private final EtlJobService jobService;
     private final EtlJarPackageService jarPackageService;
     private final EtlFlinkClusterService flinkClusterService;
-    private final EtlJobInstanceService jobInstanceService;
     private final EtlJobManager jobManager;
     private final EtlFlinkCheckpointSyncService flinkCheckpointSyncService;
     private final EtlProjectService projectService;
@@ -153,33 +150,15 @@ public class EtlJobController {
     }
 
     @SaCheckPermission("job.select")
-    @Operation(summary = "任务实例选择器")
-    @GetMapping("/instance/selector/{id}")
-    public ResponseVO<List<DictionaryVO>> instanceSelector(@PathVariable @Parameter(description = "ID") Long id) {
-        val vos = jobInstanceService.queryChain()
-                .eq(EtlJobInstance::getJobId, id)
-                .orderBy(EtlJobInstance::getCreateTime, false)
-                .limit(5) // 只输出5条
-                .list()
-                .stream().map(etlJobInstance -> {
-                    val flinkJobId = etlJobInstance.getId();
-                    return new DictionaryVO(flinkJobId, flinkJobId);
-                })
-                .toList();
-
-        return ResponseVO.ok(vos);
-    }
-
-    @SaCheckPermission("job.select")
     @Operation(summary = "检查点历史选择器")
     @GetMapping("/checkpoint/selector")
     public ResponseVO<List<DictionaryVO>> checkpointSelector(
-            @RequestParam("instanceId") @Parameter(description = "实例id") String instanceId
+            @RequestParam("jobId") @Parameter(description = "任务ID") String jobId
     ) {
         val vos = flinkCheckpointSyncService.queryChain()
-                .eq(EtlFlinkCheckpointSync::getJobId, instanceId)
-                .orderBy(EtlFlinkCheckpointSync::getChkId, false)
-                .limit(5) // 只输出5条
+                .eq(EtlFlinkCheckpointSync::getJobId, jobId)
+                .orderBy(EtlFlinkCheckpointSync::getTriggerTime, false)
+                .limit(10) // 只输出10条
                 .list()
                 .stream()
                 .map(item -> {

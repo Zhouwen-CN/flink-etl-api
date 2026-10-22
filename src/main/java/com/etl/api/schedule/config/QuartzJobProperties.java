@@ -93,7 +93,7 @@ public class QuartzJobProperties {
         private Duration checkpoint = Duration.ofDays(7);
 
         public DeleteExpirationRecordConfig() {
-            super("deleteExpirationRecord", "删除过期数据（验证码、请求历史、任务实例）", true, "0 0 * * * ?");
+            super("deleteExpirationRecord", "删除过期数据", true, "0 0 0 1/1 * ?");
         }
     }
 }
