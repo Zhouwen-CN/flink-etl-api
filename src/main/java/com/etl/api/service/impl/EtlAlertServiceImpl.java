@@ -6,9 +6,10 @@ import com.etl.api.domain.entity.EtlAlertJob;
 import com.etl.api.domain.form.EtlAlertCreateForm;
 import com.etl.api.domain.form.EtlAlertUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.mapper.EtlAlertJobMapper;
 import com.etl.api.mapper.EtlAlertMapper;
-import com.etl.api.service.EtlAlertJobService;
 import com.etl.api.service.EtlAlertService;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -27,7 +28,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EtlAlertServiceImpl extends ServiceImpl<EtlAlertMapper, EtlAlert> implements EtlAlertService {
 
-    private final EtlAlertJobService alertJobService;
+    private final EtlAlertJobMapper alertJobMapper;
 
     @Override
     public ResponseVO<Void> addAlert(EtlAlertCreateForm form) {
@@ -68,9 +69,10 @@ public class EtlAlertServiceImpl extends ServiceImpl<EtlAlertMapper, EtlAlert> i
     }
 
     private void removeAlertJobList(Collection<Long> alertIds) {
-        alertJobService.updateChain()
-                .in(EtlAlertJob::getAlertId, alertIds)
-                .remove();
+        alertJobMapper.deleteByQuery(
+                QueryWrapper.create()
+                        .in(EtlAlertJob::getAlertId, alertIds)
+        );
     }
 
     private void saveAlertJobList(List<Long> jobIds, Long alertId, boolean isUpdate) {
@@ -86,7 +88,6 @@ public class EtlAlertServiceImpl extends ServiceImpl<EtlAlertMapper, EtlAlert> i
         if (isUpdate) {
             this.removeAlertJobList(List.of(alertId));
         }
-
-        alertJobService.saveBatch(alertJobList);
+        alertJobMapper.insertBatch(alertJobList);
     }
 }

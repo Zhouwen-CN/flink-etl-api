@@ -14,12 +14,12 @@ import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.domain.vo.SysUserTokenVO;
 import com.etl.api.enumeration.DataScopeEnum;
 import com.etl.api.enumeration.LoginOperationEnum;
+import com.etl.api.mapper.SysDeptMapper;
+import com.etl.api.mapper.SysLoginCaptchaMapper;
 import com.etl.api.mapper.SysUserMapper;
+import com.etl.api.mapper.SysUserRoleMapper;
 import com.etl.api.schedule.config.QuartzJobProperties;
-import com.etl.api.service.SysDeptService;
-import com.etl.api.service.SysLoginCaptchaService;
 import com.etl.api.service.SysLoginLogService;
-import com.etl.api.service.SysUserRoleService;
 import com.etl.api.service.SysUserService;
 import com.etl.api.util.AESUtil;
 import com.etl.api.util.SaSessionUtil;
@@ -53,11 +53,12 @@ import static com.etl.api.domain.entity.table.SysUserRoleTableDef.SYS_USER_ROLE;
 @Service
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
-    private final SysLoginCaptchaService loginCaptchaService;
-    private final SysUserRoleService userRoleService;
-    private final SysLoginLogService loginLogService;
     private final QuartzJobProperties quartzJobProperties;
-    private final SysDeptService deptService;
+
+    private final SysLoginCaptchaMapper loginCaptchaMapper;
+    private final SysUserRoleMapper userRoleMapper;
+    private final SysDeptMapper deptMapper;
+    private final SysLoginLogService loginLogService;
 
     @Override
     public ResponseVO<SysUserTokenVO> login(SysUserLoginForm form, HttpServletRequest request) {
@@ -65,11 +66,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         // 验证码校验：id 匹配、code 相等、且未过期，条件全部下推到 where
         val captchaExpiration = quartzJobProperties.getDeleteExpirationRecord().getCaptcha();
-        val loginCaptcha = loginCaptchaService.queryChain()
-                .eq(SysLoginCaptcha::getId, form.getCaptchaId())
-                .eq(SysLoginCaptcha::getCode, form.getCode())
-                .ge(SysLoginCaptcha::getCreateTime, LocalDateTime.now().minus(captchaExpiration.toMillis(), ChronoUnit.MILLIS))
-                .one();
+        val loginCaptcha = loginCaptchaMapper.selectOneByQuery(
+                QueryWrapper.create()
+                        .eq(SysLoginCaptcha::getId, form.getCaptchaId())
+                        .eq(SysLoginCaptcha::getCode, form.getCode())
+                        .ge(SysLoginCaptcha::getCreateTime, LocalDateTime.now().minus(captchaExpiration.toMillis(), ChronoUnit.MILLIS))
+        );
 
         // 查询不到说明验证码不存在、code错误或已过期
         if (loginCaptcha == null) {
@@ -106,7 +108,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         SaSessionUtil.setUserInfo(sessionUserInfo);
 
         // 删除验证码
-        loginCaptchaService.removeById(loginCaptcha.getId());
+        loginCaptchaMapper.deleteById(loginCaptcha.getId());
         loginLogService.saveLoginLog(request, username, LoginOperationEnum.LOGIN, true, null);
         return ResponseVO.ok(new SysUserTokenVO(StpUtil.getTokenValue()));
     }
@@ -153,9 +155,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
 
         this.removeById(id);
-        userRoleService.updateChain()
-                .eq(SysUserRole::getUserId, id)
-                .remove();
+        userRoleMapper.deleteByQuery(
+                QueryWrapper.create()
+                        .eq(SysUserRole::getUserId, id)
+        );
         return ResponseVO.ok();
     }
 
@@ -166,9 +169,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
 
         this.removeByIds(ids);
-        userRoleService.updateChain()
-                .in(SysUserRole::getUserId, ids)
-                .remove();
+        userRoleMapper.deleteByQuery(
+                QueryWrapper.create()
+                        .in(SysUserRole::getUserId, ids)
+        );
         return ResponseVO.ok();
     }
 
@@ -184,7 +188,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .join(SYS_ROLE)
                 .on(SYS_USER_ROLE.ROLE_ID.eq(SYS_ROLE.ID))
                 .where(SYS_USER_ROLE.USER_ID.eq(user.getId()));
-        Set<Integer> dataScopes = new HashSet<>(userRoleService.listAs(queryWrapper, Integer.class));
+
+        Set<Integer> dataScopes = new HashSet<>(userRoleMapper.selectObjectListByQueryAs(queryWrapper, Integer.class));
 
         boolean isAll = false;
         Long userDeptId = user.getDeptId();
@@ -207,12 +212,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
             // 本部门及以下
             if (Objects.equals(scope, DataScopeEnum.SELF_DEPT_AND_CHILDREN.getCode()) && userDeptId != null) {
-                SysDept dept = deptService.getById(userDeptId);
+                SysDept dept = deptMapper.selectOneById(userDeptId);
                 if (dept != null && dept.getParentPath() != null) {
-                    List<Long> deptIdList = deptService.queryChain()
+                    queryWrapper = QueryWrapper.create()
                             .select(SysDept::getId)
-                            .likeLeft(SysDept::getParentPath, dept.getParentPath())
-                            .listAs(Long.class);
+                            .likeLeft(SysDept::getParentPath, dept.getParentPath());
+                    List<Long> deptIdList = deptMapper.selectObjectListByQueryAs(queryWrapper, Long.class);
                     visibleDeptIds.addAll(deptIdList);
                 }
             }
@@ -273,12 +278,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         // 删除角色
         if (isUpdate) {
-            userRoleService.updateChain()
-                    .eq(SysUserRole::getUserId, userId)
-                    .remove();
+            userRoleMapper.deleteByQuery(
+                    QueryWrapper.create()
+                            .eq(SysUserRole::getUserId, userId)
+            );
         }
 
         // 新增角色
-        userRoleService.saveBatch(userRoleList);
+        userRoleMapper.insertBatch(userRoleList);
     }
 }

@@ -4,8 +4,9 @@ import com.etl.api.domain.entity.EtlJarPackage;
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.EtlJarPackageMapper;
+import com.etl.api.mapper.EtlJobMapper;
 import com.etl.api.service.EtlJarPackageService;
-import com.etl.api.service.EtlJobService;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -29,7 +30,7 @@ import java.util.jar.JarFile;
 @RequiredArgsConstructor
 public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, EtlJarPackage> implements EtlJarPackageService {
 
-    private final EtlJobService jobService;
+    private final EtlJobMapper jobMapper;
     @Value("${custom.jar-package.location}")
     private String jarPackageLocation;
 
@@ -82,10 +83,11 @@ public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, E
 
     @Override
     public ResponseVO<Void> removeJar(Long id) {
-        val exists = jobService.queryChain()
-                .eq(EtlJob::getJarId, id)
-                .exists();
-        if (exists) {
+        val count = jobMapper.selectCountByQuery(
+                QueryWrapper.create()
+                        .eq(EtlJob::getJarId, id)
+        );
+        if (count > 0) {
             return ResponseVO.error("删除失败，尚有任务依赖");
         }
 
@@ -95,10 +97,11 @@ public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, E
 
     @Override
     public ResponseVO<Void> removeJarBatch(Collection<Long> ids) {
-        val exists = jobService.queryChain()
-                .in(EtlJob::getJarId, ids)
-                .exists();
-        if (exists) {
+        val count = jobMapper.selectCountByQuery(
+                QueryWrapper.create()
+                        .in(EtlJob::getJarId, ids)
+        );
+        if (count > 0) {
             return ResponseVO.error("删除失败，尚有任务依赖");
         }
 

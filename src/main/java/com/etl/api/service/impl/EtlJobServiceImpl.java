@@ -6,9 +6,9 @@ import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.entity.EtlProject;
 import com.etl.api.domain.form.EtlJobCreateForm;
 import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.mapper.EtlJobInstanceMapper;
 import com.etl.api.mapper.EtlJobMapper;
 import com.etl.api.mapper.EtlProjectMapper;
-import com.etl.api.service.EtlJobInstanceService;
 import com.etl.api.service.EtlJobService;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -30,7 +30,7 @@ import java.util.Collection;
 @RequiredArgsConstructor
 public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> implements EtlJobService {
 
-    private final EtlJobInstanceService jobInstanceService;
+    private final EtlJobInstanceMapper jobInstanceMapper;
     private final EtlProjectMapper projectMapper;
 
     @Override
@@ -60,11 +60,11 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
 
     @Override
     public ResponseVO<Void> removeJob(Long id) {
-        val exists = jobInstanceService.queryChain()
-                .eq(EtlJobInstance::getJobId, id)
-                .exists();
-
-        if (exists) {
+        val count = jobInstanceMapper.selectCountByQuery(
+                QueryWrapper.create()
+                        .eq(EtlJobInstance::getJobId, id)
+        );
+        if (count > 0) {
             return ResponseVO.error("删除失败，尚有任务实例依赖");
         }
         this.removeById(id);
@@ -73,11 +73,11 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
 
     @Override
     public ResponseVO<Void> removeJobBatch(Collection<Long> ids) {
-        val exists = jobInstanceService.queryChain()
-                .in(EtlJobInstance::getJobId, ids)
-                .exists();
-
-        if (exists) {
+        val count = jobInstanceMapper.selectCountByQuery(
+                QueryWrapper.create()
+                        .in(EtlJobInstance::getJobId, ids)
+        );
+        if (count > 0) {
             return ResponseVO.error("删除失败，尚有任务实例依赖");
         }
         this.removeByIds(ids);

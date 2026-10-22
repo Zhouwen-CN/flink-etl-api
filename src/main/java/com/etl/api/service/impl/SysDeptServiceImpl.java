@@ -60,7 +60,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         // 父部门不存在
         SysDept parentDept = this.getById(parentId);
         if (parentDept == null) {
-            return ResponseVO.recordNotFoundError("父部门 id:" + form.getParentId());
+            return ResponseVO.recordNotFoundError("parentDeptId:" + form.getParentId());
         }
 
         // 新增（ID回填）
@@ -87,7 +87,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         // 更新ID是否存在
         SysDept dept = this.getById(id);
         if (dept == null) {
-            return ResponseVO.recordNotFoundError("部门 id:" + id);
+            return ResponseVO.recordNotFoundError("deptId:" + id);
         }
 
         // 更新名称是否存在

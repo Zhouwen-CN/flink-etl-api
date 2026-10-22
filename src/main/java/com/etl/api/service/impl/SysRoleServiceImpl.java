@@ -7,8 +7,9 @@ import com.etl.api.domain.form.SysRoleCreateForm;
 import com.etl.api.domain.form.SysRoleUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.SysRoleMapper;
-import com.etl.api.service.SysRolePermissionService;
+import com.etl.api.mapper.SysRolePermissionMapper;
 import com.etl.api.service.SysRoleService;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -27,7 +28,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> implements SysRoleService {
 
-    private final SysRolePermissionService rolePermissionService;
+    private final SysRolePermissionMapper rolePermissionMapper;
 
     @Override
     public ResponseVO<Void> addRole(SysRoleCreateForm form) {
@@ -66,9 +67,10 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
             return ResponseVO.modifyAdminError();
         }
         this.removeById(id);
-        rolePermissionService.updateChain()
-                .eq(SysRolePermission::getRoleId, id)
-                .remove();
+        rolePermissionMapper.deleteByQuery(
+                QueryWrapper.create()
+                        .eq(SysRolePermission::getRoleId, id)
+        );
         return ResponseVO.ok();
     }
 
@@ -78,9 +80,11 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
             return ResponseVO.modifyAdminError();
         }
         this.removeByIds(ids);
-        rolePermissionService.updateChain()
-                .in(SysRolePermission::getRoleId, ids)
-                .remove();
+        rolePermissionMapper.deleteByQuery(
+                QueryWrapper.create()
+                        .in(SysRolePermission::getRoleId, ids)
+
+        );
         return ResponseVO.ok();
     }
 
@@ -93,11 +97,12 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
                 .toList();
 
         if (isUpdate) {
-            rolePermissionService.updateChain()
-                    .eq(SysRolePermission::getRoleId, roleId)
-                    .remove();
+            rolePermissionMapper.deleteByQuery(
+                    QueryWrapper.create()
+                            .eq(SysRolePermission::getRoleId, roleId)
+            );
         }
 
-        rolePermissionService.saveBatch(rolePermissionList);
+        rolePermissionMapper.insertBatch(rolePermissionList);
     }
 }

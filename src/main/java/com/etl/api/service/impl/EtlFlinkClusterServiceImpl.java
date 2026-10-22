@@ -7,10 +7,11 @@ import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.form.EtlFlinkClusterCreateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.mapper.EtlFlinkClusterMapper;
+import com.etl.api.mapper.EtlFlinkJarSyncMapper;
+import com.etl.api.mapper.EtlJobMapper;
 import com.etl.api.service.EtlFlinkClusterService;
-import com.etl.api.service.EtlFlinkJarSyncService;
-import com.etl.api.service.EtlJobService;
 import com.etl.api.service.provider.FlinkApiProvider;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -28,8 +29,8 @@ import java.util.Collection;
 @RequiredArgsConstructor
 public class EtlFlinkClusterServiceImpl extends ServiceImpl<EtlFlinkClusterMapper, EtlFlinkCluster> implements EtlFlinkClusterService {
     private final FlinkApiProvider flinkApiProvider;
-    private final EtlJobService jobService;
-    private final EtlFlinkJarSyncService flinkJarSyncService;
+    private final EtlJobMapper jobMapper;
+    private final EtlFlinkJarSyncMapper flinkJarSyncMapper;
 
     @Override
     public ResponseVO<Void> addCluster(EtlFlinkClusterCreateForm form) {
@@ -51,33 +52,38 @@ public class EtlFlinkClusterServiceImpl extends ServiceImpl<EtlFlinkClusterMappe
 
     @Override
     public ResponseVO<Void> removeCluster(Long id) {
-        val exists = jobService.queryChain()
-                .eq(EtlJob::getClusterId, id)
-                .exists();
-        if (exists) {
+        val count = jobMapper.selectCountByQuery(
+                QueryWrapper.create()
+                        .eq(EtlJob::getClusterId, id)
+        );
+        if (count > 0) {
             return ResponseVO.error("删除失败，尚有任务依赖");
         }
 
         this.removeById(id);
-        flinkJarSyncService.updateChain()
-                .eq(EtlFlinkJarSync::getClusterId, id)
-                .remove();
+
+        flinkJarSyncMapper.deleteByQuery(
+                QueryWrapper.create()
+                        .eq(EtlFlinkJarSync::getClusterId, id)
+        );
         return ResponseVO.ok();
     }
 
     @Override
     public ResponseVO<Void> removeClusterBatch(Collection<Long> ids) {
-        val exists = jobService.queryChain()
-                .in(EtlJob::getClusterId, ids)
-                .exists();
-        if (exists) {
+        val count = jobMapper.selectCountByQuery(
+                QueryWrapper.create()
+                        .in(EtlJob::getClusterId, ids)
+        );
+        if (count > 0) {
             return ResponseVO.error("删除失败，尚有任务依赖");
         }
 
         this.removeByIds(ids);
-        flinkJarSyncService.updateChain()
-                .in(EtlFlinkJarSync::getClusterId, ids)
-                .remove();
+        flinkJarSyncMapper.deleteByQuery(
+                QueryWrapper.create()
+                        .in(EtlFlinkJarSync::getClusterId, ids)
+        );
         return ResponseVO.ok();
     }
 

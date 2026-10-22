@@ -9,10 +9,11 @@ import com.etl.api.domain.form.EtlScheduledTaskUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.exception.ScheduledTaskException;
+import com.etl.api.mapper.EtlJobMapper;
 import com.etl.api.mapper.EtlScheduledTaskMapper;
-import com.etl.api.service.EtlJobService;
 import com.etl.api.service.EtlScheduledTaskService;
 import com.etl.api.service.manager.ScheduledTaskManager;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -32,7 +33,7 @@ import static com.etl.api.domain.entity.table.EtlScheduledTaskTableDef.ETL_SCHED
 @Service
 @RequiredArgsConstructor
 public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMapper, EtlScheduledTask> implements EtlScheduledTaskService {
-    private final EtlJobService jobService;
+    private final EtlJobMapper jobMapper;
     private final ScheduledTaskManager scheduledTaskManager;
 
     @Override
@@ -46,10 +47,11 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
             return ResponseVO.recordExistsError(name + ":" + etlJobId);
         }
 
-        val etlJob = jobService.queryChain()
-                .eq(EtlJob::getId, etlJobId)
-                .eq(EtlJob::getType, ETLJobTypeEnum.BATCH.getCode())
-                .one();
+        val etlJob = jobMapper.selectOneByQuery(
+                QueryWrapper.create()
+                        .eq(EtlJob::getId, etlJobId)
+                        .eq(EtlJob::getType, ETLJobTypeEnum.BATCH.getCode())
+        );
         if (etlJob == null) {
             return ResponseVO.error("Etl任务未找到 或 任务不是BATCH 模式: " + etlJobId);
         }
@@ -129,10 +131,11 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
         }
 
         val etlJobId = form.getEtlJobId();
-        val etlJob = jobService.queryChain()
-                .eq(EtlJob::getId, etlJobId)
-                .eq(EtlJob::getType, ETLJobTypeEnum.BATCH.getCode())
-                .one();
+        val etlJob = jobMapper.selectOneByQuery(
+                QueryWrapper.create()
+                        .eq(EtlJob::getId, etlJobId)
+                        .eq(EtlJob::getType, ETLJobTypeEnum.BATCH.getCode())
+        );
         if (etlJob == null) {
             return ResponseVO.error("Etl任务未找到 或 任务不是BATCH 模式: " + etlJobId);
         }
