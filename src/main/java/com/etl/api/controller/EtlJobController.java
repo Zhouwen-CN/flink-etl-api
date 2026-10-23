@@ -12,6 +12,7 @@ import com.etl.api.domain.form.EtlJobCreateForm;
 import com.etl.api.domain.form.EtlJobSubmitForm;
 import com.etl.api.domain.form.EtlJobUpdateForm;
 import com.etl.api.domain.vo.DictionaryVO;
+import com.etl.api.domain.vo.EtlFlinkCheckpointVO;
 import com.etl.api.domain.vo.EtlJobVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
@@ -21,7 +22,6 @@ import com.etl.api.service.EtlJarPackageService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.EtlProjectService;
 import com.etl.api.service.manager.EtlJobManager;
-import com.etl.api.util.LocalDateTimeUtil;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -152,22 +152,14 @@ public class EtlJobController {
     @SaCheckPermission("job.select")
     @Operation(summary = "检查点历史选择器")
     @GetMapping("/checkpoint/selector")
-    public ResponseVO<List<DictionaryVO>> checkpointSelector(
+    public ResponseVO<List<EtlFlinkCheckpointVO>> checkpointSelector(
             @RequestParam("jobId") @Parameter(description = "任务ID") String jobId
     ) {
         val vos = flinkCheckpointSyncService.queryChain()
                 .eq(EtlFlinkCheckpointSync::getJobId, jobId)
                 .orderBy(EtlFlinkCheckpointSync::getTriggerTime, false)
                 .limit(10) // 只输出10条
-                .list()
-                .stream()
-                .map(item -> {
-                    val prefix = item.getType() ? "SP - " : "CP - ";
-                    val label = prefix + LocalDateTimeUtil.format(item.getTriggerTime());
-                    val value = item.getPath();
-                    return new DictionaryVO(label, value);
-                })
-                .toList();
+                .listAs(EtlFlinkCheckpointVO.class);
         return ResponseVO.ok(vos);
     }
 }

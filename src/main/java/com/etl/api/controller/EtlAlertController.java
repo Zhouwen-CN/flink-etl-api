@@ -96,7 +96,7 @@ public class EtlAlertController {
 
     @SaCheckPermission("alert.select")
     @GetMapping("/job/selector")
-    @Operation(summary = "任务状态选择器")
+    @Operation(summary = "任务选择器")
     public ResponseVO<List<DictionaryVO>> getStatusSelector() {
         val selectorList = jobService.queryChain()
                 .eq(EtlJob::getType, ETLJobTypeEnum.STREAMING.getCode())
@@ -111,7 +111,7 @@ public class EtlAlertController {
     @SaCheckPermission("alert.select")
     @GetMapping("/job/{id}")
     @Operation(summary = "获取告警任务id列表")
-    public ResponseVO<List<Long>> getStatusSelector(@PathVariable @Parameter(description = "ID") Long id) {
+    public ResponseVO<List<Long>> getAlertJobIds(@PathVariable @Parameter(description = "ID") Long id) {
         val jobIds = alertJobService.queryChain()
                 .select(EtlAlertJob::getJobId)
                 .eq(EtlAlertJob::getAlertId, id)
