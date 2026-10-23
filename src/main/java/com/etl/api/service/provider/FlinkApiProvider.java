@@ -90,8 +90,8 @@ public class FlinkApiProvider {
     }
 
     // 提交任务
-    public String runJob(String jobManagerUrl, String jarId, String mainClass, String config, @Nullable String savePointPath) {
-        val body = new HashMap<String, String>();
+    public String runJob(String jobManagerUrl, String jarId, String mainClass, String config, @Nullable String savePointPath, Boolean allowNonRestoredState) {
+        val body = new HashMap<String, Object>();
 
         body.put("entryClass", mainClass);
         body.put("programArgs", "--config " + Base64.getEncoder().encodeToString(config.getBytes(StandardCharsets.UTF_8)));
@@ -106,6 +106,7 @@ public class FlinkApiProvider {
                     .body(Void.class);
 
             body.put("savepointPath", savePointPath);
+            body.put("allowNonRestoredState", allowNonRestoredState);
             jsonNode = restClient.post()
                     .uri(jobManagerUrl + "/jars/" + jarId + "/run")
                     .body(body)

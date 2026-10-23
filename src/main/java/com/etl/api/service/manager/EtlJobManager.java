@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -52,13 +53,13 @@ public class EtlJobManager {
         this.yamlMapper = yamlMapper;
     }
 
-    public void runJob(Long jobId, @Nullable String savepointPath) {
+    public void runJob(Long jobId, @Nullable String savepointPath, @Nullable Boolean allowNonRestoredState) {
         val etlJob = jobService.getById(jobId);
         if (etlJob == null) {
             throw new EtlJobException("Etl 任务未找到: " + jobId);
         }
 
-        // 是否有正在运行的任务
+        // 是否有正在运行的流任务
         val exists = jobInstanceService.queryChain()
                 .eq(EtlJobInstance::getJobId, jobId)
                 .eq(EtlJobInstance::getJobType, ETLJobTypeEnum.STREAMING.getCode())
@@ -88,6 +89,7 @@ public class EtlJobManager {
         if (jarPackage == null) {
             throw new EtlJobException("Jar 包未找到: " + jarId);
         }
+
         // jar包是否存在
         val filePath = jarPackage.getFilePath();
         val file = new File(filePath);
@@ -164,7 +166,12 @@ public class EtlJobManager {
             throw new EtlJobException("任务配置序列化失败: " + e.getMessage());
         }
 
-        val flinkJobId = flinkApiProvider.runJob(jobManagerUrl, flinkJarId, jarPackage.getMainClass(), replacedConfig, savepointPath);
+        // 如果是批处理任务，检查点 和 忽略恢复失败 都置为空
+        if (Objects.equals(etlJob.getType(), ETLJobTypeEnum.BATCH.getCode())) {
+            savepointPath = null;
+            allowNonRestoredState = null;
+        }
+        val flinkJobId = flinkApiProvider.runJob(jobManagerUrl, flinkJarId, jarPackage.getMainClass(), replacedConfig, savepointPath, allowNonRestoredState);
 
         // 插入任务实例表
         val etlJobInstance = new EtlJobInstance(

@@ -114,7 +114,7 @@ public class EtlJobController {
     @Operation(summary = "运行任务")
     @PostMapping("/run")
     public ResponseVO<Void> runJob(@RequestBody @Validated EtlJobSubmitForm form) {
-        jobManager.runJob(form.getId(), form.getSavepointPath());
+        jobManager.runJob(form.getId(), form.getSavepointPath(), form.getAllowNonRestoredState());
         return ResponseVO.ok();
     }
 

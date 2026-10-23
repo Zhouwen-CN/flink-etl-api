@@ -14,4 +14,7 @@ public class EtlJobSubmitForm {
 
     @Schema(description = "检查点/保存点路径")
     private String savepointPath;
+
+    @Schema(description = "忽略恢复失败，继续执行")
+    private Boolean allowNonRestoredState;
 }

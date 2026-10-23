@@ -28,7 +28,7 @@ public class ScheduledTaskHandler extends QuartzJobBean {
 
         // 执行任务
         try {
-            jobManager.runJob(etlJobId, null);
+            jobManager.runJob(etlJobId, null, null);
         } catch (Exception e) {
             log.error("[{}] 任务调度发生异常: {}", scheduleName, e.getMessage());
         }
