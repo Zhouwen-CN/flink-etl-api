@@ -1,14 +1,11 @@
 package com.etl.api.service.impl;
 
-import com.etl.api.domain.entity.EtlFlinkCheckpointSync;
 import com.etl.api.domain.entity.EtlJobInstance;
 import com.etl.api.domain.vo.ResponseVO;
-import com.etl.api.enumeration.ETLJobTypeEnum;
 import com.etl.api.enumeration.FlinkJobStatusEnum;
 import com.etl.api.mapper.EtlFlinkCheckpointSyncMapper;
 import com.etl.api.mapper.EtlJobInstanceMapper;
 import com.etl.api.service.EtlJobInstanceService;
-import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -35,14 +32,6 @@ public class EtlJobInstanceServiceImpl extends ServiceImpl<EtlJobInstanceMapper,
 
         if (FlinkJobStatusEnum.getProcessingStatus().contains(etlJobInstance.getStatus().getCode())) {
             return ResponseVO.error("删除失败，任务尚在运行中");
-        }
-
-        // 流任务，删除实例的时候需要删除相关的检查点
-        if (ETLJobTypeEnum.STREAMING.getCode().equals(etlJobInstance.getJobType())) {
-            flinkCheckpointSyncMapper.deleteByQuery(
-                    QueryWrapper.create()
-                            .eq(EtlFlinkCheckpointSync::getJobId, id)
-            );
         }
 
         this.removeById(id);
