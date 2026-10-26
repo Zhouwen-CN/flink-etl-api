@@ -1,7 +1,7 @@
 create table T_SYS_ERROR_LOG
 (
     id          bigint primary key auto_increment comment '自增主键',
-    url         varchar(50) not null comment '请求地址',
+    url varchar(200) not null comment '请求地址',
     method      varchar(10) not null comment '请求方式',
     ip          varchar(20) not null comment 'ip地址',
     region      varchar(50)   default null comment '地区',

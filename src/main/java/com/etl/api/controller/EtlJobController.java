@@ -4,21 +4,23 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.aop.IgnoreTenant;
 import com.etl.api.domain.convert.EtlFlinkClusterConvert;
 import com.etl.api.domain.convert.EtlJarPackageConvert;
-import com.etl.api.domain.convert.EtlJobConvert;
 import com.etl.api.domain.convert.EtlProjectConvert;
 import com.etl.api.domain.entity.EtlFlinkCheckpointSync;
 import com.etl.api.domain.entity.EtlJob;
+import com.etl.api.domain.form.EtlJobConfigRollbackForm;
 import com.etl.api.domain.form.EtlJobCreateForm;
 import com.etl.api.domain.form.EtlJobSubmitForm;
 import com.etl.api.domain.form.EtlJobUpdateForm;
 import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.EtlFlinkCheckpointVO;
+import com.etl.api.domain.vo.EtlJobConfigVersionVO;
 import com.etl.api.domain.vo.EtlJobVO;
 import com.etl.api.domain.vo.PageVO;
 import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.service.EtlFlinkCheckpointSyncService;
 import com.etl.api.service.EtlFlinkClusterService;
 import com.etl.api.service.EtlJarPackageService;
+import com.etl.api.service.EtlJobConfigVersionService;
 import com.etl.api.service.EtlJobService;
 import com.etl.api.service.EtlProjectService;
 import com.etl.api.service.manager.EtlJobManager;
@@ -54,6 +56,7 @@ import java.util.Objects;
 public class EtlJobController {
 
     private final EtlJobService jobService;
+    private final EtlJobConfigVersionService configVersionService;
     private final EtlJarPackageService jarPackageService;
     private final EtlFlinkClusterService flinkClusterService;
     private final EtlJobManager jobManager;
@@ -91,9 +94,7 @@ public class EtlJobController {
     @Operation(summary = "更新")
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated EtlJobUpdateForm form) {
-        val entity = EtlJobConvert.INSTANCE.convert(form);
-        jobService.updateById(entity);
-        return ResponseVO.ok();
+        return jobService.updateJob(form);
     }
 
     @SaCheckPermission("job.delete")
@@ -116,6 +117,22 @@ public class EtlJobController {
     public ResponseVO<Void> runJob(@RequestBody @Validated EtlJobSubmitForm form) {
         jobManager.runJob(form.getId(), form.getSavepointPath(), form.getAllowNonRestoredState());
         return ResponseVO.ok();
+    }
+
+    @SaCheckPermission("job.select")
+    @Operation(summary = "配置版本列表")
+    @GetMapping("/config/version")
+    public ResponseVO<List<EtlJobConfigVersionVO>> configVersions(
+            @RequestParam("jobId") @Parameter(description = "任务ID") Long jobId
+    ) {
+        return configVersionService.listByJobId(jobId);
+    }
+
+    @SaCheckPermission("job.update")
+    @Operation(summary = "配置回滚")
+    @PutMapping("/config/rollback")
+    public ResponseVO<Void> rollbackConfig(@RequestBody @Validated EtlJobConfigRollbackForm form) {
+        return configVersionService.rollback(form);
     }
 
     @SaCheckPermission("job.select")

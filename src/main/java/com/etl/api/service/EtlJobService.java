@@ -2,6 +2,7 @@ package com.etl.api.service;
 
 import com.etl.api.domain.entity.EtlJob;
 import com.etl.api.domain.form.EtlJobCreateForm;
+import com.etl.api.domain.form.EtlJobUpdateForm;
 import com.etl.api.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
@@ -16,6 +17,8 @@ import java.util.Collection;
 public interface EtlJobService extends IService<EtlJob> {
 
     ResponseVO<Void> addJob(EtlJobCreateForm form);
+
+    ResponseVO<Void> updateJob(EtlJobUpdateForm form);
 
     ResponseVO<Void> removeJob(Long id);
 
