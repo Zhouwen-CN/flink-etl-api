@@ -21,22 +21,21 @@ spring:
   # 邮箱配置
   mail:
     #host: 没有配置host，自动配置类就不会加载，参考：org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+    host: ${MAIL_HOST:}
     port: ${MAIL_PORT:}
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}
-    protocol: smtp
-    default-encoding: utf-8
+    protocol: smtps
     ssl:
       enabled: true
     properties:
       mail.debug: true
-      mail.transport.protocol: smtp
-      mail.smtp.auth: true
-      mail.smtp.starttls.enable: true
-      mail.smtp.starttls.required: true
-      mail.smtp.connectiontimeout: 5000
-      mail.smtp.timeout: 3000
-      mail.smtp.writetimeout: 5000
+      mail.smtps.auth: true
+      mail.smtps.ssl.trust: ${MAIL_HOST:*}
+      mail.smtps.connectiontimeout: 5000
+      mail.smtps.timeout: 5000
+      mail.smtps.writetimeout: 5000
+
 
   # jackson配置
   jackson:
