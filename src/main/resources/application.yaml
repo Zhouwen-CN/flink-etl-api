@@ -29,7 +29,6 @@ spring:
     ssl:
       enabled: true
     properties:
-      mail.debug: true
       mail.smtps.auth: true
       mail.smtps.ssl.trust: ${MAIL_HOST:*}
       mail.smtps.connectiontimeout: 5000

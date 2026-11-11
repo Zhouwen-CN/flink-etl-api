@@ -12,11 +12,13 @@ create table T_SYS_DICT_TYPE
 ) comment '字典类型表';
 
 insert into T_SYS_DICT_TYPE(id, name, remark, status)
-values (1, 'gender', '性别', 1);
+values (1, 'sys_user_gender', '性别', 1);
 insert into T_SYS_DICT_TYPE(id, name, remark, status)
-values (2, 'job_type', '任务类型', 1);
+values (2, 'sys_data_scope', '数据范围', 1);
 insert into T_SYS_DICT_TYPE(id, name, remark, status)
-values (3, 'data_scope', '数据范围', 1);
+values (3, 'etl_job_type', '任务类型', 1);
+insert into T_SYS_DICT_TYPE(id, name, remark, status)
+values (4, 'ai_api_format', 'ai接口格式', 1);
 
 create table T_SYS_DICT_DATA
 (
@@ -40,16 +42,24 @@ values (2, 1, '男', 1, 1);
 insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (3, 1, '女', 2, 2);
 
--- 任务类型
-insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
-values (4, 2, 'BATCH', 1, 1);
-insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
-values (5, 2, 'STREAMING', 2, 2);
-
 -- 数据范围
 insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
-values (6, 3, '全部', 1, 1);
+values (4, 2, '全部', 1, 1);
 insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
-values (7, 3, '本部门及以下', 2, 2);
+values (5, 2, '本部门及以下', 2, 2);
 insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
-values (8, 3, '本部门', 3, 3);
+values (6, 2, '本部门', 3, 3);
+
+-- 任务类型
+insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (7, 3, 'BATCH', 1, 1);
+insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (8, 3, 'STREAMING', 2, 2);
+
+-- ai接口格式
+insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (9, 4, 'OpenAI Chat Completions', 1, 1);
+insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (10, 4, 'OpenAI Responses', 2, 2);
+insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (11, 4, 'Anthropic Messages', 3, 3);

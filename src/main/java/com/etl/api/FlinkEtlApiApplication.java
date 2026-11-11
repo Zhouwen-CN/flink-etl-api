@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @EnableAdminServer
-@MapperScan("com.etl.api.mapper")
+@MapperScan({"com.etl.api.mapper", "com.etl.api.ai.mapper"})
 public class FlinkEtlApiApplication {
 
     public static void main(String[] args) {

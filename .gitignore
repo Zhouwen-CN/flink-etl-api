@@ -35,6 +35,7 @@ build/
 
 .env*
 logs
+database.lock.db
 database.mv.db
 database.trace.db
 .codegraph
