@@ -19,6 +19,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,6 +40,9 @@ public class AiModelController {
 
     private final AiModelService aiModelService;
     private final ChatModelFactory chatModelFactory;
+
+    @Value("${custom.ai.model-test-message}")
+    private String modelTestMessage;
 
     @SaCheckPermission("model.select")
     @Operation(summary = "分页查询")
@@ -95,9 +99,13 @@ public class AiModelController {
     public ResponseVO<String> test(
             @RequestParam("modelId") @Parameter(description = "模型ID") Long modelId
     ) {
-        ChatModel chatModel = chatModelFactory.getChatModel(modelId);
+        AiModel model = aiModelService.getById(modelId);
+        if (model == null) {
+            return ResponseVO.recordNotFoundError(modelId);
+        }
+        ChatModel chatModel = chatModelFactory.getChatModel(model);
         try {
-            return ResponseVO.ok(chatModel.chat("Hello"));
+            return ResponseVO.ok(chatModel.chat(modelTestMessage));
         } catch (Exception e) {
             // dev.langchain4j.exception.AuthenticationException
             return ResponseVO.error(e.getMessage());

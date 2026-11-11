@@ -243,3 +243,5 @@ custom:
       desc: 同步Flink任务状态
       enable: true
       cron: "0/5 * * * * ?"
+  ai:
+    model-test-message: hi
