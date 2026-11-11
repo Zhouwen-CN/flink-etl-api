@@ -41,7 +41,7 @@ public class AiModelController {
     private final AiModelService aiModelService;
     private final ChatModelFactory chatModelFactory;
 
-    @Value("${custom.ai.model-test-message}")
+    @Value("${custom.ai.model-test-message:hi}")
     private String modelTestMessage;
 
     @SaCheckPermission("model.select")

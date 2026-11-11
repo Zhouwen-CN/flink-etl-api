@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import org.hibernate.validator.constraints.Length;
 
 @Data
 @Schema(description = "AI对话表单")
@@ -15,9 +14,8 @@ public class AiChatForm {
     private Long modelId;
 
     @NotNull
-    @Length(min = 1, max = 40)
     @Schema(description = "会话ID")
-    private String conversationId;
+    private Long conversationId;
 
     @NotBlank
     @Schema(description = "对话内容")

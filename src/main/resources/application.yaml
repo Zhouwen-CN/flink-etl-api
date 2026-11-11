@@ -245,3 +245,4 @@ custom:
       cron: "0/5 * * * * ?"
   ai:
     model-test-message: hi
+    max_memory_messages: 100
