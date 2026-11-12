@@ -66,6 +66,7 @@ public class ChatModelFactory {
                 .baseUrl(model.getBaseUrl())
                 .apiKey(model.getApiKey())
                 .modelName(model.getModelName())
+                .returnThinking(true) // 返回思考
                 .logRequests(isLogging)
                 .logResponses(isLogging)
                 .listeners(metricsListener)
@@ -94,6 +95,7 @@ public class ChatModelFactory {
                 .baseUrl(model.getBaseUrl())
                 .apiKey(model.getApiKey())
                 .modelName(model.getModelName())
+                .returnThinking(true) // 返回思考
                 // Anthropic Messages API 要求必传 max_tokens，运行时的实际值通过 ChatRequest 覆盖
                 // .maxTokens(1024) // 默认1024
                 .logRequests(isLogging)
