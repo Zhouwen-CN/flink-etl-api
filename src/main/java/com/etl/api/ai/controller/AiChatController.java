@@ -3,11 +3,13 @@ package com.etl.api.ai.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.ai.config.AiChatMemoryStore;
+import com.etl.api.ai.domain.convert.AiModelConvert;
 import com.etl.api.ai.domain.entity.AiConversation;
 import com.etl.api.ai.domain.entity.AiConversationMessage;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiChatForm;
 import com.etl.api.ai.domain.form.AiConversationCreateForm;
+import com.etl.api.ai.domain.form.AiConversationRenameForm;
 import com.etl.api.ai.domain.vo.AiConversationVO;
 import com.etl.api.ai.factory.ChatModelFactory;
 import com.etl.api.ai.service.AiConversationMessageService;
@@ -16,6 +18,7 @@ import com.etl.api.ai.service.AiModelService;
 import com.etl.api.ai.service.AssistantService;
 import com.etl.api.ai.util.AiMessageUtil;
 import com.etl.api.ai.util.SseEmitterUtil;
+import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.domain.vo.ResponseVO;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
@@ -24,13 +27,17 @@ import dev.langchain4j.model.chat.response.StreamingHandle;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,6 +63,18 @@ public class AiChatController {
 
     @Value("${custom.ai.max_memory_messages:100}")
     private Integer maxMemoryMessages;
+
+    @SaCheckPermission("chat.select")
+    @Operation(summary = "模型选择器")
+    @GetMapping("/model/selector")
+    public ResponseVO<List<DictionaryVO>> listModelSelector() {
+        List<DictionaryVO> list = modelService.queryChain()
+                .list()
+                .stream()
+                .map(AiModelConvert.INSTANCE::convert)
+                .toList();
+        return ResponseVO.ok(list);
+    }
 
     @SaCheckPermission("chat.select")
     @Operation(summary = "查询会话列表")
@@ -91,6 +110,22 @@ public class AiChatController {
         vo.setId(conversation.getId());
         vo.setTitle(conversation.getTitle());
         return ResponseVO.ok(vo);
+    }
+
+    @SaCheckPermission("chat.delete")
+    @Operation(summary = "删除会话（含会话消息）")
+    @DeleteMapping("/conversation/{id}")
+    public ResponseVO<Void> deleteConversation(@PathVariable @Parameter(description = "会话ID") Long id) {
+        conversationService.deleteConversation(id);
+        return ResponseVO.ok();
+    }
+
+    @SaCheckPermission("chat.update")
+    @Operation(summary = "会话重命名")
+    @PatchMapping("/conversation")
+    public ResponseVO<Void> renameConversation(@RequestBody @Validated AiConversationRenameForm form) {
+        conversationService.renameConversation(form.getId(), form.getTitle());
+        return ResponseVO.ok();
     }
 
     @SaCheckPermission("chat.insert")

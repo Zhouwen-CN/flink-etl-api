@@ -5,6 +5,7 @@ import com.etl.api.ai.domain.entity.AiConversation;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.factory.ChatModelFactory;
 import com.etl.api.ai.mapper.AiConversationMapper;
+import com.etl.api.ai.service.AiConversationMessageService;
 import com.etl.api.ai.service.AiConversationService;
 import com.etl.api.ai.service.AiModelService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -14,8 +15,10 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * AI会话 服务层实现。
@@ -39,6 +42,7 @@ public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper,
 
     private final AiModelService modelService;
     private final ChatModelFactory chatModelFactory;
+    private final AiConversationMessageService conversationMessageService;
 
     @Override
     public AiConversation createConversation(Long modelId, String message) {
@@ -56,6 +60,28 @@ public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper,
                 .build();
         this.save(conversation);
         return conversation;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteConversation(Long id) {
+        AiConversation conversation = this.getById(id);
+        if (conversation == null || !Objects.equals(conversation.getUserId(), StpUtil.getLoginIdAsLong())) {
+            throw new RuntimeException("conversation not found: " + id);
+        }
+        conversationMessageService.deleteByConversationId(id);
+        this.removeById(id);
+    }
+
+    @Override
+    public void renameConversation(Long id, String title) {
+        AiConversation conversation = this.getById(id);
+        if (conversation == null || !Objects.equals(conversation.getUserId(), StpUtil.getLoginIdAsLong())) {
+            throw new RuntimeException("conversation not found: " + id);
+        }
+        String trimmed = title.trim();
+        conversation.setTitle(trimmed.isEmpty() ? DEFAULT_TITLE : trimmed);
+        this.updateById(conversation);
     }
 
     private String generateTitle(ChatModel chatModel, String userMessage) {

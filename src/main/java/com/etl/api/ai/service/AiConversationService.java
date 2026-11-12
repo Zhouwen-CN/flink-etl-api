@@ -19,4 +19,19 @@ public interface AiConversationService extends IService<AiConversation> {
      * @return 会话实体（含生成的主键 id 与 title）
      */
     AiConversation createConversation(Long modelId, String message);
+
+    /**
+     * 删除会话及其对应的会话消息（校验会话归属当前用户）。
+     *
+     * @param id 会话id
+     */
+    void deleteConversation(Long id);
+
+    /**
+     * 会话重命名（校验会话归属当前用户）。
+     *
+     * @param id    会话id
+     * @param title 新标题
+     */
+    void renameConversation(Long id, String title);
 }

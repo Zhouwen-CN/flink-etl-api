@@ -1,13 +1,11 @@
 package com.etl.api.ai.util;
 
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessageSerializer;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.TokenUsage;
 
-import java.util.Collections;
 import java.util.Map;
 
 public final class AiMessageUtil {
@@ -27,14 +25,6 @@ public final class AiMessageUtil {
     public static String thinking(String thinking) {
         AiMessage aiMessage = AiMessage.builder()
                 .thinking(thinking)
-                .build();
-
-        return ChatMessageSerializer.messageToJson(aiMessage);
-    }
-
-    public static String toolRequest(ToolExecutionRequest toolExecutionRequest) {
-        AiMessage aiMessage = AiMessage.builder()
-                .toolExecutionRequests(Collections.singletonList(toolExecutionRequest))
                 .build();
 
         return ChatMessageSerializer.messageToJson(aiMessage);

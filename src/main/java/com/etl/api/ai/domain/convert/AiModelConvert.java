@@ -3,7 +3,7 @@ package com.etl.api.ai.domain.convert;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiModelCreateForm;
 import com.etl.api.ai.domain.form.AiModelUpdateForm;
-import com.etl.api.ai.domain.vo.AiModelVO;
+import com.etl.api.domain.vo.DictionaryVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -18,5 +18,7 @@ public interface AiModelConvert {
 
     AiModel convert(AiModelUpdateForm form);
 
-    AiModelVO toVo(AiModel entity);
+    @Mapping(target = "value", source = "id")
+    @Mapping(target = "label", source = "name")
+    DictionaryVO convert(AiModel entity);
 }
