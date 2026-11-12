@@ -27,8 +27,8 @@ public class AiChatMemoryStore implements ChatMemoryStore {
     private final AiConversationMessageService aiConversationMessageService;
 
     @Override
-    public List<ChatMessage> getMessages(Object conversationId) {
-        Long cid = toLong(conversationId);
+    public List<ChatMessage> getMessages(Object memoryId) {
+        Long cid = toLong(memoryId);
         List<AiConversationMessage> records = aiConversationMessageService.listByConversationId(cid);
         List<ChatMessage> messages = new ArrayList<>(records.size());
         for (AiConversationMessage record : records) {
@@ -39,9 +39,9 @@ public class AiChatMemoryStore implements ChatMemoryStore {
 
     @Override
     @Transactional
-    public void updateMessages(Object conversationId, List<ChatMessage> messages) {
+    public void updateMessages(Object memoryId, List<ChatMessage> messages) {
         // 增量更新：已保存消息与新消息前缀一致时只追加新消息；发生窗口淘汰（列表头部被移除）时全量重写
-        Long cid = toLong(conversationId);
+        Long cid = toLong(memoryId);
         List<AiConversationMessage> existing = aiConversationMessageService.listByConversationId(cid);
 
         int common = 0;
@@ -65,8 +65,8 @@ public class AiChatMemoryStore implements ChatMemoryStore {
     }
 
     @Override
-    public void deleteMessages(Object conversationId) {
-        aiConversationMessageService.deleteByConversationId(toLong(conversationId));
+    public void deleteMessages(Object memoryId) {
+        aiConversationMessageService.deleteByConversationId(toLong(memoryId));
     }
 
     private Long toLong(Object conversationId) {

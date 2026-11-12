@@ -1,7 +1,6 @@
 package com.etl.api.ai.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.etl.api.ai.domain.convert.AiModelConvert;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiModelCreateForm;
 import com.etl.api.ai.domain.form.AiModelUpdateForm;
@@ -38,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AiModelController {
 
-    private final AiModelService aiModelService;
+    private final AiModelService modelService;
     private final ChatModelFactory chatModelFactory;
 
     @Value("${custom.ai.model-test-message:hi}")
@@ -53,53 +52,42 @@ public class AiModelController {
             @RequestParam(value = "searchName", required = false) @Parameter(description = "模型标识") String searchName,
             @RequestParam(value = "format", required = false) @Parameter(description = "接口格式: 1-OpenAI Chat Completions, 2-OpenAI Responses, 3-Anthropic Messages") Integer format
     ) {
-        val page = aiModelService.queryChain()
+        val page = modelService.queryChain()
                 .like(AiModel::getName, searchName, StringUtils.hasText(searchName))
                 .eq(AiModel::getFormat, format, format != null)
                 .pageAs(Page.of(currentPage, pageSize), AiModelVO.class);
         return ResponseVO.ok(PageVO.from(page));
     }
 
-    @SaCheckPermission("model.select")
-    @Operation(summary = "详情")
-    @GetMapping("/{id}")
-    public ResponseVO<AiModelVO> get(@PathVariable @Parameter(description = "ID") Long id) {
-        val model = aiModelService.getById(id);
-        if (model == null) {
-            return ResponseVO.recordNotFoundError(id);
-        }
-        return ResponseVO.ok(AiModelConvert.INSTANCE.toVo(model));
-    }
-
     @SaCheckPermission("model.insert")
     @Operation(summary = "新增")
     @PostMapping
     public ResponseVO<Void> add(@RequestBody @Validated AiModelCreateForm form) {
-        return aiModelService.addAiModel(form);
+        return modelService.addAiModel(form);
     }
 
     @SaCheckPermission("model.update")
     @Operation(summary = "更新")
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated AiModelUpdateForm form) {
-        return aiModelService.updateAiModel(form);
+        return modelService.updateAiModel(form);
     }
 
     @SaCheckPermission("model.delete")
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        aiModelService.removeById(id);
+        modelService.removeById(id);
         return ResponseVO.ok();
     }
 
     @SaCheckPermission("model.select")
-    @Operation(summary = "测试连通性，按当前配置调用模型")
+    @Operation(summary = "测试模型")
     @GetMapping("/test")
     public ResponseVO<String> test(
             @RequestParam("modelId") @Parameter(description = "模型ID") Long modelId
     ) {
-        AiModel model = aiModelService.getById(modelId);
+        AiModel model = modelService.getById(modelId);
         if (model == null) {
             return ResponseVO.recordNotFoundError(modelId);
         }
