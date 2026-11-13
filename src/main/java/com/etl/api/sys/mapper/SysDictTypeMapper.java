@@ -1,0 +1,14 @@
+package com.etl.api.sys.mapper;
+
+import com.etl.api.sys.domain.entity.SysDictType;
+import com.mybatisflex.core.BaseMapper;
+
+/**
+ * 字典类型表 映射层。
+ *
+ * @author chen
+ * @since 2026-05-12
+ */
+public interface SysDictTypeMapper extends BaseMapper<SysDictType> {
+
+}

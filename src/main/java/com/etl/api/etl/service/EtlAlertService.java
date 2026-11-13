@@ -3,7 +3,7 @@ package com.etl.api.etl.service;
 import com.etl.api.etl.domain.entity.EtlAlert;
 import com.etl.api.etl.domain.form.EtlAlertCreateForm;
 import com.etl.api.etl.domain.form.EtlAlertUpdateForm;
-import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
 import java.util.Collection;

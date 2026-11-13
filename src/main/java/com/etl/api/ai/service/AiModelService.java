@@ -3,7 +3,7 @@ package com.etl.api.ai.service;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiModelCreateForm;
 import com.etl.api.ai.domain.form.AiModelUpdateForm;
-import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
 /**

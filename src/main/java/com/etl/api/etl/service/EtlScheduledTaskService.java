@@ -4,7 +4,7 @@ import com.etl.api.etl.domain.entity.EtlScheduledTask;
 import com.etl.api.etl.domain.form.EtlScheduledTaskCreateForm;
 import com.etl.api.etl.domain.form.EtlScheduledTaskStatusChangeForm;
 import com.etl.api.etl.domain.form.EtlScheduledTaskUpdateForm;
-import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
 import java.util.Collection;

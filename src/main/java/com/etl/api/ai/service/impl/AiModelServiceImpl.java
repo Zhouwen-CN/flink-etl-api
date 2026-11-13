@@ -6,7 +6,7 @@ import com.etl.api.ai.domain.form.AiModelCreateForm;
 import com.etl.api.ai.domain.form.AiModelUpdateForm;
 import com.etl.api.ai.mapper.AiModelMapper;
 import com.etl.api.ai.service.AiModelService;
-import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;

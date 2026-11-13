@@ -1,0 +1,14 @@
+package com.etl.api.sys.mapper;
+
+import com.etl.api.sys.domain.entity.SysLoginCaptcha;
+import com.mybatisflex.core.BaseMapper;
+
+/**
+ * 登入验证码表 映射层。
+ *
+ * @author chen
+ * @since 2026-05-06
+ */
+public interface SysLoginCaptchaMapper extends BaseMapper<SysLoginCaptcha> {
+
+}

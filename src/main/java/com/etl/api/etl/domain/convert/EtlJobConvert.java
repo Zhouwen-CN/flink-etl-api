@@ -3,7 +3,7 @@ package com.etl.api.etl.domain.convert;
 import com.etl.api.etl.domain.entity.EtlJob;
 import com.etl.api.etl.domain.form.EtlJobCreateForm;
 import com.etl.api.etl.domain.form.EtlJobUpdateForm;
-import com.etl.api.domain.vo.DictionaryVO;
+import com.etl.api.sys.domain.vo.DictionaryVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;

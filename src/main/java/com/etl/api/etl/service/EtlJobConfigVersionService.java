@@ -3,8 +3,8 @@ package com.etl.api.etl.service;
 import com.etl.api.etl.domain.entity.EtlJobConfigVersion;
 import com.etl.api.etl.domain.form.EtlJobConfigRollbackForm;
 import com.etl.api.etl.domain.vo.EtlJobConfigVersionVO;
-import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.etl.enumeration.ConfigOperationTypeEnum;
+import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
 import java.util.List;

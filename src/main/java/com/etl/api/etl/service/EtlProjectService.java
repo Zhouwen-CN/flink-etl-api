@@ -2,7 +2,7 @@ package com.etl.api.etl.service;
 
 import com.etl.api.etl.domain.entity.EtlProject;
 import com.etl.api.etl.domain.form.EtlProjectCreateForm;
-import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
 /**

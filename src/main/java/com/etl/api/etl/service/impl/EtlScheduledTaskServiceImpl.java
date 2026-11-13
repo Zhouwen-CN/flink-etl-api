@@ -6,13 +6,13 @@ import com.etl.api.etl.domain.entity.EtlScheduledTask;
 import com.etl.api.etl.domain.form.EtlScheduledTaskCreateForm;
 import com.etl.api.etl.domain.form.EtlScheduledTaskStatusChangeForm;
 import com.etl.api.etl.domain.form.EtlScheduledTaskUpdateForm;
-import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.etl.enumeration.ETLJobTypeEnum;
 import com.etl.api.etl.exception.ScheduledTaskException;
 import com.etl.api.etl.mapper.EtlJobMapper;
 import com.etl.api.etl.mapper.EtlScheduledTaskMapper;
 import com.etl.api.etl.service.EtlScheduledTaskService;
 import com.etl.api.etl.service.manager.ScheduledTaskManager;
+import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 
-import static com.etl.api.domain.entity.table.EtlScheduledTaskTableDef.ETL_SCHEDULED_TASK;
+import static com.etl.api.etl.domain.entity.table.EtlScheduledTaskTableDef.ETL_SCHEDULED_TASK;
 
 /**
  * 定时任务表 服务层实现。

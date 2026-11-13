@@ -1,8 +1,8 @@
 package com.etl.api.ai.domain.entity;
 
-import com.etl.api.domain.base.BaseEntity;
-import com.etl.api.domain.base.InsertListener;
-import com.etl.api.domain.base.UpdateListener;
+import com.etl.api.sys.domain.base.BaseEntity;
+import com.etl.api.sys.domain.base.InsertListener;
+import com.etl.api.sys.domain.base.UpdateListener;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;

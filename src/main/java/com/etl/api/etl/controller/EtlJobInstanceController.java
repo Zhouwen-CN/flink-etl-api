@@ -6,10 +6,7 @@ import com.etl.api.etl.domain.convert.EtlJarPackageConvert;
 import com.etl.api.etl.domain.convert.EtlJobConvert;
 import com.etl.api.etl.domain.convert.EtlProjectConvert;
 import com.etl.api.etl.domain.entity.EtlJobInstance;
-import com.etl.api.domain.vo.DictionaryVO;
 import com.etl.api.etl.domain.vo.EtlJobInstanceVO;
-import com.etl.api.domain.vo.PageVO;
-import com.etl.api.domain.vo.ResponseVO;
 import com.etl.api.etl.enumeration.ETLJobTypeEnum;
 import com.etl.api.etl.enumeration.FlinkJobStatusEnum;
 import com.etl.api.etl.service.EtlFlinkClusterService;
@@ -18,6 +15,9 @@ import com.etl.api.etl.service.EtlJobInstanceService;
 import com.etl.api.etl.service.EtlJobService;
 import com.etl.api.etl.service.EtlProjectService;
 import com.etl.api.etl.service.manager.EtlJobManager;
+import com.etl.api.sys.domain.vo.DictionaryVO;
+import com.etl.api.sys.domain.vo.PageVO;
+import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,8 +39,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Objects;
 
-import static com.etl.api.domain.entity.table.EtlFlinkClusterTableDef.ETL_FLINK_CLUSTER;
-import static com.etl.api.domain.entity.table.EtlJobInstanceTableDef.ETL_JOB_INSTANCE;
+import static com.etl.api.etl.domain.entity.table.EtlFlinkClusterTableDef.ETL_FLINK_CLUSTER;
+import static com.etl.api.etl.domain.entity.table.EtlJobInstanceTableDef.ETL_JOB_INSTANCE;
 
 @RestController
 @RequestMapping("/instance")

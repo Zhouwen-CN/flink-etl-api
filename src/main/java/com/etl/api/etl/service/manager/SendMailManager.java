@@ -26,7 +26,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-import static com.etl.api.domain.entity.table.EtlAlertJobTableDef.ETL_ALERT_JOB;
+import static com.etl.api.etl.domain.entity.table.EtlAlertJobTableDef.ETL_ALERT_JOB;
 
 @Slf4j
 @Service

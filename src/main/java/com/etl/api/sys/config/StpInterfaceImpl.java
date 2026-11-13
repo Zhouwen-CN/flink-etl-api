@@ -1,0 +1,57 @@
+package com.etl.api.sys.config;
+
+import cn.dev33.satoken.stp.StpInterface;
+import com.etl.api.sys.service.SysUserRoleService;
+import com.mybatisflex.core.query.QueryWrapper;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+import static com.etl.api.sys.domain.entity.table.SysPermissionTableDef.SYS_PERMISSION;
+import static com.etl.api.sys.domain.entity.table.SysRolePermissionTableDef.SYS_ROLE_PERMISSION;
+import static com.etl.api.sys.domain.entity.table.SysRoleTableDef.SYS_ROLE;
+import static com.etl.api.sys.domain.entity.table.SysUserRoleTableDef.SYS_USER_ROLE;
+
+/**
+ * sa-token 自定义权限加载接口实现类：<a href="https://sa-token.cc/doc.html#/fun/jur-cache">可以使用缓存</a>
+ */
+@Component
+@RequiredArgsConstructor
+public class StpInterfaceImpl implements StpInterface {
+    private final SysUserRoleService userRoleService;
+
+    /**
+     * 返回一个账号所拥有的权限码集合
+     */
+    @Override
+    public List<String> getPermissionList(Object loginId, String loginType) {
+        val queryWrapper = QueryWrapper.create()
+                .select(SYS_PERMISSION.CODE)
+                .from(SYS_USER_ROLE)
+                .join(SYS_ROLE_PERMISSION)
+                .on(SYS_USER_ROLE.ROLE_ID.eq(SYS_ROLE_PERMISSION.ROLE_ID))
+                .join(SYS_PERMISSION)
+                .on(SYS_ROLE_PERMISSION.PERMISSION_ID.eq(SYS_PERMISSION.ID))
+                .where(SYS_USER_ROLE.USER_ID.eq(loginId))
+                .groupBy(SYS_PERMISSION.CODE);
+
+        return userRoleService.listAs(queryWrapper, String.class);
+    }
+
+    /**
+     * 返回一个账号所拥有的角色标识集合 (权限与角色可分开校验)
+     */
+    @Override
+    public List<String> getRoleList(Object loginId, String loginType) {
+        val queryWrapper = QueryWrapper.create()
+                .select(SYS_ROLE.CODE)
+                .from(SYS_USER_ROLE)
+                .join(SYS_ROLE)
+                .on(SYS_USER_ROLE.ROLE_ID.eq(SYS_ROLE.ID))
+                .where(SYS_USER_ROLE.USER_ID.eq(loginId));
+
+        return userRoleService.listAs(queryWrapper, String.class);
+    }
+}

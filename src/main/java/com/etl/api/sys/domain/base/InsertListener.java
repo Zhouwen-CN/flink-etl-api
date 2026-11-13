@@ -1,0 +1,19 @@
+package com.etl.api.sys.domain.base;
+
+import com.etl.api.sys.util.SaSessionUtil;
+import com.mybatisflex.annotation.AbstractInsertListener;
+import lombok.val;
+
+import java.time.LocalDateTime;
+
+public class InsertListener extends AbstractInsertListener<BaseEntity> {
+
+    @Override
+    public void doInsert(BaseEntity baseEntity) {
+        val username = SaSessionUtil.getUserInfo().getUsername();
+        baseEntity.setCreateUser(username);
+        baseEntity.setCreateTime(LocalDateTime.now());
+        baseEntity.setUpdateUser(username);
+        baseEntity.setUpdateTime(LocalDateTime.now());
+    }
+}

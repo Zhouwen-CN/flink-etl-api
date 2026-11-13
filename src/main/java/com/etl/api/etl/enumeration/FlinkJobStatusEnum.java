@@ -1,6 +1,6 @@
 package com.etl.api.etl.enumeration;
 
-import com.etl.api.domain.vo.DictionaryVO;
+import com.etl.api.sys.domain.vo.DictionaryVO;
 import com.mybatisflex.annotation.EnumValue;
 import lombok.Getter;
 

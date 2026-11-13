@@ -42,3 +42,4 @@ database.trace.db
 static
 script/
 docs/
+.trae/

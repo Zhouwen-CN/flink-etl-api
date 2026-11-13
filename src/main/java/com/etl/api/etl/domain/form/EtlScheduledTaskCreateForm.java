@@ -1,6 +1,6 @@
 package com.etl.api.etl.domain.form;
 
-import com.etl.api.domain.validator.CronExpression;
+import com.etl.api.etl.domain.validator.CronExpression;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

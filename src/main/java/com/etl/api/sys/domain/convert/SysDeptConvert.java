@@ -1,0 +1,28 @@
+package com.etl.api.sys.domain.convert;
+
+import com.etl.api.sys.domain.entity.SysDept;
+import com.etl.api.sys.domain.form.SysDeptCreateForm;
+import com.etl.api.sys.domain.form.SysDeptUpdateForm;
+import com.etl.api.sys.domain.vo.SysDeptVO;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+import java.util.ArrayList;
+
+@Mapper(imports = ArrayList.class)
+public interface SysDeptConvert {
+
+    SysDeptConvert INSTANCE = Mappers.getMapper(SysDeptConvert.class);
+
+    @Mapping(target = "children", expression = "java(new ArrayList<>())")
+    SysDeptVO convert(SysDept entity);
+
+    @Mapping(target = "parentPath", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    SysDept convert(SysDeptCreateForm form);
+
+    @Mapping(target = "parentPath", ignore = true)
+    @Mapping(target = "parentId", ignore = true)
+    SysDept convert(SysDeptUpdateForm form);
+}
