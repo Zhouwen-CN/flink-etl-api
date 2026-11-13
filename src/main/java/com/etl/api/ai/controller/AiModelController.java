@@ -3,12 +3,14 @@ package com.etl.api.ai.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiModelCreateForm;
+import com.etl.api.ai.domain.form.AiModelSelectorForm;
 import com.etl.api.ai.domain.form.AiModelUpdateForm;
 import com.etl.api.ai.domain.vo.AiModelVO;
 import com.etl.api.ai.factory.ChatModelFactory;
 import com.etl.api.ai.service.AiModelService;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.mybatisflex.core.paginate.Page;
 import dev.langchain4j.model.chat.ChatModel;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,8 +19,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,7 +34,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestClient;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Slf4j
 @RestController
 @RequestMapping("/ai/model")
 @Tag(name = "AI模型 控制器")
@@ -39,6 +49,7 @@ public class AiModelController {
 
     private final AiModelService modelService;
     private final ChatModelFactory chatModelFactory;
+    private final RestClient restClient;
 
     @Value("${custom.ai.model-test-message:hi}")
     private String modelTestMessage;
@@ -79,6 +90,46 @@ public class AiModelController {
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
         modelService.removeById(id);
         return ResponseVO.ok();
+    }
+
+    @SaCheckPermission("model.select")
+    @Operation(summary = "模型选择器")
+    @PostMapping("/selector")
+    public ResponseVO<List<String>> selector(@RequestBody @Validated AiModelSelectorForm form) {
+        val ids = new ArrayList<String>();
+        try {
+            // apiKey 不存在时，通过 id 获取
+            String apiKey = form.getApiKey();
+            if (!StringUtils.hasText(apiKey) && form.getId() != null) {
+                AiModel model = modelService.getById(form.getId());
+                if (model == null) {
+                    return ResponseVO.recordNotFoundError(form.getId());
+                }
+                apiKey = model.getApiKey();
+            }
+
+            String baseUrl = form.getBaseUrl();
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            var requestSpec = restClient.get()
+                    .uri(baseUrl + "/models");
+            if (StringUtils.hasText(apiKey)) {
+                requestSpec = requestSpec.header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
+            }
+            JsonNode jsonNode = requestSpec
+                    .retrieve()
+                    .body(JsonNode.class);
+
+            Optional.ofNullable(jsonNode)
+                    .map(item -> item.get("data"))
+                    .filter(JsonNode::isArray)
+                    .ifPresent(data -> data.forEach(item -> ids.add(item.get("id").asText())));
+            return ResponseVO.ok(ids);
+        } catch (Exception e) {
+            log.warn("模型选择器 [获取模型列表] 请求失败: {}", e.getMessage());
+            return ResponseVO.ok(ids);
+        }
     }
 
     @SaCheckPermission("model.select")

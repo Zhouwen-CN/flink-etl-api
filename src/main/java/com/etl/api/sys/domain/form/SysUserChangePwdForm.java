@@ -1,7 +1,7 @@
 package com.etl.api.sys.domain.form;
 
 
-import com.etl.api.sys.domain.validator.FieldMatch;
+import com.etl.api.sys.domain.validator.SysUserChangePwdFormValidator;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -12,11 +12,7 @@ import org.hibernate.validator.constraints.Length;
 @Getter
 @Setter
 @ToString
-@FieldMatch(
-        field = "newPwd",
-        confirmField = "confirmPwd",
-        message = "两次输入的密码不一致"
-)
+@SysUserChangePwdFormValidator
 @Schema(description = "修改密码表单")
 public class SysUserChangePwdForm {
 
