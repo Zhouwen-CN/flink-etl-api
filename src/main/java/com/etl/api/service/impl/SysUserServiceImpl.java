@@ -18,7 +18,7 @@ import com.etl.api.mapper.SysDeptMapper;
 import com.etl.api.mapper.SysLoginCaptchaMapper;
 import com.etl.api.mapper.SysUserMapper;
 import com.etl.api.mapper.SysUserRoleMapper;
-import com.etl.api.schedule.config.QuartzJobProperties;
+import com.etl.api.etl.schedule.config.QuartzJobProperties;
 import com.etl.api.service.SysLoginLogService;
 import com.etl.api.service.SysUserService;
 import com.etl.api.util.AESUtil;

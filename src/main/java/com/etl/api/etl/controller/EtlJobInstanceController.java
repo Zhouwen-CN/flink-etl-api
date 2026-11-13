@@ -1,0 +1,183 @@
+package com.etl.api.etl.controller;
+
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.etl.api.etl.domain.convert.EtlFlinkClusterConvert;
+import com.etl.api.etl.domain.convert.EtlJarPackageConvert;
+import com.etl.api.etl.domain.convert.EtlJobConvert;
+import com.etl.api.etl.domain.convert.EtlProjectConvert;
+import com.etl.api.etl.domain.entity.EtlJobInstance;
+import com.etl.api.domain.vo.DictionaryVO;
+import com.etl.api.etl.domain.vo.EtlJobInstanceVO;
+import com.etl.api.domain.vo.PageVO;
+import com.etl.api.domain.vo.ResponseVO;
+import com.etl.api.etl.enumeration.ETLJobTypeEnum;
+import com.etl.api.etl.enumeration.FlinkJobStatusEnum;
+import com.etl.api.etl.service.EtlFlinkClusterService;
+import com.etl.api.etl.service.EtlJarPackageService;
+import com.etl.api.etl.service.EtlJobInstanceService;
+import com.etl.api.etl.service.EtlJobService;
+import com.etl.api.etl.service.EtlProjectService;
+import com.etl.api.etl.service.manager.EtlJobManager;
+import com.mybatisflex.core.paginate.Page;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Objects;
+
+import static com.etl.api.domain.entity.table.EtlFlinkClusterTableDef.ETL_FLINK_CLUSTER;
+import static com.etl.api.domain.entity.table.EtlJobInstanceTableDef.ETL_JOB_INSTANCE;
+
+@RestController
+@RequestMapping("/instance")
+@Tag(name = "任务实例 控制器")
+@RequiredArgsConstructor
+public class EtlJobInstanceController {
+    private final EtlJobInstanceService jobInstanceService;
+    private final EtlFlinkClusterService flinkClusterService;
+    private final EtlJobService jobService;
+    private final EtlJarPackageService jarPackageService;
+    private final EtlJobManager jobManager;
+    private final EtlProjectService projectService;
+
+    @SaCheckPermission("instance.select")
+    @Operation(summary = "分页查询")
+    @GetMapping
+    public ResponseVO<PageVO<EtlJobInstanceVO>> getPage(
+            @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
+            @RequestParam("pageSize") @Parameter(description = "页面大小") @Min(1) @Max(50) Integer pageSize,
+            @RequestParam(value = "instanceId", required = false) @Parameter(description = "任务实例id") String instanceId,
+            @RequestParam(value = "projectId", required = false) @Parameter(description = "项目id") Long projectId,
+            @RequestParam(value = "clusterId", required = false) @Parameter(description = "集群id") Long clusterId,
+            @RequestParam(value = "jobId", required = false) @Parameter(description = "任务id") Long jobId,
+            @RequestParam(value = "jobType", required = false) @Parameter(description = "集群id") Integer jobType,
+            @RequestParam(value = "status", required = false) @Parameter(description = "任务状态") Integer status
+    ) {
+
+        val page = jobInstanceService.queryChain()
+                .select(
+                        ETL_JOB_INSTANCE.ID,
+                        ETL_JOB_INSTANCE.PROJECT_ID,
+                        ETL_JOB_INSTANCE.CLUSTER_ID,
+                        ETL_FLINK_CLUSTER.JOB_MANAGER_URL,
+                        ETL_JOB_INSTANCE.JAR_ID,
+                        ETL_JOB_INSTANCE.JOB_ID,
+                        ETL_JOB_INSTANCE.JOB_TYPE,
+                        ETL_JOB_INSTANCE.STATUS,
+                        ETL_JOB_INSTANCE.START_TIME,
+                        ETL_JOB_INSTANCE.END_TIME,
+                        ETL_JOB_INSTANCE.DURATION,
+                        ETL_JOB_INSTANCE.UPDATE_TIME
+                )
+                .join(ETL_FLINK_CLUSTER)
+                .on(ETL_JOB_INSTANCE.CLUSTER_ID.eq(ETL_FLINK_CLUSTER.ID))
+                .like(EtlJobInstance::getId, instanceId, StringUtils.hasText(instanceId))
+                .eq(EtlJobInstance::getProjectId, projectId, Objects.nonNull(projectId))
+                .eq(EtlJobInstance::getClusterId, clusterId, Objects.nonNull(clusterId))
+                .eq(EtlJobInstance::getJobId, jobId, Objects.nonNull(jobId))
+                .eq(EtlJobInstance::getJobType, jobType, Objects.nonNull(jobType))
+                .eq(EtlJobInstance::getStatus, status, Objects.nonNull(status))
+                .orderBy(EtlJobInstance::getUpdateTime, false)
+                .orderBy(EtlJobInstance::getStatus, true)
+                .pageAs(Page.of(currentPage, pageSize), EtlJobInstanceVO.class);
+
+        return ResponseVO.ok(PageVO.from(page));
+    }
+
+    @SaCheckPermission("instance.update")
+    @PutMapping("/job/cancel/{id}")
+    @Operation(summary = "停止任务实例")
+    public ResponseVO<Void> cancelJob(@PathVariable @Parameter(description = "任务实例ID") String id) {
+        jobManager.cancelJob(id);
+        return ResponseVO.ok();
+    }
+
+    @SaCheckPermission("instance.update")
+    @PatchMapping("/remapping")
+    @Operation(summary = "实例重新映射")
+    public ResponseVO<Void> remapping() {
+        /*
+            flink 集群重启，主备切换，会导致请求失败，状态变更为 unknown
+            如果是实时任务，并且是 unknow 状态，那么更新成 init 状态，结束时间置为空
+         */
+        jobInstanceService.updateChain()
+                .eq(EtlJobInstance::getJobType, ETLJobTypeEnum.STREAMING.getCode())
+                .eq(EtlJobInstance::getStatus, FlinkJobStatusEnum.UNKNOWN)
+                .set(EtlJobInstance::getStatus, FlinkJobStatusEnum.INITIALIZING)
+                .set(EtlJobInstance::getEndTime, null)
+                .update();
+        return ResponseVO.ok();
+    }
+
+
+    @SaCheckPermission("instance.delete")
+    @DeleteMapping("/{id}")
+    @Operation(summary = "删除")
+    public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") String id) {
+        return jobInstanceService.removeInstance(id);
+    }
+
+    @SaCheckPermission("instance.select")
+    @Operation(summary = "项目选择器")
+    @GetMapping("/project/selector")
+    public ResponseVO<List<DictionaryVO>> projectSelector() {
+        val vos = projectService.list()
+                .stream()
+                .map(EtlProjectConvert.INSTANCE::convert)
+                .toList();
+        return ResponseVO.ok(vos);
+    }
+
+
+    @SaCheckPermission("instance.select")
+    @GetMapping("/cluster/selector")
+    @Operation(summary = "Flink集群选择器")
+    public ResponseVO<List<DictionaryVO>> getClusterSelector() {
+        val vos = flinkClusterService.list()
+                .stream().map(EtlFlinkClusterConvert.INSTANCE::convert)
+                .toList();
+        return ResponseVO.ok(vos);
+    }
+
+    @SaCheckPermission("instance.select")
+    @GetMapping("/job/selector")
+    @Operation(summary = "任务选择器")
+    public ResponseVO<List<DictionaryVO>> getJobSelector() {
+        val vos = jobService.list()
+                .stream().map(EtlJobConvert.INSTANCE::convert)
+                .toList();
+        return ResponseVO.ok(vos);
+    }
+
+    @SaCheckPermission("instance.select")
+    @GetMapping("/status/selector")
+    @Operation(summary = "任务状态选择器")
+    public ResponseVO<List<DictionaryVO>> getStatusSelector() {
+        val vos = FlinkJobStatusEnum.toDictionaryVO();
+        return ResponseVO.ok(vos);
+    }
+
+    @SaCheckPermission("instance.select")
+    @GetMapping("/jar/selector")
+    @Operation(summary = "jar包选择器")
+    public ResponseVO<List<DictionaryVO>> getJarSelector() {
+        val vos = jarPackageService.list()
+                .stream().map(EtlJarPackageConvert.INSTANCE::convert)
+                .toList();
+        return ResponseVO.ok(vos);
+    }
+}

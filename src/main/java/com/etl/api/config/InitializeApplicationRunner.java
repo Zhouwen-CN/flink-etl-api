@@ -1,8 +1,8 @@
 package com.etl.api.config;
 
-import com.etl.api.domain.entity.EtlScheduledTask;
-import com.etl.api.service.EtlScheduledTaskService;
-import com.etl.api.service.manager.ScheduledTaskManager;
+import com.etl.api.etl.domain.entity.EtlScheduledTask;
+import com.etl.api.etl.service.EtlScheduledTaskService;
+import com.etl.api.etl.service.manager.ScheduledTaskManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;

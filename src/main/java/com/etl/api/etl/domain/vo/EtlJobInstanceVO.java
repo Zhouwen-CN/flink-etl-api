@@ -1,0 +1,48 @@
+package com.etl.api.etl.domain.vo;
+
+import com.etl.api.etl.enumeration.FlinkJobStatusEnum;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+@Data
+@Schema(description = "ETL任务实例视图")
+public class EtlJobInstanceVO {
+
+    @Schema(description = "flink任务id")
+    private String id;
+
+    @Schema(description = "项目id")
+    private Long projectId;
+
+    @Schema(description = "集群id")
+    private Long clusterId;
+
+    @Schema(description = "集群地址")
+    private String jobManagerUrl;
+
+    @Schema(description = "jar包id")
+    private Long jarId;
+
+    @Schema(description = "任务id")
+    private Long jobId;
+
+    @Schema(description = "任务类型(1batch 2streaming)")
+    private Integer jobType;
+
+    @Schema(description = "任务状态")
+    private FlinkJobStatusEnum status;
+
+    @Schema(description = "任务开始时间")
+    private LocalDateTime startTime;
+
+    @Schema(description = "任务结束时间")
+    private LocalDateTime endTime;
+
+    @Schema(description = "持续时间")
+    private Long duration;
+
+    @Schema(description = "更新时间")
+    private LocalDateTime updateTime;
+}

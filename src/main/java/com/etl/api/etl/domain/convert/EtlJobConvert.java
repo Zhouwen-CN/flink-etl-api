@@ -1,0 +1,26 @@
+package com.etl.api.etl.domain.convert;
+
+import com.etl.api.etl.domain.entity.EtlJob;
+import com.etl.api.etl.domain.form.EtlJobCreateForm;
+import com.etl.api.etl.domain.form.EtlJobUpdateForm;
+import com.etl.api.domain.vo.DictionaryVO;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+@Mapper
+public interface EtlJobConvert {
+
+    EtlJobConvert INSTANCE = Mappers.getMapper(EtlJobConvert.class);
+
+    @Mapping(target = "deptId", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    EtlJob convert(EtlJobCreateForm form);
+
+    @Mapping(target = "deptId", ignore = true)
+    EtlJob convert(EtlJobUpdateForm form);
+
+    @Mapping(target = "value", source = "id")
+    @Mapping(target = "label", source = "name")
+    DictionaryVO convert(EtlJob etlJob);
+}
