@@ -41,7 +41,7 @@ import java.util.Collection;
 import java.util.List;
 
 @RestController
-@RequestMapping("/alert")
+@RequestMapping("/etl/alert")
 @Tag(name = "告警 控制器")
 @RequiredArgsConstructor
 public class EtlAlertController {

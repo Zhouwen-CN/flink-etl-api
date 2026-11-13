@@ -48,7 +48,7 @@ import java.util.Collection;
 import java.util.List;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/sys/user")
 @Tag(name = "用户 控制器")
 @RequiredArgsConstructor
 public class SysUserController {

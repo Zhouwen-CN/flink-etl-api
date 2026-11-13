@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Collection;
 
 @RestController
-@RequestMapping("/permission")
+@RequestMapping("/sys/permission")
 @Tag(name = "权限 控制器")
 @RequiredArgsConstructor
 public class SysPermissionController {

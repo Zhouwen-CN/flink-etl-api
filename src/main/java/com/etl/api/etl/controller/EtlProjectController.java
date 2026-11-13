@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/project")
+@RequestMapping("/etl/project")
 @Tag(name = "ETL项目 控制器")
 @RequiredArgsConstructor
 public class EtlProjectController {

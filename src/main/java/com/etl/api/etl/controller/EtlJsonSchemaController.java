@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
  * 任务配置，json schema 校验
  */
 @RestController
-@RequestMapping("/json")
+@RequestMapping("/etl/json")
 @Tag(name = "Json Schema 控制器")
 public class EtlJsonSchemaController {
 

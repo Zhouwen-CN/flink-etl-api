@@ -39,7 +39,7 @@ import static com.etl.api.sys.domain.entity.table.SysDictDataTableDef.SYS_DICT_D
 import static com.etl.api.sys.domain.entity.table.SysDictTypeTableDef.SYS_DICT_TYPE;
 
 @RestController
-@RequestMapping("/dict/data")
+@RequestMapping("/sys/dict/data")
 @Tag(name = "字典数据 控制器")
 @RequiredArgsConstructor
 public class SysDictDataController {

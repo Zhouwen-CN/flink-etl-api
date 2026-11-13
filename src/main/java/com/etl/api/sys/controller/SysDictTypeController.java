@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Collection;
 
 @RestController
-@RequestMapping("/dict/type")
+@RequestMapping("/sys/dict/type")
 @Tag(name = "字典类型 控制器")
 @RequiredArgsConstructor
 public class SysDictTypeController {

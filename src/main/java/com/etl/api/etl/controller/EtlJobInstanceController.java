@@ -43,7 +43,7 @@ import static com.etl.api.etl.domain.entity.table.EtlFlinkClusterTableDef.ETL_FL
 import static com.etl.api.etl.domain.entity.table.EtlJobInstanceTableDef.ETL_JOB_INSTANCE;
 
 @RestController
-@RequestMapping("/instance")
+@RequestMapping("/etl/instance")
 @Tag(name = "任务实例 控制器")
 @RequiredArgsConstructor
 public class EtlJobInstanceController {

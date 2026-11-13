@@ -38,7 +38,7 @@ import java.util.Objects;
 import static com.etl.api.sys.domain.entity.table.SysRoleTableDef.SYS_ROLE;
 
 @RestController
-@RequestMapping("/role")
+@RequestMapping("/sys/role")
 @Tag(name = "角色 控制器")
 @RequiredArgsConstructor
 public class SysRoleController {

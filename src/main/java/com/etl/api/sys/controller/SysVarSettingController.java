@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Collection;
 
 @RestController
-@RequestMapping("/variable")
+@RequestMapping("/sys/variable")
 @Tag(name = "任务变量 控制器")
 @RequiredArgsConstructor
 public class SysVarSettingController {

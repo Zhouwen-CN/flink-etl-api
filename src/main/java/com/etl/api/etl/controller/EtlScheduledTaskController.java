@@ -40,7 +40,7 @@ import java.util.Collection;
 import java.util.List;
 
 @RestController
-@RequestMapping("/schedule")
+@RequestMapping("/etl/schedule")
 @Tag(name = "定时任务 控制器")
 @RequiredArgsConstructor
 public class EtlScheduledTaskController {

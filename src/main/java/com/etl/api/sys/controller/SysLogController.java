@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/log")
+@RequestMapping("/sys/log")
 @Tag(name = "日志 控制器")
 @RequiredArgsConstructor
 public class SysLogController {

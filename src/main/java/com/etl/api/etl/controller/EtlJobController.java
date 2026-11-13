@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Objects;
 
 @RestController
-@RequestMapping("/job")
+@RequestMapping("/etl/job")
 @Tag(name = "ETL任务 控制器")
 @RequiredArgsConstructor
 public class EtlJobController {

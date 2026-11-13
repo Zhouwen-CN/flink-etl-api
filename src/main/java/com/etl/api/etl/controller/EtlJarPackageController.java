@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 @RestController
-@RequestMapping("/jar")
+@RequestMapping("/etl/jar")
 @Tag(name = "jar包 控制器")
 @RequiredArgsConstructor
 public class EtlJarPackageController {

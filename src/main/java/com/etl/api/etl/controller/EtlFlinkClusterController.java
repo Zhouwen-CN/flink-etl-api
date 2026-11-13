@@ -34,7 +34,7 @@ import java.util.Collection;
 
 @Validated
 @RestController
-@RequestMapping("/flink/cluster")
+@RequestMapping("/etl/cluster")
 @Tag(name = "Flink集群 控制器")
 @RequiredArgsConstructor
 public class EtlFlinkClusterController {
