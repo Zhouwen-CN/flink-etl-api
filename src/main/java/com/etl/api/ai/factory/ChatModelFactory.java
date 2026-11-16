@@ -28,6 +28,7 @@ public class ChatModelFactory {
 
     private final MicrometerMetricsChatModelListener metricsListener;
     private final boolean isLogging;
+    private static final int DEFAULT_ANTHROPIC_MAX_TOKENS = 4096;
 
     public ChatModelFactory(MeterRegistry meterRegistry, Environment environment) {
         this.metricsListener = new MicrometerMetricsChatModelListener(meterRegistry);
@@ -97,7 +98,7 @@ public class ChatModelFactory {
                 .modelName(model.getModelName())
                 .returnThinking(true) // 返回思考
                 // Anthropic Messages API 要求必传 max_tokens，运行时的实际值通过 ChatRequest 覆盖
-                // .maxTokens(1024) // 默认1024
+                .maxTokens(DEFAULT_ANTHROPIC_MAX_TOKENS) // 默认1024
                 .logRequests(isLogging)
                 .logResponses(isLogging)
                 .listeners(metricsListener)
@@ -141,7 +142,7 @@ public class ChatModelFactory {
                 .apiKey(model.getApiKey())
                 .modelName(model.getModelName())
                 // Anthropic Messages API 要求必传 max_tokens，运行时的实际值通过 ChatRequest 覆盖
-                // .maxTokens(1024) // 默认1024
+                .maxTokens(DEFAULT_ANTHROPIC_MAX_TOKENS) // 默认1024
                 .logRequests(isLogging)
                 .logResponses(isLogging)
                 .listeners(metricsListener)
