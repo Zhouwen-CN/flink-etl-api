@@ -23,7 +23,6 @@ import com.etl.api.ai.util.SseEmitterUtil;
 import com.etl.api.sys.domain.vo.DictionaryVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.chat.response.StreamingHandle;
 import dev.langchain4j.service.AiServices;
@@ -157,11 +156,26 @@ public class AiChatController {
             cancelQuietly(handleRef, conversationId);
         });
 
-        AssistantService assistantService = buildAssistant(chatModelFactory.getStreamingChatModel(aiModel));
+        // 获取 ai service
+        AssistantService assistantService = AiServices.builder(AssistantService.class)
+                .streamingChatModel(chatModelFactory.getStreamingChatModel(aiModel))
+                .systemMessageProvider(id -> aiBot.getSystemPrompt())
+                .chatMemoryProvider(id -> MessageWindowChatMemory.builder()
+                        .id(id)
+                        .maxMessages(maxMemoryMessages)
+                        .chatMemoryStore(chatMemoryStore)
+                        .build()
+                )
+                .build();
 
-        // todo: 请求参数，按需修改
-        ChatRequestParameters parameters = ChatRequestParameters.builder().build();
-        TokenStream tokenStream = assistantService.streamingChat(conversationId, form.getMessage(), parameters);
+        // 获取 chat 请求参数
+        ChatRequestParameters chatRequestParameters = ChatRequestParameters.builder()
+                .temperature(aiBot.getTemperature())
+                .topP(aiBot.getTopP())
+                .build();
+
+        // stream chat
+        TokenStream tokenStream = assistantService.streamingChat(conversationId, form.getMessage(), chatRequestParameters);
 
         tokenStream
                 .onPartialThinkingWithContext((partial, ctx) -> {
@@ -194,17 +208,5 @@ public class AiChatController {
                 log.warn("cancel streaming failed, conversationId={}", conversationId, e);
             }
         }
-    }
-
-    private AssistantService buildAssistant(StreamingChatModel streamingChatModel) {
-        return AiServices.builder(AssistantService.class)
-                .streamingChatModel(streamingChatModel)
-                .chatMemoryProvider(id -> MessageWindowChatMemory.builder()
-                        .id(id)
-                        .maxMessages(maxMemoryMessages)
-                        .chatMemoryStore(chatMemoryStore)
-                        .build()
-                )
-                .build();
     }
 }
