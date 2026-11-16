@@ -30,6 +30,8 @@ import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.chat.response.StreamingHandle;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.tool.ToolArgumentsErrorHandler;
+import dev.langchain4j.service.tool.ToolExecutionErrorHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -176,6 +178,11 @@ public class AiChatController {
                         .chatMemoryStore(chatMemoryStore)
                         .build()
                 )
+                // 工具调用往返轮数
+                .maxToolCallingRoundTrips(aiBot.getMaxToolCalls())
+                // 把工具 参数错误信息 和 调用错误信息 发送给 LLM
+                .toolArgumentsErrorHandler(ToolArgumentsErrorHandler.sendExceptionMessageToLlm())
+                .toolExecutionErrorHandler(ToolExecutionErrorHandler.failInvocationUnlessVisibleToLlm())
                 .build();
 
         // 获取 chat 请求参数
@@ -206,9 +213,11 @@ public class AiChatController {
                     handleRef.set(ctx.streamingHandle());
                     sse.sendDelta(AiMessageUtil.text(partial.text()));
                 })
-                .onCompleteResponse(response -> {
-                    sse.sendDone(AiMessageUtil.metadata(response));
-                })
+                // 工具执行前：推送调用请求（工具名 + 参数）
+                .beforeToolExecution(before -> sse.sendTool(AiMessageUtil.toolCall(before.request())))
+                // 工具执行后：推送执行结果
+                .onToolExecuted(execution -> sse.sendTool(AiMessageUtil.toolResult(execution)))
+                .onCompleteResponse(response -> sse.sendDone(AiMessageUtil.metadata(response)))
                 .onError(ex -> sse.sendError(ex.getMessage()))
                 .start();
 

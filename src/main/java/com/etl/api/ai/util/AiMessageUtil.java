@@ -1,11 +1,14 @@
 package com.etl.api.ai.util;
 
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessageSerializer;
 import dev.langchain4j.data.message.ImageContent;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.TokenUsage;
+import dev.langchain4j.service.tool.ToolExecution;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,8 +66,29 @@ public final class AiMessageUtil {
         return ChatMessageSerializer.messageToJson(aiMessage);
     }
 
+    /**
+     * 工具调用请求信息（执行前推送），前端可展示"正在调用工具"及参数
+     */
+    public static String toolCall(ToolExecutionRequest request) {
+        AiMessage aiMessage = AiMessage.builder()
+                .toolExecutionRequests(List.of(request))
+                .build();
+
+        return ChatMessageSerializer.messageToJson(aiMessage);
+    }
+
+    /**
+     * 工具调用结果信息（执行后推送），放在 attributes 中与普通文本区分
+     */
+    public static String toolResult(ToolExecution execution) {
+        ToolExecutionResultMessage toolExecutionResultMessage = ToolExecutionResultMessage.toolExecutionResultMessage(
+                execution.request(),
+                execution.result()
+        );
+        return ChatMessageSerializer.messageToJson(toolExecutionResultMessage);
+    }
+
     public static String metadata(ChatResponse response) {
-        String text = response.aiMessage().text();
         TokenUsage tokenUsage = response.tokenUsage();
         Integer inputTokenCount = tokenUsage.inputTokenCount();
         Integer outputTokenCount = tokenUsage.outputTokenCount();
@@ -73,7 +97,6 @@ public final class AiMessageUtil {
         AiMessage aiMessage = AiMessage.builder()
                 .attributes(
                         Map.of(
-                                "rawMessage", text,
                                 "inputToken", inputTokenCount,
                                 "outputToken", outputTokenCount,
                                 "totalToken", totalTokenCount
