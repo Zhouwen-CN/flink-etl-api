@@ -10,8 +10,8 @@ import lombok.Data;
 public class AiConversationCreateForm {
 
     @NotNull
-    @Schema(description = "模型ID")
-    private Long modelId;
+    @Schema(description = "Bot ID")
+    private Long botId;
 
     @NotBlank
     @Schema(description = "用户第一条消息")

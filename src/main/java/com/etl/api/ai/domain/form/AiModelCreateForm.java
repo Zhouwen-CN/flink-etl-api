@@ -3,6 +3,7 @@ package com.etl.api.ai.domain.form;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
@@ -30,4 +31,11 @@ public class AiModelCreateForm {
     @Length(max = 64)
     @Schema(description = "模型名称，如 gpt-4o-mini")
     private String modelName;
+
+    @PositiveOrZero
+    @Schema(description = "上下文窗口")
+    private Integer contextWindow;
+
+    @Schema(description = "是否支持图片")
+    private Boolean supportImage;
 }

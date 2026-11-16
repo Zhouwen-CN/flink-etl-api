@@ -59,4 +59,14 @@ public class AiModel extends BaseEntity implements Serializable {
      */
     private String modelName;
 
+    /**
+     * 上下文窗口
+     */
+    private Integer contextWindow;
+
+    /**
+     * 是否支持图片
+     */
+    private Boolean supportImage;
+
 }

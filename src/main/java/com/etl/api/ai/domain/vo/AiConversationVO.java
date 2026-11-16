@@ -10,6 +10,9 @@ public class AiConversationVO {
     @Schema(description = "会话ID")
     private Long id;
 
+    @Schema(description = "Bot ID")
+    private Long botId;
+
     @Schema(description = "会话标题")
     private String title;
 }

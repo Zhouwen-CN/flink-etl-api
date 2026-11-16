@@ -24,6 +24,12 @@ public class AiModelVO {
     @Schema(description = "模型名称，如 gpt-4o-mini")
     private String modelName;
 
+    @Schema(description = "上下文窗口")
+    private Integer contextWindow;
+
+    @Schema(description = "是否支持图片")
+    private Boolean supportImage;
+
     @Schema(description = "更新时间")
     private LocalDateTime updateTime;
 }

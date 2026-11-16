@@ -10,8 +10,8 @@ import lombok.Data;
 public class AiChatForm {
 
     @NotNull
-    @Schema(description = "模型ID")
-    private Long modelId;
+    @Schema(description = "Bot ID")
+    private Long botId;
 
     @NotNull
     @Schema(description = "会话ID")

@@ -40,6 +40,11 @@ public class AiConversation extends BaseEntity implements Serializable {
     private Long userId;
 
     /**
+     * bot id
+     */
+    private Long botId;
+
+    /**
      * 会话标题
      */
     private String title;

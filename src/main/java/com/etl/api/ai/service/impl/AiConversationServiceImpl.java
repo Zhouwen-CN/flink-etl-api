@@ -1,10 +1,12 @@
 package com.etl.api.ai.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiConversation;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.factory.ChatModelFactory;
 import com.etl.api.ai.mapper.AiConversationMapper;
+import com.etl.api.ai.service.AiBotService;
 import com.etl.api.ai.service.AiConversationMessageService;
 import com.etl.api.ai.service.AiConversationService;
 import com.etl.api.ai.service.AiModelService;
@@ -37,15 +39,20 @@ public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper,
 
     private static final String DEFAULT_TITLE = "新会话";
 
+    private final AiBotService botService;
     private final AiModelService modelService;
     private final ChatModelFactory chatModelFactory;
     private final AiConversationMessageService conversationMessageService;
 
     @Override
-    public AiConversation createConversation(Long modelId, String message) {
-        AiModel aiModel = modelService.getById(modelId);
+    public AiConversation createConversation(Long botId, String message) {
+        AiBot aiBot = botService.getById(botId);
+        if (aiBot == null) {
+            throw new RuntimeException("bot not found: " + botId);
+        }
+        AiModel aiModel = modelService.getById(aiBot.getModelId());
         if (aiModel == null) {
-            throw new RuntimeException("model not found: " + modelId);
+            throw new RuntimeException("model not found: " + aiBot.getModelId());
         }
 
         ChatModel chatModel = chatModelFactory.getChatModel(aiModel);
@@ -53,6 +60,7 @@ public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper,
 
         AiConversation conversation = AiConversation.builder()
                 .userId(StpUtil.getLoginIdAsLong())
+                .botId(botId)
                 .title(title)
                 .build();
         this.save(conversation);

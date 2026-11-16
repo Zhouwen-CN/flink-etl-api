@@ -3,7 +3,8 @@ package com.etl.api.ai.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.ai.config.AiChatMemoryStore;
-import com.etl.api.ai.domain.convert.AiModelConvert;
+import com.etl.api.ai.domain.convert.AiBotConvert;
+import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiConversation;
 import com.etl.api.ai.domain.entity.AiConversationMessage;
 import com.etl.api.ai.domain.entity.AiModel;
@@ -12,6 +13,7 @@ import com.etl.api.ai.domain.form.AiConversationCreateForm;
 import com.etl.api.ai.domain.form.AiConversationRenameForm;
 import com.etl.api.ai.domain.vo.AiConversationVO;
 import com.etl.api.ai.factory.ChatModelFactory;
+import com.etl.api.ai.service.AiBotService;
 import com.etl.api.ai.service.AiConversationMessageService;
 import com.etl.api.ai.service.AiConversationService;
 import com.etl.api.ai.service.AiModelService;
@@ -56,6 +58,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AiChatController {
 
     private final ChatModelFactory chatModelFactory;
+    private final AiBotService botService;
     private final AiModelService modelService;
     private final AiChatMemoryStore chatMemoryStore;
     private final AiConversationService conversationService;
@@ -65,13 +68,13 @@ public class AiChatController {
     private Integer maxMemoryMessages;
 
     @SaCheckPermission("chat.select")
-    @Operation(summary = "模型选择器")
-    @GetMapping("/model/selector")
-    public ResponseVO<List<DictionaryVO>> listModelSelector() {
-        List<DictionaryVO> list = modelService.queryChain()
+    @Operation(summary = "Bot选择器")
+    @GetMapping("/bot/selector")
+    public ResponseVO<List<DictionaryVO>> listBotSelector() {
+        List<DictionaryVO> list = botService.queryChain()
                 .list()
                 .stream()
-                .map(AiModelConvert.INSTANCE::convert)
+                .map(AiBotConvert.INSTANCE::convert)
                 .toList();
         return ResponseVO.ok(list);
     }
@@ -105,7 +108,7 @@ public class AiChatController {
     @Operation(summary = "新增会话")
     @PostMapping("/conversation")
     public ResponseVO<AiConversationVO> createConversation(@RequestBody @Validated AiConversationCreateForm form) {
-        AiConversation conversation = conversationService.createConversation(form.getModelId(), form.getMessage());
+        AiConversation conversation = conversationService.createConversation(form.getBotId(), form.getMessage());
         AiConversationVO vo = new AiConversationVO();
         vo.setId(conversation.getId());
         vo.setTitle(conversation.getTitle());
@@ -134,9 +137,13 @@ public class AiChatController {
     public SseEmitter streamChat(@RequestBody @Validated AiChatForm form) {
         Long conversationId = form.getConversationId();
 
-        AiModel aiModel = modelService.getById(form.getModelId());
+        AiBot aiBot = botService.getById(form.getBotId());
+        if (aiBot == null) {
+            throw new RuntimeException("bot not found: " + form.getBotId());
+        }
+        AiModel aiModel = modelService.getById(aiBot.getModelId());
         if (aiModel == null) {
-            throw new RuntimeException("model not found: " + form.getModelId());
+            throw new RuntimeException("model not found: " + aiBot.getModelId());
         }
 
         SseEmitterUtil sse = new SseEmitterUtil();
