@@ -3,6 +3,7 @@ package com.etl.api.ai.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.ai.config.AiChatMemoryStore;
+import com.etl.api.ai.config.ChatModelFactory;
 import com.etl.api.ai.domain.convert.AiBotConvert;
 import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiConversation;
@@ -12,7 +13,7 @@ import com.etl.api.ai.domain.form.AiChatForm;
 import com.etl.api.ai.domain.form.AiConversationCreateForm;
 import com.etl.api.ai.domain.form.AiConversationRenameForm;
 import com.etl.api.ai.domain.vo.AiConversationVO;
-import com.etl.api.ai.factory.ChatModelFactory;
+import com.etl.api.ai.exception.AiChatException;
 import com.etl.api.ai.service.AiBotService;
 import com.etl.api.ai.service.AiConversationMessageService;
 import com.etl.api.ai.service.AiConversationService;
@@ -138,14 +139,17 @@ public class AiChatController {
 
         AiBot aiBot = botService.getById(form.getBotId());
         if (aiBot == null) {
-            throw new RuntimeException("bot not found: " + form.getBotId());
+            throw new AiChatException("Bot不存在: " + form.getBotId());
+        }
+        if (!Boolean.TRUE.equals(aiBot.getStatus())) {
+            throw new AiChatException("Bot已停用: " + aiBot.getName());
         }
         AiModel aiModel = modelService.getById(aiBot.getModelId());
         if (aiModel == null) {
-            throw new RuntimeException("model not found: " + aiBot.getModelId());
+            throw new AiChatException("模型不存在: " + aiBot.getModelId());
         }
         if (form.getImages() != null && !form.getImages().isEmpty() && !Boolean.TRUE.equals(aiModel.getSupportImage())) {
-            throw new RuntimeException("bot not support image: " + aiBot.getName());
+            throw new AiChatException("模型不支持图片: " + aiBot.getName());
         }
 
         SseEmitterUtil sse = new SseEmitterUtil();

@@ -1,4 +1,4 @@
-package com.etl.api.ai.factory;
+package com.etl.api.ai.config;
 
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.enumeration.AiModelFormatEnum;

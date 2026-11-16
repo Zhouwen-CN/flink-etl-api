@@ -1,12 +1,12 @@
 package com.etl.api.ai.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.etl.api.ai.config.ChatModelFactory;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiModelCreateForm;
 import com.etl.api.ai.domain.form.AiModelSelectorForm;
 import com.etl.api.ai.domain.form.AiModelUpdateForm;
 import com.etl.api.ai.domain.vo.AiModelVO;
-import com.etl.api.ai.factory.ChatModelFactory;
 import com.etl.api.ai.service.AiModelService;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;

@@ -1,10 +1,11 @@
 package com.etl.api.ai.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.etl.api.ai.config.ChatModelFactory;
 import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiConversation;
 import com.etl.api.ai.domain.entity.AiModel;
-import com.etl.api.ai.factory.ChatModelFactory;
+import com.etl.api.ai.exception.AiChatException;
 import com.etl.api.ai.mapper.AiConversationMapper;
 import com.etl.api.ai.service.AiBotService;
 import com.etl.api.ai.service.AiConversationMessageService;
@@ -48,11 +49,14 @@ public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper,
     public AiConversation createConversation(Long botId, String message) {
         AiBot aiBot = botService.getById(botId);
         if (aiBot == null) {
-            throw new RuntimeException("bot not found: " + botId);
+            throw new AiChatException("Bot不存在: " + botId);
+        }
+        if (!Boolean.TRUE.equals(aiBot.getStatus())) {
+            throw new AiChatException("Bot已停用: " + aiBot.getName());
         }
         AiModel aiModel = modelService.getById(aiBot.getModelId());
         if (aiModel == null) {
-            throw new RuntimeException("model not found: " + aiBot.getModelId());
+            throw new AiChatException("模型不存在: " + aiBot.getModelId());
         }
 
         ChatModel chatModel = chatModelFactory.getChatModel(aiModel);
@@ -72,7 +76,7 @@ public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper,
     public void deleteConversation(Long id) {
         AiConversation conversation = this.getById(id);
         if (conversation == null || !Objects.equals(conversation.getUserId(), StpUtil.getLoginIdAsLong())) {
-            throw new RuntimeException("conversation not found: " + id);
+            throw new AiChatException("会话不存在: " + id);
         }
         conversationMessageService.deleteByConversationId(id);
         this.removeById(id);
@@ -82,7 +86,7 @@ public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper,
     public void renameConversation(Long id, String title) {
         AiConversation conversation = this.getById(id);
         if (conversation == null || !Objects.equals(conversation.getUserId(), StpUtil.getLoginIdAsLong())) {
-            throw new RuntimeException("conversation not found: " + id);
+            throw new AiChatException("会话不存在: " + id);
         }
         String trimmed = title.trim();
         conversation.setTitle(trimmed.isEmpty() ? DEFAULT_TITLE : trimmed);

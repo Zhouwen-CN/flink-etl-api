@@ -3,6 +3,7 @@ package com.etl.api.sys.exception;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
+import com.etl.api.ai.exception.AiChatException;
 import com.etl.api.etl.exception.EtlJobException;
 import com.etl.api.etl.exception.FlinkApiRequestException;
 import com.etl.api.etl.exception.ScheduledTaskException;
@@ -129,6 +130,14 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ScheduledTaskException.class)
     public ResponseVO<Void> scheduleJobExceptionHandler(ScheduledTaskException e) {
+        return ResponseVO.error(e.getMessage());
+    }
+
+    /**
+     * AI 聊天业务异常
+     */
+    @ExceptionHandler(AiChatException.class)
+    public ResponseVO<Void> aiChatExceptionHandler(AiChatException e) {
         return ResponseVO.error(e.getMessage());
     }
 
