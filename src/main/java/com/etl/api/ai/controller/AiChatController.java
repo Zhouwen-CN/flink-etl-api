@@ -23,6 +23,8 @@ import com.etl.api.ai.util.AiMessageUtil;
 import com.etl.api.ai.util.SseEmitterUtil;
 import com.etl.api.sys.domain.vo.DictionaryVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
+import dev.langchain4j.data.message.Content;
+import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.chat.response.StreamingHandle;
@@ -47,6 +49,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -181,11 +184,15 @@ public class AiChatController {
                 .topP(aiBot.getTopP())
                 .build();
 
+        // 构建用户消息内容列表（文本 + 图片）
+        List<Content> contents = new ArrayList<>();
+        contents.add(TextContent.from(form.getMessage()));
+        contents.addAll(AiMessageUtil.buildImageContents(form.getImages()));
+
         // stream chat
         TokenStream tokenStream = assistantService.streamingChat(
                 conversationId,
-                form.getMessage(),
-                AiMessageUtil.buildImageContents(form.getImages()),
+                contents,
                 chatRequestParameters
         );
 
