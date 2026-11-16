@@ -144,6 +144,9 @@ public class AiChatController {
         if (aiModel == null) {
             throw new RuntimeException("model not found: " + aiBot.getModelId());
         }
+        if (form.getImages() != null && !form.getImages().isEmpty() && !Boolean.TRUE.equals(aiModel.getSupportImage())) {
+            throw new RuntimeException("bot not support image: " + aiBot.getName());
+        }
 
         SseEmitterUtil sse = new SseEmitterUtil();
         AtomicReference<StreamingHandle> handleRef = new AtomicReference<>();
@@ -175,7 +178,12 @@ public class AiChatController {
                 .build();
 
         // stream chat
-        TokenStream tokenStream = assistantService.streamingChat(conversationId, form.getMessage(), chatRequestParameters);
+        TokenStream tokenStream = assistantService.streamingChat(
+                conversationId,
+                form.getMessage(),
+                AiMessageUtil.buildImageContents(form.getImages()),
+                chatRequestParameters
+        );
 
         tokenStream
                 .onPartialThinkingWithContext((partial, ctx) -> {
