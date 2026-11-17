@@ -8,7 +8,6 @@ import dev.langchain4j.data.message.ChatMessageSerializer;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,7 +37,6 @@ public class AiChatMemoryStore implements ChatMemoryStore {
     }
 
     @Override
-    @Transactional
     public void updateMessages(Object memoryId, List<ChatMessage> messages) {
         // 增量更新：已保存消息与新消息前缀一致时只追加新消息；发生窗口淘汰（列表头部被移除）时全量重写
         Long cid = toLong(memoryId);

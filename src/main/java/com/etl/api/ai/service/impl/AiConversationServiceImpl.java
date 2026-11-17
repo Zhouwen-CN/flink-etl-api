@@ -19,7 +19,6 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -72,7 +71,6 @@ public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper,
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void deleteConversation(Long id) {
         AiConversation conversation = this.getById(id);
         if (conversation == null || !Objects.equals(conversation.getUserId(), StpUtil.getLoginIdAsLong())) {

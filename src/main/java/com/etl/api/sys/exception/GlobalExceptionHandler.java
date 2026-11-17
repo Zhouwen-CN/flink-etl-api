@@ -4,6 +4,7 @@ package com.etl.api.sys.exception;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
 import com.etl.api.ai.exception.AiChatException;
+import com.etl.api.ai.exception.McpConfigException;
 import com.etl.api.etl.exception.EtlJobException;
 import com.etl.api.etl.exception.FlinkApiRequestException;
 import com.etl.api.etl.exception.ScheduledTaskException;
@@ -138,6 +139,14 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AiChatException.class)
     public ResponseVO<Void> aiChatExceptionHandler(AiChatException e) {
+        return ResponseVO.error(e.getMessage());
+    }
+
+    /**
+     * MCP 配置异常（config_json 校验失败、工具同步失败）
+     */
+    @ExceptionHandler(McpConfigException.class)
+    public ResponseVO<Void> mcpConfigExceptionHandler(McpConfigException e) {
         return ResponseVO.error(e.getMessage());
     }
 

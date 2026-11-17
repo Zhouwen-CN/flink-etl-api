@@ -6,7 +6,7 @@ create table T_AI_MODEL
     base_url       varchar(256)  not null comment '大模型请求地址',
     api_key        varchar(1000) not null comment '大模型 API KEY',
     model_name     varchar(64)   not null comment '模型名称，如 gpt-4o-mini',
-    context_window int         default null comment '上下文窗口',
+    context_window int not null comment '上下文窗口',
     support_image  bit(1)      default 0 comment '是否支持图片',
     create_user    varchar(30) default null comment '创建者',
     create_time    datetime    default CURRENT_TIMESTAMP comment '创建时间',

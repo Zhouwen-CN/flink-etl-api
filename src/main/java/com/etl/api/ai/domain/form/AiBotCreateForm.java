@@ -35,6 +35,7 @@ public class AiBotCreateForm {
     @Schema(description = "系统提示词")
     private String systemPrompt;
 
+    @NotNull
     @PositiveOrZero
     @Schema(description = "单次对话最大工具调用轮数")
     private Integer maxToolCalls;

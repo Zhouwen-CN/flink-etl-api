@@ -20,22 +20,27 @@ public class AiModelCreateForm {
     @Schema(description = "接口格式: 1-OpenAI Chat Completions, 2-OpenAI Responses, 3-Anthropic Messages")
     private Integer format;
 
+    @NotBlank
     @Length(max = 256)
     @Schema(description = "大模型请求地址")
     private String baseUrl;
 
+    @NotBlank
     @Length(max = 1000)
     @Schema(description = "大模型 API KEY")
     private String apiKey;
 
+    @NotBlank
     @Length(max = 64)
     @Schema(description = "模型名称，如 gpt-4o-mini")
     private String modelName;
 
+    @NotNull
     @PositiveOrZero
     @Schema(description = "上下文窗口")
     private Integer contextWindow;
 
+    @NotNull
     @Schema(description = "是否支持图片")
     private Boolean supportImage;
 }

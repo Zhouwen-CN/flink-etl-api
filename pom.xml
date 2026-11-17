@@ -128,6 +128,7 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
+        <!-- langchain4j -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
@@ -152,6 +153,11 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-micrometer-metrics</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-mcp</artifactId>
             <version>${langchain4j.version}</version>
         </dependency>
 
