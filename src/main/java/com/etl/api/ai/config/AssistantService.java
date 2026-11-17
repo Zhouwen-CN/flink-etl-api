@@ -1,4 +1,4 @@
-package com.etl.api.ai.service;
+package com.etl.api.ai.config;
 
 import dev.langchain4j.data.message.Content;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;

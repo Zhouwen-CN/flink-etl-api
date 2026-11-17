@@ -1,4 +1,4 @@
-package com.etl.api.ai.service;
+package com.etl.api.ai.config;
 
 import com.etl.api.ai.enumeration.McpTransportTypeEnum;
 import com.etl.api.ai.exception.McpConfigException;

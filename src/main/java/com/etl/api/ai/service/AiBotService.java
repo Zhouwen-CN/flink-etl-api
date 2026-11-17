@@ -6,6 +6,8 @@ import com.etl.api.ai.domain.form.AiBotUpdateForm;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
 
+import java.util.List;
+
 /**
  * AI Bot表 服务层。
  *
@@ -17,4 +19,9 @@ public interface AiBotService extends IService<AiBot> {
     ResponseVO<Void> addAiBot(AiBotCreateForm form);
 
     ResponseVO<Void> updateAiBot(AiBotUpdateForm form);
+
+    /**
+     * 查询bot挂载的工具ID列表（前端数据回显）
+     */
+    List<Long> getToolIds(Long botId);
 }

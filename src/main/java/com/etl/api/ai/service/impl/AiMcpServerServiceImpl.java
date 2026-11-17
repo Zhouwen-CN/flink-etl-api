@@ -1,17 +1,18 @@
 package com.etl.api.ai.service.impl;
 
+import com.etl.api.ai.config.McpConfigValidator;
 import com.etl.api.ai.domain.convert.AiMcpServerConvert;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
 import com.etl.api.ai.domain.entity.AiMcpServer;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiMcpServerCreateForm;
 import com.etl.api.ai.domain.form.AiMcpServerUpdateForm;
+import com.etl.api.ai.domain.vo.AiMcpSelectorVO;
 import com.etl.api.ai.domain.vo.AiMcpServerVO;
 import com.etl.api.ai.mapper.AiBotMcpToolMapper;
 import com.etl.api.ai.mapper.AiMcpServerMapper;
 import com.etl.api.ai.mapper.AiMcpToolMapper;
 import com.etl.api.ai.service.AiMcpServerService;
-import com.etl.api.ai.service.McpConfigValidator;
 import com.etl.api.ai.service.McpToolSyncService;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
@@ -25,7 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * AI MCP服务表 服务层实现。
@@ -139,5 +142,32 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
             throw e;
         }
         return ResponseVO.ok();
+    }
+
+    @Override
+    public List<AiMcpSelectorVO> selector() {
+        val servers = this.queryChain()
+                .orderBy(AiMcpServer::getId, true)
+                .list();
+        val tools = mcpToolMapper.selectListByQuery(QueryWrapper.create()
+                .orderBy(AiMcpTool::getId, true));
+        val toolsByServerId = tools.stream()
+                .collect(Collectors.groupingBy(AiMcpTool::getServerId));
+
+        return servers.stream().map(server -> {
+            val serverNode = new AiMcpSelectorVO();
+            // 服务节点仅作分组：value 加前缀避免与工具id冲突，点击即全选其下所有工具
+            serverNode.setValue("server-" + server.getId());
+            serverNode.setLabel(server.getName());
+
+            val toolNodes = toolsByServerId.getOrDefault(server.getId(), List.of()).stream().map(tool -> {
+                val toolNode = new AiMcpSelectorVO();
+                toolNode.setValue(tool.getId());
+                toolNode.setLabel(tool.getName());
+                return toolNode;
+            }).toList();
+            serverNode.setChildren(toolNodes);
+            return serverNode;
+        }).toList();
     }
 }

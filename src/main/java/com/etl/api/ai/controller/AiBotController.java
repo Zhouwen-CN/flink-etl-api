@@ -6,7 +6,9 @@ import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.form.AiBotCreateForm;
 import com.etl.api.ai.domain.form.AiBotUpdateForm;
 import com.etl.api.ai.domain.vo.AiBotVO;
+import com.etl.api.ai.domain.vo.AiMcpSelectorVO;
 import com.etl.api.ai.service.AiBotService;
+import com.etl.api.ai.service.AiMcpServerService;
 import com.etl.api.ai.service.AiModelService;
 import com.etl.api.sys.domain.vo.DictionaryVO;
 import com.etl.api.sys.domain.vo.PageVO;
@@ -45,6 +47,7 @@ public class AiBotController {
 
     private final AiBotService botService;
     private final AiModelService modelService;
+    private final AiMcpServerService mcpServerService;
     private final SysDeptService deptService;
 
     @SaCheckPermission("bot.select")
@@ -76,11 +79,25 @@ public class AiBotController {
     }
 
     @SaCheckPermission("bot.select")
+    @Operation(summary = "MCP选择器", description = "树形：MCP服务节点 -> 工具叶子，工具节点value为工具id，服务节点value为server-{id}，点击服务节点即全选其下所有工具")
+    @GetMapping("/mcp/selector")
+    public ResponseVO<List<AiMcpSelectorVO>> mcpSelector() {
+        return ResponseVO.ok(mcpServerService.selector());
+    }
+
+    @SaCheckPermission("bot.select")
     @Operation(summary = "部门选择器")
     @GetMapping("/dept/selector")
     public ResponseVO<List<SysDeptVO>> deptSelector() {
         val vos = deptService.treeSelector();
         return ResponseVO.ok(vos);
+    }
+
+    @SaCheckPermission("bot.select")
+    @Operation(summary = "工具ID列表", description = "根据bot_id查询挂载的工具ID列表，用作前端数据回显")
+    @GetMapping("/tool/{id}")
+    public ResponseVO<List<Long>> getToolIds(@PathVariable @Parameter(description = "bot ID") Long id) {
+        return ResponseVO.ok(botService.getToolIds(id));
     }
 
     @SaCheckPermission("bot.insert")

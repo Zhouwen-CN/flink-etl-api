@@ -3,10 +3,13 @@ package com.etl.api.ai.service;
 import com.etl.api.ai.domain.entity.AiMcpServer;
 import com.etl.api.ai.domain.form.AiMcpServerCreateForm;
 import com.etl.api.ai.domain.form.AiMcpServerUpdateForm;
+import com.etl.api.ai.domain.vo.AiMcpSelectorVO;
 import com.etl.api.ai.domain.vo.AiMcpServerVO;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
+
+import java.util.List;
 
 /**
  * AI MCP服务表 服务层。
@@ -40,4 +43,9 @@ public interface AiMcpServerService extends IService<AiMcpServer> {
      * 手动触发工具同步（失败仅返回错误原因，不影响已有数据）
      */
     ResponseVO<Void> syncTools(Long id);
+
+    /**
+     * MCP选择器（树形：server节点 -> tool叶子，供bot挂载工具的 el-tree-select 渲染）
+     */
+    List<AiMcpSelectorVO> selector();
 }

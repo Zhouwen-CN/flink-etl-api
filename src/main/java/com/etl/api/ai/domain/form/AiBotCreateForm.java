@@ -9,6 +9,8 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
+import java.util.List;
+
 @Data
 @Schema(description = "新增AI Bot表单")
 public class AiBotCreateForm {
@@ -44,6 +46,10 @@ public class AiBotCreateForm {
     private Boolean status;
 
     @NotNull
-    @Schema(description = "归属部门id")
+    @Schema(description = "归属部门ID")
     private Long deptId;
+
+    @NotNull
+    @Schema(description = "工具ID列表")
+    private List<Long> toolIds;
 }

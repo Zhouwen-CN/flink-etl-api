@@ -26,7 +26,7 @@ public class TransactionAspect {
     private final TransactionTemplate transactionTemplate;
     private final Pattern READ_ONLY_PATTERN = Pattern.compile("^(get|select|list|find).*$");
 
-    @Around("execution (public * com.etl.api.sys.service.impl.*.*(..)) || execution (public * com.etl.api.etl.service.impl.*.*(..))")
+    @Around("execution (public * com.etl.api.*.service.impl.*.*(..))")
     public Object around(ProceedingJoinPoint pjp) throws Throwable {
         val signature = (MethodSignature) pjp.getSignature();
         val targetClass = pjp.getTarget().getClass();
