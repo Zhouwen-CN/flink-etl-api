@@ -1,6 +1,6 @@
 package com.etl.api.ai.domain.dto;
 
-import com.etl.api.ai.enumeration.McpTransportTypeEnum;
+import com.etl.api.ai.enumeration.AiMcpTransportTypeEnum;
 import lombok.Data;
 
 import java.util.Map;
@@ -18,7 +18,7 @@ import java.util.Map;
 public class McpServerConfigDTO {
 
     /**
-     * 传输类型，白名单见 {@link McpTransportTypeEnum}
+     * 传输类型，白名单见 {@link AiMcpTransportTypeEnum}
      */
     private String type;
 

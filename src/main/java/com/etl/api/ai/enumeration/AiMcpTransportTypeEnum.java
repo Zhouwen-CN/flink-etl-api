@@ -14,7 +14,7 @@ import java.util.Set;
  * stdio 类型仅限管理员目录（后续迭代），前端提交直接拒绝。
  */
 @Getter
-public enum McpTransportTypeEnum {
+public enum AiMcpTransportTypeEnum {
 
     SSE("SSE", Set.of("sse", "http-sse", "ssehttp")),
     STREAMABLE_HTTP("Streamable HTTP", Set.of("http", "streamable", "http-stream", "streamablehttp")),
@@ -23,7 +23,7 @@ public enum McpTransportTypeEnum {
     private final String desc;
     private final Set<String> typeAliases;
 
-    McpTransportTypeEnum(String desc, Set<String> typeAliases) {
+    AiMcpTransportTypeEnum(String desc, Set<String> typeAliases) {
         this.desc = desc;
         this.typeAliases = typeAliases;
     }
@@ -31,7 +31,7 @@ public enum McpTransportTypeEnum {
     /**
      * type 字符串转枚举，未匹配返回 empty
      */
-    public static Optional<McpTransportTypeEnum> of(String type) {
+    public static Optional<AiMcpTransportTypeEnum> of(String type) {
         if (type == null) {
             return Optional.empty();
         }

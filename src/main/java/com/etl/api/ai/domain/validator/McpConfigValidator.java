@@ -1,7 +1,7 @@
 package com.etl.api.ai.domain.validator;
 
 import com.etl.api.ai.domain.dto.McpServerConfigDTO;
-import com.etl.api.ai.enumeration.McpTransportTypeEnum;
+import com.etl.api.ai.enumeration.AiMcpTransportTypeEnum;
 import com.etl.api.ai.exception.McpConfigException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,7 +54,7 @@ public class McpConfigValidator {
         if (!StringUtils.hasText(type)) {
             throw new McpConfigException("MCP 配置必须包含 type 字段（远程传输类型）");
         }
-        if (!McpTransportTypeEnum.isRemoteSupported(type)) {
+        if (!AiMcpTransportTypeEnum.isRemoteSupported(type)) {
             throw new McpConfigException("不支持的传输类型: " + type +
                     "，仅允许: sse、http-sse、ssehttp、http、streamable、http-stream、streamablehttp");
         }
