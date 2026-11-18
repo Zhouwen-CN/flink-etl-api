@@ -102,7 +102,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
                             .eq(SysRolePermission::getRoleId, roleId)
             );
         }
-
-        rolePermissionMapper.insertBatch(rolePermissionList);
+        if (!rolePermissionList.isEmpty()) {
+            rolePermissionMapper.insertBatch(rolePermissionList);
+        }
     }
 }

@@ -285,6 +285,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
 
         // 新增角色
-        userRoleMapper.insertBatch(userRoleList);
+        if (!userRoleList.isEmpty()) {
+            userRoleMapper.insertBatch(userRoleList);
+        }
     }
 }

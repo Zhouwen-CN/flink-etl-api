@@ -88,6 +88,9 @@ public class EtlAlertServiceImpl extends ServiceImpl<EtlAlertMapper, EtlAlert> i
         if (isUpdate) {
             this.removeAlertJobList(List.of(alertId));
         }
-        alertJobMapper.insertBatch(alertJobList);
+
+        if (!alertJobList.isEmpty()) {
+            alertJobMapper.insertBatch(alertJobList);
+        }
     }
 }
