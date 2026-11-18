@@ -13,7 +13,7 @@ import com.etl.api.ai.mapper.AiBotMcpToolMapper;
 import com.etl.api.ai.mapper.AiMcpServerMapper;
 import com.etl.api.ai.mapper.AiMcpToolMapper;
 import com.etl.api.ai.service.AiMcpServerService;
-import com.etl.api.ai.service.McpToolSyncService;
+import com.etl.api.ai.service.AiMcpToolService;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.paginate.Page;
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcpServer> implements AiMcpServerService {
 
     private final McpConfigValidator configValidator;
-    private final McpToolSyncService toolSyncService;
+    private final AiMcpToolService mcpToolService;
     private final AiMcpToolMapper mcpToolMapper;
     private final AiBotMcpToolMapper botMcpToolMapper;
 
@@ -70,7 +70,7 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
         this.save(entity);
 
         // 保存即同步工具：连接或拉取失败则整个保存失败（事务回滚）
-        toolSyncService.syncTools(entity.getId(), serverConfig);
+        mcpToolService.syncTools(entity.getId(), serverConfig);
         log.info("新增MCP服务并同步工具, serverId: {}, name: {}", entity.getId(), entity.getName());
         return ResponseVO.ok();
     }
@@ -97,7 +97,7 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
         if (configChanged) {
             // config_json 变更时重新同步工具，失败则整个更新失败、保持旧值（事务回滚）
             val serverConfig = configValidator.validate(newConfigJson);
-            toolSyncService.syncTools(form.getId(), serverConfig);
+            mcpToolService.syncTools(form.getId(), serverConfig);
         }
 
         val entity = AiMcpServerConvert.INSTANCE.convert(form);
@@ -136,7 +136,7 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
         val serverConfig = configValidator.validate(server.getConfigJson());
         try {
             // 手动同步失败仅返回错误原因，不影响已有数据（不回滚，同步失败发生在建连/拉取阶段）
-            toolSyncService.syncTools(id, serverConfig);
+            mcpToolService.syncTools(id, serverConfig);
         } catch (Exception e) {
             log.warn("手动同步MCP工具失败, serverId: {}, error: {}", id, e.getMessage());
             throw e;
@@ -149,9 +149,10 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
         val servers = this.queryChain()
                 .orderBy(AiMcpServer::getId, true)
                 .list();
-        val tools = mcpToolMapper.selectListByQuery(QueryWrapper.create()
-                .orderBy(AiMcpTool::getId, true));
-        val toolsByServerId = tools.stream()
+        val toolsByServerId = mcpToolMapper.selectListByQuery(
+                        QueryWrapper.create().orderBy(AiMcpTool::getId, true)
+                )
+                .stream()
                 .collect(Collectors.groupingBy(AiMcpTool::getServerId));
 
         return servers.stream().map(server -> {

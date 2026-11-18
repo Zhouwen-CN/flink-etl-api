@@ -23,6 +23,7 @@ import com.etl.api.ai.util.AiMessageUtil;
 import com.etl.api.ai.util.SseEmitterUtil;
 import com.etl.api.sys.domain.vo.DictionaryVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
+import com.etl.api.sys.util.LocalDateTimeUtil;
 import dev.langchain4j.data.message.Content;
 import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -37,6 +38,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -51,6 +53,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -168,16 +173,32 @@ public class AiChatController {
             cancelQuietly(handleRef, conversationId);
         });
 
+        // 挂载的 MCP 工具：ToolSpecification 来自本地缓存 input_schema，执行时临时建连调用远端
+        val chatTools = botService.buildChatTools(aiBot.getId());
+
         // 获取 ai service
         AssistantService assistantService = AiServices.builder(AssistantService.class)
                 .streamingChatModel(chatModelFactory.getStreamingChatModel(aiModel))
                 .systemMessageProvider(id -> aiBot.getSystemPrompt())
+                // 环境信息
+                .systemMessageTransformer(systemPrompt -> {
+                    val now = LocalDateTimeUtil.format(LocalDateTime.now());
+                    val osInfo = System.getProperty("os.name") + " " + System.getProperty("os.version");
+                    return """
+                            %s
+                            
+                            # 环境信息
+                            - 当前时间: %s (%s)
+                            - 操作系统: %s
+                            """.formatted(systemPrompt,now, ZoneId.systemDefault(), osInfo);
+                })
                 .chatMemoryProvider(id -> MessageWindowChatMemory.builder()
                         .id(id)
                         .maxMessages(maxMemoryMessages)
                         .chatMemoryStore(chatMemoryStore)
                         .build()
                 )
+                .tools(chatTools)
                 // 工具调用往返轮数
                 .maxToolCallingRoundTrips(aiBot.getMaxToolCalls())
                 // 把工具 参数错误信息 和 调用错误信息 发送给 LLM

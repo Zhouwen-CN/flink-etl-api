@@ -11,7 +11,12 @@ import com.etl.api.ai.service.AiModelService;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.paginate.Page;
+import dev.langchain4j.http.client.HttpClient;
+import dev.langchain4j.http.client.HttpMethod;
+import dev.langchain4j.http.client.HttpRequest;
+import dev.langchain4j.http.client.SuccessfulHttpResponse;
 import dev.langchain4j.model.chat.ChatModel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,7 +39,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +53,8 @@ public class AiModelController {
 
     private final AiModelService modelService;
     private final ChatModelFactory chatModelFactory;
-    private final RestClient restClient;
+    private final HttpClient aiHttpClient;
+    private final ObjectMapper objectMapper;
 
     @Value("${custom.ai.model-test-message:hi}")
     private String modelTestMessage;
@@ -112,14 +117,14 @@ public class AiModelController {
             if (baseUrl.endsWith("/")) {
                 baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
             }
-            var requestSpec = restClient.get()
-                    .uri(baseUrl + "/models");
+            val requestBuilder = HttpRequest.builder()
+                    .method(HttpMethod.GET)
+                    .url(baseUrl + "/models");
             if (StringUtils.hasText(apiKey)) {
-                requestSpec = requestSpec.header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
+                requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
             }
-            JsonNode jsonNode = requestSpec
-                    .retrieve()
-                    .body(JsonNode.class);
+            SuccessfulHttpResponse response = aiHttpClient.execute(requestBuilder.build());
+            JsonNode jsonNode = objectMapper.readTree(response.body());
 
             Optional.ofNullable(jsonNode)
                     .map(item -> item.get("data"))
