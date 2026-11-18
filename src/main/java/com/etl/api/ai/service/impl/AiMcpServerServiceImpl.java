@@ -1,12 +1,12 @@
 package com.etl.api.ai.service.impl;
 
-import com.etl.api.ai.domain.validator.McpConfigValidator;
 import com.etl.api.ai.domain.convert.AiMcpServerConvert;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
 import com.etl.api.ai.domain.entity.AiMcpServer;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiMcpServerCreateForm;
 import com.etl.api.ai.domain.form.AiMcpServerUpdateForm;
+import com.etl.api.ai.domain.validator.McpConfigValidator;
 import com.etl.api.ai.domain.vo.AiMcpSelectorVO;
 import com.etl.api.ai.domain.vo.AiMcpServerVO;
 import com.etl.api.ai.mapper.AiBotMcpToolMapper;
@@ -93,7 +93,7 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
         // 前端每次修改都会回传旧值：先对比前后 config_json，发生变更才校验并重新同步工具
         val newConfigJson = form.getConfigJson();
         val oldConfigJson = old.getConfigJson();
-        val configChanged = Objects.equals(newConfigJson, oldConfigJson);
+        val configChanged = !Objects.equals(newConfigJson, oldConfigJson);
         if (configChanged) {
             // config_json 变更时重新同步工具，失败则整个更新失败、保持旧值（事务回滚）
             val serverConfig = configValidator.validate(newConfigJson);
