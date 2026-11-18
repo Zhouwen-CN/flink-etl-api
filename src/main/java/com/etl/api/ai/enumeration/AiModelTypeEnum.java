@@ -9,8 +9,7 @@ import lombok.Getter;
 public enum AiModelTypeEnum {
 
     CHAT(1, "Chat"),
-    EMBEDDING(2, "Embedding"),
-    RERANK(3, "Rerank");
+    EMBEDDING(2, "Embedding");
 
     private final int code;
     private final String desc;

@@ -172,18 +172,6 @@
             <artifactId>langchain4j-http-client-spring-restclient</artifactId>
             <version>${langchain4j.version}</version>
         </dependency>
-        <!-- Rerank 模型（Cohere /v1/rerank 兼容协议，SiliconFlow 等均兼容） -->
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-cohere</artifactId>
-            <version>${langchain4j.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>langchain4j-http-client-jdk</artifactId>
-                    <groupId>dev.langchain4j</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
         <!-- spring doc -->
         <dependency>

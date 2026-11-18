@@ -71,5 +71,3 @@ insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (12, 5, 'Chat', 1, 1);
 insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (13, 5, 'Embedding', 2, 2);
-insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
-values (14, 5, 'Rerank', 3, 3);

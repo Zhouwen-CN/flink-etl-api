@@ -13,7 +13,6 @@ import com.etl.api.sys.domain.vo.ResponseVO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
-import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.http.client.HttpClient;
 import dev.langchain4j.http.client.HttpMethod;
 import dev.langchain4j.http.client.HttpRequest;
@@ -133,7 +132,6 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
             val result = switch (AiModelTypeEnum.of(model.getType())) {
                 case CHAT -> chatModelFactory.getChatModel(model).chat(modelTestMessage);
                 case EMBEDDING -> testEmbedding(model);
-                case RERANK -> testRerank(model);
             };
             return ResponseVO.ok(result);
         } catch (Exception e) {
@@ -149,14 +147,5 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
                 .content()
                 .vector();
         return "嵌入成功，向量维度: " + vector.length;
-    }
-
-    private String testRerank(AiModel model) {
-        val documents = List.of(
-                TextSegment.from("大模型是当前人工智能领域的核心技术之一。"),
-                TextSegment.from("今天中午想吃红烧牛肉面。")
-        );
-        val scores = chatModelFactory.getRerankModel(model).scoreAll(documents, modelTestMessage);
-        return "重排成功，相关性得分: " + scores;
     }
 }

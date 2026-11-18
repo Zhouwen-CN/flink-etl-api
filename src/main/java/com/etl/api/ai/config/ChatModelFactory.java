@@ -9,23 +9,21 @@ import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
-import dev.langchain4j.model.cohere.CohereScoringModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiResponsesChatModel;
 import dev.langchain4j.model.openai.OpenAiResponsesStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
-import dev.langchain4j.model.scoring.ScoringModel;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 
 /**
- * 根据传入的 {@link AiModel} 配置装配 ChatModel/EmbeddingModel/ScoringModel。
- * Chat 模型按 format 区分接口协议，Embedding 固定走 OpenAI /v1/embeddings，
- * Rerank 固定走 Cohere /v1/rerank；temperature/topP/maxTokens 等采样参数不落模型配置，
+ * 根据传入的 {@link AiModel} 配置装配 ChatModel/EmbeddingModel。
+ * Chat 模型按 format 区分接口协议，Embedding 固定走 OpenAI /v1/embeddings；
+ * temperature/topP/maxTokens 等采样参数不落模型配置，
  * 由调用方通过 ChatRequest 传递。
  *
  * @author chen
@@ -80,18 +78,6 @@ public class ChatModelFactory {
                 .modelName(model.getModelName())
                 .logRequests(isLogging)
                 .logResponses(isLogging)
-                .build();
-    }
-
-    /**
-     * 按模型配置获取 ScoringModel（Rerank），固定走 Cohere 兼容的 /v1/rerank 协议
-     */
-    public ScoringModel getRerankModel(AiModel model) {
-        requireType(model, AiModelTypeEnum.RERANK);
-        return CohereScoringModel.builder()
-                .baseUrl(model.getBaseUrl())
-                .apiKey(model.getApiKey())
-                .modelName(model.getModelName())
                 .build();
     }
 

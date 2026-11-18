@@ -40,7 +40,7 @@ public class AiModel extends BaseEntity implements Serializable {
     private String name;
 
     /**
-     * 模型类型: 1-Chat, 2-Embedding, 3-Rerank
+     * 模型类型: 1-Chat, 2-Embedding
      */
     private Integer type;
 

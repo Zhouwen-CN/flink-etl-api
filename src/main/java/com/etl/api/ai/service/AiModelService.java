@@ -27,7 +27,7 @@ public interface AiModelService extends IService<AiModel> {
     ResponseVO<List<String>> modelSelector(AiModelSelectorForm form);
 
     /**
-     * 按模型类型测试连通性：Chat 对话、Embedding 向量化、Rerank 重排
+     * 按模型类型测试连通性：Chat 对话、Embedding 向量化
      */
     ResponseVO<String> testModel(Long modelId);
 }

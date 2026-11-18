@@ -2,7 +2,7 @@ create table T_AI_MODEL
 (
     id             bigint primary key auto_increment comment '自增主键',
     name           varchar(64)   not null comment '模型唯一标识',
-    type           tinyint       not null comment '模型类型: 1-Chat, 2-Embedding, 3-Rerank',
+    type tinyint not null comment '模型类型: 1-Chat, 2-Embedding',
     format         tinyint     default null comment '接口格式: 1-OpenAI Chat Completions, 2-OpenAI Responses, 3-Anthropic Messages',
     base_url       varchar(256)  not null comment '大模型请求地址',
     api_key        varchar(1000) not null comment '大模型 API KEY',
