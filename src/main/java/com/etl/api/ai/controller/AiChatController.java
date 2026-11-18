@@ -2,44 +2,24 @@ package com.etl.api.ai.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
-import com.etl.api.ai.config.AiChatMemoryStore;
-import com.etl.api.ai.config.AssistantService;
-import com.etl.api.ai.config.ChatModelFactory;
 import com.etl.api.ai.domain.convert.AiBotConvert;
 import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiConversation;
 import com.etl.api.ai.domain.entity.AiConversationMessage;
-import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiChatForm;
 import com.etl.api.ai.domain.form.AiConversationCreateForm;
 import com.etl.api.ai.domain.form.AiConversationRenameForm;
 import com.etl.api.ai.domain.vo.AiConversationVO;
-import com.etl.api.ai.exception.AiChatException;
 import com.etl.api.ai.service.AiBotService;
+import com.etl.api.ai.service.AiChatService;
 import com.etl.api.ai.service.AiConversationMessageService;
 import com.etl.api.ai.service.AiConversationService;
-import com.etl.api.ai.service.AiModelService;
-import com.etl.api.ai.util.AiMessageUtil;
-import com.etl.api.ai.util.SseEmitterUtil;
 import com.etl.api.sys.domain.vo.DictionaryVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
-import com.etl.api.sys.util.LocalDateTimeUtil;
-import dev.langchain4j.data.message.Content;
-import dev.langchain4j.data.message.TextContent;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.request.ChatRequestParameters;
-import dev.langchain4j.model.chat.response.StreamingHandle;
-import dev.langchain4j.service.AiServices;
-import dev.langchain4j.service.TokenStream;
-import dev.langchain4j.service.tool.ToolArgumentsErrorHandler;
-import dev.langchain4j.service.tool.ToolExecutionErrorHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -53,29 +33,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
-@Slf4j
 @Tag(name = "AI聊天 控制器")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/ai/chat")
 public class AiChatController {
 
-    private final ChatModelFactory chatModelFactory;
     private final AiBotService botService;
-    private final AiModelService modelService;
-    private final AiChatMemoryStore chatMemoryStore;
+    private final AiChatService chatService;
     private final AiConversationService conversationService;
     private final AiConversationMessageService conversationMessageService;
-
-    @Value("${custom.ai.max_memory_messages:100}")
-    private Integer maxMemoryMessages;
 
     @SaCheckPermission("chat.select")
     @Operation(summary = "Bot选择器")
@@ -145,117 +114,6 @@ public class AiChatController {
     @Operation(summary = "聊天（SSE 流式）")
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamChat(@RequestBody @Validated AiChatForm form) {
-        Long conversationId = form.getConversationId();
-
-        AiBot aiBot = botService.getById(form.getBotId());
-        if (aiBot == null) {
-            throw new AiChatException("Bot不存在: " + form.getBotId());
-        }
-        if (!Boolean.TRUE.equals(aiBot.getStatus())) {
-            throw new AiChatException("Bot已停用: " + aiBot.getName());
-        }
-        AiModel aiModel = modelService.getById(aiBot.getModelId());
-        if (aiModel == null) {
-            throw new AiChatException("模型不存在: " + aiBot.getModelId());
-        }
-        if (form.getImages() != null && !form.getImages().isEmpty() && !Boolean.TRUE.equals(aiModel.getSupportImage())) {
-            throw new AiChatException("模型不支持图片: " + aiBot.getName());
-        }
-
-        SseEmitterUtil sse = new SseEmitterUtil();
-        AtomicReference<StreamingHandle> handleRef = new AtomicReference<>();
-
-        // 客户端断开/超时 → 取消模型生成，避免空跑浪费 token
-        // 前端 abort 后服务端在下一次写入时感知断开，此处负责触发取消
-        sse.onError(ex -> cancelQuietly(handleRef, conversationId));
-        sse.onTimeout(() -> {
-            log.warn("SSE timeout, conversationId={}", conversationId);
-            cancelQuietly(handleRef, conversationId);
-        });
-
-        // 挂载的 MCP 工具：ToolSpecification 来自本地缓存 input_schema，执行时临时建连调用远端
-        val chatTools = botService.buildChatTools(aiBot.getId());
-
-        // 获取 ai service
-        AssistantService assistantService = AiServices.builder(AssistantService.class)
-                .streamingChatModel(chatModelFactory.getStreamingChatModel(aiModel))
-                .systemMessageProvider(id -> aiBot.getSystemPrompt())
-                // 环境信息
-                .systemMessageTransformer(systemPrompt -> {
-                    val now = LocalDateTimeUtil.format(LocalDateTime.now());
-                    val osInfo = System.getProperty("os.name") + " " + System.getProperty("os.version");
-                    return """
-                            %s
-                            
-                            # 环境信息
-                            - 当前时间: %s (%s)
-                            - 操作系统: %s
-                            """.formatted(systemPrompt,now, ZoneId.systemDefault(), osInfo);
-                })
-                .chatMemoryProvider(id -> MessageWindowChatMemory.builder()
-                        .id(id)
-                        .maxMessages(maxMemoryMessages)
-                        .chatMemoryStore(chatMemoryStore)
-                        .build()
-                )
-                .tools(chatTools)
-                // 工具调用往返轮数
-                .maxToolCallingRoundTrips(aiBot.getMaxToolCalls())
-                // 把工具 参数错误信息 和 调用错误信息 发送给 LLM
-                .toolArgumentsErrorHandler(ToolArgumentsErrorHandler.sendExceptionMessageToLlm())
-                .toolExecutionErrorHandler(ToolExecutionErrorHandler.failInvocationUnlessVisibleToLlm())
-                .build();
-
-        // 获取 chat 请求参数
-        ChatRequestParameters chatRequestParameters = ChatRequestParameters.builder()
-                .temperature(aiBot.getTemperature())
-                .topP(aiBot.getTopP())
-                .build();
-
-        // 构建用户消息内容列表（文本 + 图片）
-        List<Content> contents = new ArrayList<>();
-        contents.add(TextContent.from(form.getMessage()));
-        contents.addAll(AiMessageUtil.buildImageContents(form.getImages()));
-
-        // stream chat
-        TokenStream tokenStream = assistantService.streamingChat(
-                conversationId,
-                contents,
-                chatRequestParameters
-        );
-
-        tokenStream
-                .onPartialThinkingWithContext((partial, ctx) -> {
-                    handleRef.set(ctx.streamingHandle());
-                    sse.sendDelta(AiMessageUtil.thinking(partial.text()));
-                })
-                // 官方推荐：onPartialResponseWithContext 可拿到 StreamingHandle 用于取消
-                .onPartialResponseWithContext((partial, ctx) -> {
-                    handleRef.set(ctx.streamingHandle());
-                    sse.sendDelta(AiMessageUtil.text(partial.text()));
-                })
-                // 工具执行前：推送调用请求（工具名 + 参数）
-                .beforeToolExecution(before -> sse.sendTool(AiMessageUtil.toolCall(before.request())))
-                // 工具执行后：推送执行结果
-                .onToolExecuted(execution -> sse.sendTool(AiMessageUtil.toolResult(execution)))
-                .onCompleteResponse(response -> sse.sendDone(AiMessageUtil.metadata(response)))
-                .onError(ex -> sse.sendError(ex.getMessage()))
-                .start();
-
-        return sse.getEmitter();
-    }
-
-    /**
-     * 连接断开/超时时的静默取消，只负责停生成，不再向已断开的连接写数据
-     */
-    private void cancelQuietly(AtomicReference<StreamingHandle> handleRef, Long conversationId) {
-        StreamingHandle handle = handleRef.get();
-        if (handle != null) {
-            try {
-                handle.cancel();
-            } catch (Exception e) {
-                log.warn("cancel streaming failed, conversationId={}", conversationId, e);
-            }
-        }
+        return chatService.streamChat(form);
     }
 }
