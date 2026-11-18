@@ -1,5 +1,6 @@
 package com.etl.api.ai.service.impl;
 
+import com.etl.api.ai.domain.dto.McpServerConfigDTO;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiMcpToolUpdateForm;
@@ -10,7 +11,6 @@ import com.etl.api.ai.mapper.AiMcpToolMapper;
 import com.etl.api.ai.service.AiMcpToolService;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -27,7 +27,6 @@ import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -82,7 +81,7 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
     }
 
     @Override
-    public void syncTools(Long serverId, JsonNode serverConfig) {
+    public void syncTools(Long serverId, McpServerConfigDTO serverConfig) {
         List<ToolSpecification> specs = fetchTools(serverConfig);
 
         val existing = mcpToolMapper.selectListByQuery(
@@ -126,15 +125,13 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
     /**
      * 建立临时连接拉取工具清单，用后即关。
      */
-    private List<ToolSpecification> fetchTools(JsonNode serverConfig) {
-        val url = serverConfig.path("url").asText();
-
+    private List<ToolSpecification> fetchTools(McpServerConfigDTO serverConfig) {
         // transport 级 timeout 与显式 httpClient 互斥，超时统一配置在 AiHttpClientConfig
         val transportBuilder = StreamableHttpMcpTransport.builder()
-                .url(url.trim())
+                .url(serverConfig.getUrl().trim())
                 .httpClient(aiHttpClient);
-        val headers = extractHeaders(serverConfig.get("headers"));
-        if (!headers.isEmpty()) {
+        val headers = serverConfig.getHeaders();
+        if (headers != null && !headers.isEmpty()) {
             transportBuilder.customHeaders(headers);
         }
 
@@ -152,20 +149,5 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
             }
             throw new McpConfigException("同步MCP工具失败（连接或拉取工具清单异常）: " + cause.getMessage());
         }
-    }
-
-    /**
-     * headers 节点转 Map（仅取文本值），缺失或空返回空 Map
-     */
-    private Map<String, String> extractHeaders(JsonNode headers) {
-        val result = new LinkedHashMap<String, String>();
-        if (headers != null && headers.isObject()) {
-            for (val field : headers.properties()) {
-                if (StringUtils.hasText(field.getKey()) && field.getValue().isTextual()) {
-                    result.put(field.getKey(), field.getValue().asText());
-                }
-            }
-        }
-        return result;
     }
 }

@@ -1,6 +1,6 @@
 package com.etl.api.ai.service.impl;
 
-import com.etl.api.ai.config.McpConfigValidator;
+import com.etl.api.ai.domain.validator.McpConfigValidator;
 import com.etl.api.ai.domain.convert.AiBotConvert;
 import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
@@ -14,7 +14,6 @@ import com.etl.api.ai.mapper.AiMcpServerMapper;
 import com.etl.api.ai.mapper.AiMcpToolMapper;
 import com.etl.api.ai.service.AiBotService;
 import com.etl.api.sys.domain.vo.ResponseVO;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -35,10 +34,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * AI Bot表 服务层实现。
@@ -120,7 +117,9 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
             );
         }
 
-        botMcpToolMapper.insertBatch(botMcpToolList);
+        if (!botMcpToolList.isEmpty()) {
+            botMcpToolMapper.insertBatch(botMcpToolList);
+        }
     }
 
     @Override
@@ -216,16 +215,15 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
     }
 
     private McpClient buildClient(String configJson) {
-        // 已保存的服务配置无需再校验，validate 仅用于取出单个服务节点
+        // 已保存的服务配置无需再校验，validate 仅用于反序列化为强类型配置
         val serverConfig = configValidator.validate(configJson);
-        val url = serverConfig.path("url").asText();
 
         // transport 级 timeout 与显式 httpClient 互斥，超时统一配置在 AiHttpClientConfig
         val transportBuilder = StreamableHttpMcpTransport.builder()
-                .url(url.trim())
+                .url(serverConfig.getUrl().trim())
                 .httpClient(aiHttpClient);
-        val headers = extractHeaders(serverConfig.get("headers"));
-        if (!headers.isEmpty()) {
+        val headers = serverConfig.getHeaders();
+        if (headers != null && !headers.isEmpty()) {
             transportBuilder.customHeaders(headers);
         }
 
@@ -234,20 +232,5 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
                 .initializationTimeout(TIMEOUT)
                 .toolExecutionTimeout(TOOL_EXECUTION_TIMEOUT)
                 .build();
-    }
-
-    /**
-     * headers 节点转 Map（仅取文本值），缺失或空返回空 Map
-     */
-    private Map<String, String> extractHeaders(JsonNode headers) {
-        val result = new LinkedHashMap<String, String>();
-        if (headers != null && headers.isObject()) {
-            for (val field : headers.properties()) {
-                if (StringUtils.hasText(field.getKey()) && field.getValue().isTextual()) {
-                    result.put(field.getKey(), field.getValue().asText());
-                }
-            }
-        }
-        return result;
     }
 }

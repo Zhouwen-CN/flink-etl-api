@@ -1,11 +1,11 @@
 package com.etl.api.ai.service;
 
+import com.etl.api.ai.domain.dto.McpServerConfigDTO;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiMcpToolUpdateForm;
 import com.etl.api.ai.domain.vo.AiMcpToolVO;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.mybatisflex.core.service.IService;
 
 /**
@@ -34,8 +34,8 @@ public interface AiMcpToolService extends IService<AiMcpTool> {
      * 服务端已消失的工具物理删除并级联删除挂载行。
      *
      * @param serverId     mcp服务id
-     * @param serverConfig 单个服务的配置节点（已经过 McpConfigValidator 校验）
+     * @param serverConfig 单个服务的连接配置（已经过 McpConfigValidator 校验）
      * @throws com.etl.api.ai.exception.McpConfigException 建连或拉取工具清单失败
      */
-    void syncTools(Long serverId, JsonNode serverConfig);
+    void syncTools(Long serverId, McpServerConfigDTO serverConfig);
 }

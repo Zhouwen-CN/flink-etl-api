@@ -19,6 +19,6 @@ public class AiMcpServerCreateForm {
     private String description;
 
     @NotBlank
-    @Schema(description = "mcp连接配置JSON（单个服务，仅允许远程传输）")
+    @Schema(description = "mcp连接配置JSON（平铺格式单个远程服务，字段：type、url、headers）")
     private String configJson;
 }

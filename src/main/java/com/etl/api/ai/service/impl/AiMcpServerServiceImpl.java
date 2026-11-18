@@ -1,6 +1,6 @@
 package com.etl.api.ai.service.impl;
 
-import com.etl.api.ai.config.McpConfigValidator;
+import com.etl.api.ai.domain.validator.McpConfigValidator;
 import com.etl.api.ai.domain.convert.AiMcpServerConvert;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
 import com.etl.api.ai.domain.entity.AiMcpServer;
