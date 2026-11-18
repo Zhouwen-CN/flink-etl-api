@@ -24,9 +24,6 @@ public enum AiModelFormatEnum {
      * code 转枚举，null 默认 OpenAI Chat Completions，未知 code 抛出异常
      */
     public static AiModelFormatEnum of(Integer code) {
-        if (code == null) {
-            return OPENAI_CHAT_COMPLETIONS;
-        }
         for (AiModelFormatEnum format : values()) {
             if (format.code == code) {
                 return format;

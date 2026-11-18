@@ -19,6 +19,8 @@ insert into T_SYS_DICT_TYPE(id, name, remark, status)
 values (3, 'etl_job_type', '任务类型', 1);
 insert into T_SYS_DICT_TYPE(id, name, remark, status)
 values (4, 'ai_api_format', 'ai接口格式', 1);
+insert into T_SYS_DICT_TYPE(id, name, remark, status)
+values (5, 'ai_model_type', 'ai模型类型', 1);
 
 create table T_SYS_DICT_DATA
 (
@@ -63,3 +65,11 @@ insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (10, 4, 'OpenAI Responses', 2, 2);
 insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (11, 4, 'Anthropic Messages', 3, 3);
+
+-- ai模型类型
+insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (12, 5, 'Chat', 1, 1);
+insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (13, 5, 'Embedding', 2, 2);
+insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
+values (14, 5, 'Rerank', 3, 3);

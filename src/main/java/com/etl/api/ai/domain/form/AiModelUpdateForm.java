@@ -7,6 +7,9 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
+/**
+ * 更新的时候，apikey 可以为空
+ */
 @Data
 @Schema(description = "更新AI模型表单")
 public class AiModelUpdateForm {
@@ -21,6 +24,9 @@ public class AiModelUpdateForm {
     private String name;
 
     @NotNull
+    @Schema(description = "模型类型: 1-Chat, 2-Embedding, 3-Rerank")
+    private Integer type;
+
     @Schema(description = "接口格式: 1-OpenAI Chat Completions, 2-OpenAI Responses, 3-Anthropic Messages")
     private Integer format;
 

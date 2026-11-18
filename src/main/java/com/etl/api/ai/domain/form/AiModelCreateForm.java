@@ -17,6 +17,9 @@ public class AiModelCreateForm {
     private String name;
 
     @NotNull
+    @Schema(description = "模型类型: 1-Chat, 2-Embedding, 3-Rerank")
+    private Integer type;
+
     @Schema(description = "接口格式: 1-OpenAI Chat Completions, 2-OpenAI Responses, 3-Anthropic Messages")
     private Integer format;
 
