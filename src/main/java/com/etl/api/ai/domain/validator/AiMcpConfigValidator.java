@@ -2,8 +2,7 @@ package com.etl.api.ai.domain.validator;
 
 import com.etl.api.ai.domain.dto.McpServerConfigDTO;
 import com.etl.api.ai.enumeration.AiMcpTransportTypeEnum;
-import com.etl.api.ai.exception.McpConfigException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.etl.api.ai.exception.AiMcpConfigException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -21,14 +20,14 @@ import java.net.URI;
  */
 @Component
 @RequiredArgsConstructor
-public class McpConfigValidator {
+public class AiMcpConfigValidator {
 
     private final ObjectMapper objectMapper;
 
     /**
      * 校验 config_json 并返回强类型配置。
      *
-     * @throws McpConfigException 校验失败（含具体原因）
+     * @throws AiMcpConfigException 校验失败（含具体原因）
      */
     public McpServerConfigDTO validate(String configJson) {
         val config = parse(configJson);
@@ -42,38 +41,36 @@ public class McpConfigValidator {
      */
     private McpServerConfigDTO parse(String configJson) {
         try {
-            return objectMapper.copy()
-                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-                    .readValue(configJson, McpServerConfigDTO.class);
+            return objectMapper.readValue(configJson, McpServerConfigDTO.class);
         } catch (Exception e) {
-            throw new McpConfigException("MCP 配置JSON解析失败: " + e.getMessage());
+            throw new AiMcpConfigException("MCP 配置JSON解析失败: " + e.getMessage());
         }
     }
 
     private void validateType(String type) {
         if (!StringUtils.hasText(type)) {
-            throw new McpConfigException("MCP 配置必须包含 type 字段（远程传输类型）");
+            throw new AiMcpConfigException("MCP 配置必须包含 type 字段（远程传输类型）");
         }
         if (!AiMcpTransportTypeEnum.isRemoteSupported(type)) {
-            throw new McpConfigException("不支持的传输类型: " + type +
+            throw new AiMcpConfigException("不支持的传输类型: " + type +
                     "，仅允许: sse、http-sse、ssehttp、http、streamable、http-stream、streamablehttp");
         }
     }
 
     private void validateUrl(String url) {
         if (!StringUtils.hasText(url)) {
-            throw new McpConfigException("MCP 配置必须包含 url 字段");
+            throw new AiMcpConfigException("MCP 配置必须包含 url 字段");
         }
         try {
             val uri = new URI(url.trim());
             val scheme = uri.getScheme();
             if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
-                throw new McpConfigException("url 仅支持 http/https 协议: " + url);
+                throw new AiMcpConfigException("url 仅支持 http/https 协议: " + url);
             }
-        } catch (McpConfigException e) {
+        } catch (AiMcpConfigException e) {
             throw e;
         } catch (Exception e) {
-            throw new McpConfigException("url 格式不合法: " + url);
+            throw new AiMcpConfigException("url 格式不合法: " + url);
         }
     }
 }

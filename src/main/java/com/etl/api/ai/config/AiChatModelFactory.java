@@ -30,13 +30,13 @@ import org.springframework.stereotype.Component;
  * @since 2026-11-11
  */
 @Component
-public class ChatModelFactory {
+public class AiChatModelFactory {
 
     private final MicrometerMetricsChatModelListener metricsListener;
     private final boolean isLogging;
     private static final int DEFAULT_ANTHROPIC_MAX_TOKENS = 4096;
 
-    public ChatModelFactory(MeterRegistry meterRegistry, Environment environment) {
+    public AiChatModelFactory(MeterRegistry meterRegistry, Environment environment) {
         this.metricsListener = new MicrometerMetricsChatModelListener(meterRegistry);
         this.isLogging = environment.acceptsProfiles(Profiles.of("dev"));
     }

@@ -1,6 +1,6 @@
 package com.etl.api.ai.service.impl;
 
-import com.etl.api.ai.domain.validator.McpConfigValidator;
+import com.etl.api.ai.domain.validator.AiMcpConfigValidator;
 import com.etl.api.ai.domain.convert.AiBotConvert;
 import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
@@ -69,7 +69,7 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
     private final AiBotMcpToolMapper botMcpToolMapper;
     private final AiMcpToolMapper mcpToolMapper;
     private final AiMcpServerMapper mcpServerMapper;
-    private final McpConfigValidator configValidator;
+    private final AiMcpConfigValidator configValidator;
     private final HttpClient aiHttpClient;
 
     @Override

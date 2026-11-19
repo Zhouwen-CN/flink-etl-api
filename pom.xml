@@ -19,7 +19,8 @@
         <spring-doc.version>2.8.17</spring-doc.version>
         <sa-token.version>1.45.0</sa-token.version>
 
-        <langchain4j.version>1.23.0-beta33</langchain4j.version>
+        <langchain4j.version>1.23.0</langchain4j.version>
+        <langchain4j.beta.version>1.23.0-beta33</langchain4j.beta.version>
 
         <mybatis-flex.version>1.11.6</mybatis-flex.version>
         <ip2region.version>3.3.4</ip2region.version>
@@ -128,15 +129,10 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
-        <!-- langchain4j -->
+        <!-- langchain4j open ai -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
-            <version>${langchain4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-anthropic-spring-boot-starter</artifactId>
+            <artifactId>langchain4j-open-ai</artifactId>
             <version>${langchain4j.version}</version>
             <exclusions>
                 <exclusion>
@@ -145,20 +141,35 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- langchain4j anthropic -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-spring-boot-starter</artifactId>
+            <artifactId>langchain4j-anthropic</artifactId>
+            <version>${langchain4j.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>langchain4j-http-client-jdk</artifactId>
+                    <groupId>dev.langchain4j</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- langchain4j ai service -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j</artifactId>
             <version>${langchain4j.version}</version>
         </dependency>
+        <!-- langchain4j micrometer -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-micrometer-metrics</artifactId>
-            <version>${langchain4j.version}</version>
+            <version>${langchain4j.beta.version}</version>
         </dependency>
+        <!-- langchain4j mcp -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-mcp</artifactId>
-            <version>${langchain4j.version}</version>
+            <version>${langchain4j.beta.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>langchain4j-http-client-jdk</artifactId>
@@ -166,11 +177,28 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- MCP transport 的 HTTP 客户端（Spring RestClient 实现），替代被排除的 jdk 客户端 -->
+        <!-- langchain4j http client -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-http-client-spring-restclient</artifactId>
-            <version>${langchain4j.version}</version>
+            <version>${langchain4j.beta.version}</version>
+        </dependency>
+        <!-- langchain4j vector store -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-community-redis</artifactId>
+            <version>${langchain4j.beta.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-milvus</artifactId>
+            <version>${langchain4j.beta.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>langchain4j-http-client-jdk</artifactId>
+                    <groupId>dev.langchain4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- spring doc -->

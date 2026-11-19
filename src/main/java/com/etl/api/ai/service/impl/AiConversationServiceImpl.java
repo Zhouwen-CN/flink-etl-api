@@ -1,7 +1,7 @@
 package com.etl.api.ai.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.etl.api.ai.config.ChatModelFactory;
+import com.etl.api.ai.config.AiChatModelFactory;
 import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiConversation;
 import com.etl.api.ai.domain.entity.AiModel;
@@ -41,7 +41,7 @@ public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper,
 
     private final AiBotService botService;
     private final AiModelService modelService;
-    private final ChatModelFactory chatModelFactory;
+    private final AiChatModelFactory chatModelFactory;
     private final AiConversationMessageService conversationMessageService;
 
     @Override

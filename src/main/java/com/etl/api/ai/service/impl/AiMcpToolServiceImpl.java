@@ -5,7 +5,7 @@ import com.etl.api.ai.domain.entity.AiBotMcpTool;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiMcpToolUpdateForm;
 import com.etl.api.ai.domain.vo.AiMcpToolVO;
-import com.etl.api.ai.exception.McpConfigException;
+import com.etl.api.ai.exception.AiMcpConfigException;
 import com.etl.api.ai.mapper.AiBotMcpToolMapper;
 import com.etl.api.ai.mapper.AiMcpToolMapper;
 import com.etl.api.ai.service.AiMcpToolService;
@@ -145,9 +145,9 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
         } catch (Exception e) {
             val cause = e.getCause() != null ? e.getCause() : e;
             if (cause instanceof TimeoutException) {
-                throw new McpConfigException("同步MCP工具失败: 连接或拉取工具清单超时（5s）");
+                throw new AiMcpConfigException("同步MCP工具失败: 连接或拉取工具清单超时（5s）");
             }
-            throw new McpConfigException("同步MCP工具失败（连接或拉取工具清单异常）: " + cause.getMessage());
+            throw new AiMcpConfigException("同步MCP工具失败（连接或拉取工具清单异常）: " + cause.getMessage());
         }
     }
 }

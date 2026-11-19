@@ -4,6 +4,7 @@ import com.etl.api.ai.domain.dto.McpServerConfigDTO;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiMcpToolUpdateForm;
 import com.etl.api.ai.domain.vo.AiMcpToolVO;
+import com.etl.api.ai.exception.AiMcpConfigException;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.service.IService;
@@ -35,7 +36,7 @@ public interface AiMcpToolService extends IService<AiMcpTool> {
      *
      * @param serverId     mcp服务id
      * @param serverConfig 单个服务的连接配置（已经过 McpConfigValidator 校验）
-     * @throws com.etl.api.ai.exception.McpConfigException 建连或拉取工具清单失败
+     * @throws AiMcpConfigException 建连或拉取工具清单失败
      */
     void syncTools(Long serverId, McpServerConfigDTO serverConfig);
 }

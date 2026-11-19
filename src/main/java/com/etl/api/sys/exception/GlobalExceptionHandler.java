@@ -3,11 +3,6 @@ package com.etl.api.sys.exception;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
-import com.etl.api.ai.exception.AiChatException;
-import com.etl.api.ai.exception.McpConfigException;
-import com.etl.api.etl.exception.EtlJobException;
-import com.etl.api.etl.exception.FlinkApiRequestException;
-import com.etl.api.etl.exception.ScheduledTaskException;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.etl.api.sys.service.SysErrorLogService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -108,46 +103,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseVO<Void> noResourceFoundExceptionHandler(NoResourceFoundException e) {
         return ResponseVO.error(HttpStatus.NOT_FOUND, e.getMessage());
-    }
-
-    /**
-     * Flink API 请求异常
-     */
-    @ExceptionHandler(FlinkApiRequestException.class)
-    public ResponseVO<Void> flinkApiRequestExceptionHandler(FlinkApiRequestException e) {
-        return ResponseVO.error(e.getMessage());
-    }
-
-    /**
-     * ETL 任务异常
-     */
-    @ExceptionHandler(EtlJobException.class)
-    public ResponseVO<Void> etlJobExceptionHandler(EtlJobException e) {
-        return ResponseVO.error(e.getMessage());
-    }
-
-    /**
-     * 调度任务异常
-     */
-    @ExceptionHandler(ScheduledTaskException.class)
-    public ResponseVO<Void> scheduleJobExceptionHandler(ScheduledTaskException e) {
-        return ResponseVO.error(e.getMessage());
-    }
-
-    /**
-     * AI 聊天业务异常
-     */
-    @ExceptionHandler(AiChatException.class)
-    public ResponseVO<Void> aiChatExceptionHandler(AiChatException e) {
-        return ResponseVO.error(e.getMessage());
-    }
-
-    /**
-     * MCP 配置异常（config_json 校验失败、工具同步失败）
-     */
-    @ExceptionHandler(McpConfigException.class)
-    public ResponseVO<Void> mcpConfigExceptionHandler(McpConfigException e) {
-        return ResponseVO.error(e.getMessage());
     }
 
     /**

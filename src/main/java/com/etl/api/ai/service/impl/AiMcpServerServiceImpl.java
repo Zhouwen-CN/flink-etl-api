@@ -6,7 +6,7 @@ import com.etl.api.ai.domain.entity.AiMcpServer;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiMcpServerCreateForm;
 import com.etl.api.ai.domain.form.AiMcpServerUpdateForm;
-import com.etl.api.ai.domain.validator.McpConfigValidator;
+import com.etl.api.ai.domain.validator.AiMcpConfigValidator;
 import com.etl.api.ai.domain.vo.AiMcpSelectorVO;
 import com.etl.api.ai.domain.vo.AiMcpServerVO;
 import com.etl.api.ai.mapper.AiBotMcpToolMapper;
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcpServer> implements AiMcpServerService {
 
-    private final McpConfigValidator configValidator;
+    private final AiMcpConfigValidator configValidator;
     private final AiMcpToolService mcpToolService;
     private final AiMcpToolMapper mcpToolMapper;
     private final AiBotMcpToolMapper botMcpToolMapper;

@@ -13,17 +13,17 @@ import java.util.function.Consumer;
  */
 @Getter
 @Slf4j
-public class SseEmitterUtil {
+public class AiSseEmitterUtil {
 
     private static final long DEFAULT_TIMEOUT = Duration.ofMinutes(5).toMillis();
 
     private final SseEmitter emitter;
 
-    public SseEmitterUtil() {
+    public AiSseEmitterUtil() {
         this(DEFAULT_TIMEOUT);
     }
 
-    public SseEmitterUtil(long timeoutMillis) {
+    public AiSseEmitterUtil(long timeoutMillis) {
         this.emitter = new SseEmitter(timeoutMillis);
     }
 

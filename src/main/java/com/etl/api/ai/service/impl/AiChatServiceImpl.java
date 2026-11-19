@@ -1,8 +1,8 @@
 package com.etl.api.ai.service.impl;
 
 import com.etl.api.ai.config.AiChatMemoryStore;
-import com.etl.api.ai.config.AssistantService;
-import com.etl.api.ai.config.ChatModelFactory;
+import com.etl.api.ai.config.AiAssistantService;
+import com.etl.api.ai.config.AiChatModelFactory;
 import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiChatForm;
@@ -11,7 +11,7 @@ import com.etl.api.ai.service.AiBotService;
 import com.etl.api.ai.service.AiChatService;
 import com.etl.api.ai.service.AiModelService;
 import com.etl.api.ai.util.AiMessageUtil;
-import com.etl.api.ai.util.SseEmitterUtil;
+import com.etl.api.ai.util.AiSseEmitterUtil;
 import com.etl.api.sys.util.LocalDateTimeUtil;
 import dev.langchain4j.data.message.Content;
 import dev.langchain4j.data.message.TextContent;
@@ -52,7 +52,7 @@ public class AiChatServiceImpl implements AiChatService {
     @Value("${custom.ai.max_memory_messages:100}")
     private Integer maxMemoryMessages;
 
-    private final ChatModelFactory chatModelFactory;
+    private final AiChatModelFactory chatModelFactory;
     private final AiChatMemoryStore chatMemoryStore;
     private final AiBotService botService;
     private final AiModelService modelService;
@@ -76,7 +76,7 @@ public class AiChatServiceImpl implements AiChatService {
             throw new AiChatException("模型不支持图片: " + aiBot.getName());
         }
 
-        SseEmitterUtil sse = new SseEmitterUtil();
+        AiSseEmitterUtil sse = new AiSseEmitterUtil();
         AtomicReference<StreamingHandle> handleRef = new AtomicReference<>();
 
         // 客户端断开/超时 → 取消模型生成，避免空跑浪费 token
@@ -91,7 +91,7 @@ public class AiChatServiceImpl implements AiChatService {
         val chatTools = botService.buildChatTools(aiBot.getId());
 
         // 获取 ai service
-        AssistantService assistantService = AiServices.builder(AssistantService.class)
+        AiAssistantService assistantService = AiServices.builder(AiAssistantService.class)
                 .streamingChatModel(chatModelFactory.getStreamingChatModel(aiModel))
                 .systemMessageProvider(id -> aiBot.getSystemPrompt())
                 // 环境信息

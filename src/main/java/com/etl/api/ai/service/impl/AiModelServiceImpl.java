@@ -1,6 +1,6 @@
 package com.etl.api.ai.service.impl;
 
-import com.etl.api.ai.config.ChatModelFactory;
+import com.etl.api.ai.config.AiChatModelFactory;
 import com.etl.api.ai.domain.convert.AiModelConvert;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiModelCreateForm;
@@ -40,7 +40,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> implements AiModelService {
 
-    private final ChatModelFactory chatModelFactory;
+    private final AiChatModelFactory chatModelFactory;
     private final HttpClient aiHttpClient;
     private final ObjectMapper objectMapper;
 

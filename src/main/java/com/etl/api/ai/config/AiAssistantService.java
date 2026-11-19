@@ -10,7 +10,7 @@ import dev.langchain4j.service.memory.ChatMemoryAccess;
 import java.util.List;
 
 
-public interface AssistantService extends ChatMemoryAccess {
+public interface AiAssistantService extends ChatMemoryAccess {
 
     /**
      * 聊天（流式）
