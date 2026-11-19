@@ -128,7 +128,7 @@ public class EtlAlertController {
                 .one();
 
         if (alert == null) {
-            return ResponseVO.recordNotFoundError(id);
+            return ResponseVO.recordNotFoundError("ID", id);
         }
 
         sendMailManager.sendTest(alert.getName(), alert.getEmail());

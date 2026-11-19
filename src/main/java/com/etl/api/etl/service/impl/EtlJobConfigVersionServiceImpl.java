@@ -54,7 +54,7 @@ public class EtlJobConfigVersionServiceImpl extends ServiceImpl<EtlJobConfigVers
 
         val job = etlJobMapper.selectOneById(jobId);
         if (job == null) {
-            return ResponseVO.recordNotFoundError(jobId);
+            return ResponseVO.recordNotFoundError("ID", jobId);
         }
 
         // 目标版本配置写回任务表

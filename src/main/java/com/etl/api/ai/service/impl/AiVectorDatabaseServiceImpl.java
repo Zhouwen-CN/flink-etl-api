@@ -64,7 +64,7 @@ public class AiVectorDatabaseServiceImpl extends ServiceImpl<AiVectorDatabaseMap
     public ResponseVO<Void> updateVectorDatabase(AiVectorDatabaseUpdateForm form) {
         val old = this.getById(form.getId());
         if (old == null) {
-            return ResponseVO.recordNotFoundError(form.getId());
+            return ResponseVO.recordNotFoundError("ID", form.getId());
         }
 
         val nameExists = this.queryChain()

@@ -46,8 +46,8 @@ public final class ResponseVO<T> {
     }
 
     // 记录未找到错误
-    public static <T> ResponseVO<T> recordNotFoundError(Object identify) {
-        return error("记录未找到: " + identify);
+    public static <T> ResponseVO<T> recordNotFoundError(String fieldName, Object identify) {
+        return error("记录未找到: " + fieldName + "=" + identify);
     }
 
     // admin用户相关不能修改

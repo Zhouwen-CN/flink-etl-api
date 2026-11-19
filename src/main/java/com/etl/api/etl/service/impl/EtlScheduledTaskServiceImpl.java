@@ -82,7 +82,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
                 .one();
 
         if (scheduleJob == null) {
-            return ResponseVO.recordNotFoundError("scheduleTaskId:" + id);
+            return ResponseVO.recordNotFoundError("ID", id);
         }
 
         if (scheduleJob.getJobEnable()) {
@@ -127,7 +127,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
         val id = form.getId();
         val etlScheduledTask = this.getById(id);
         if (etlScheduledTask == null) {
-            return ResponseVO.recordNotFoundError("scheduleTaskId:" + id);
+            return ResponseVO.recordNotFoundError("ID", id);
         }
 
         val etlJobId = form.getEtlJobId();

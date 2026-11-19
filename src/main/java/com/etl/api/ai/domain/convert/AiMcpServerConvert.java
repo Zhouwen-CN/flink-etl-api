@@ -17,6 +17,4 @@ public interface AiMcpServerConvert {
     AiMcpServer convert(AiMcpServerCreateForm form);
 
     AiMcpServer convert(AiMcpServerUpdateForm form);
-
-    AiMcpServerVO convert(AiMcpServer entity);
 }

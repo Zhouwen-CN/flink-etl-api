@@ -79,7 +79,7 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
     public ResponseVO<Void> updateAiMcpServer(AiMcpServerUpdateForm form) {
         val old = this.getById(form.getId());
         if (old == null) {
-            return ResponseVO.recordNotFoundError(form.getId());
+            return ResponseVO.recordNotFoundError("ID", form.getId());
         }
 
         val nameExists = this.queryChain()
@@ -130,7 +130,7 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
     public ResponseVO<Void> syncTools(Long id) {
         val server = this.getById(id);
         if (server == null) {
-            return ResponseVO.recordNotFoundError(id);
+            return ResponseVO.recordNotFoundError("ID", id);
         }
 
         val serverConfig = configValidator.validate(server.getConfigJson());

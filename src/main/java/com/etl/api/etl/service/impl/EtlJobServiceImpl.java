@@ -70,7 +70,7 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
     public ResponseVO<Void> updateJob(EtlJobUpdateForm form) {
         val job = this.getById(form.getId());
         if (job == null) {
-            return ResponseVO.recordNotFoundError(form.getId());
+            return ResponseVO.recordNotFoundError("ID", form.getId());
         }
         val entity = EtlJobConvert.INSTANCE.convert(form);
         this.updateById(entity);

@@ -62,8 +62,8 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
     @Override
     public ResponseVO<Void> updateAiModel(AiModelUpdateForm form) {
         val aiModel = this.getById(form.getId());
-        if(aiModel == null){
-            return ResponseVO.recordNotFoundError(form.getId());
+        if (aiModel == null) {
+            return ResponseVO.recordNotFoundError("ID", form.getId());
         }
 
         val exists = this.queryChain()
@@ -75,7 +75,7 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
         }
 
         val apiKey = form.getApiKey();
-        if(apiKey == null){
+        if (apiKey == null) {
             form.setApiKey(aiModel.getApiKey());
         }
 
@@ -93,7 +93,7 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
             if (!StringUtils.hasText(apiKey) && form.getId() != null) {
                 AiModel model = this.getById(form.getId());
                 if (model == null) {
-                    return ResponseVO.recordNotFoundError(form.getId());
+                    return ResponseVO.recordNotFoundError("ID", form.getId());
                 }
                 apiKey = model.getApiKey();
             }
@@ -126,7 +126,7 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
     public ResponseVO<String> testModel(Long modelId) {
         AiModel model = this.getById(modelId);
         if (model == null) {
-            return ResponseVO.recordNotFoundError(modelId);
+            return ResponseVO.recordNotFoundError("ID", modelId);
         }
         try {
             val result = switch (AiModelTypeEnum.of(model.getType())) {

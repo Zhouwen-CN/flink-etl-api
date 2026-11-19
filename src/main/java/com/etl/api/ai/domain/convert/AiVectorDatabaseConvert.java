@@ -3,7 +3,7 @@ package com.etl.api.ai.domain.convert;
 import com.etl.api.ai.domain.entity.AiVectorDatabase;
 import com.etl.api.ai.domain.form.AiVectorDatabaseCreateForm;
 import com.etl.api.ai.domain.form.AiVectorDatabaseUpdateForm;
-import com.etl.api.ai.domain.vo.AiVectorDatabaseVO;
+import com.etl.api.sys.domain.vo.DictionaryVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -18,5 +18,7 @@ public interface AiVectorDatabaseConvert {
 
     AiVectorDatabase convert(AiVectorDatabaseUpdateForm form);
 
-    AiVectorDatabaseVO convert(AiVectorDatabase entity);
+    @Mapping(target = "value", source = "id")
+    @Mapping(target = "label", source = "name")
+    DictionaryVO convert(AiVectorDatabase entity);
 }

@@ -70,7 +70,7 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
     public ResponseVO<Void> updateAiMcpTool(AiMcpToolUpdateForm form) {
         val entity = this.getById(form.getId());
         if (entity == null) {
-            return ResponseVO.recordNotFoundError(form.getId());
+            return ResponseVO.recordNotFoundError("ID", form.getId());
         }
 
         // 仅用户可配置字段；outputTemplate 传null表示清空（updateById 不忽略null，其余字段为已查出原值）
