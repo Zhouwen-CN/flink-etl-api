@@ -60,7 +60,7 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
                 .eq(AiMcpServer::getName, form.getName())
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(form.getName());
+            return ResponseVO.recordExistsError("Name", form.getName());
         }
 
         // 本地格式校验（Jackson 解析，不建连）
@@ -87,7 +87,7 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
                 .ne(AiMcpServer::getId, form.getId())
                 .exists();
         if (nameExists) {
-            return ResponseVO.recordExistsError(form.getName());
+            return ResponseVO.recordExistsError("Name", form.getName());
         }
 
         // 前端每次修改都会回传旧值：先对比前后 config_json，发生变更才校验并重新同步工具

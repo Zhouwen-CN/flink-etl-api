@@ -34,7 +34,7 @@ public class SysDictTypeServiceImpl extends ServiceImpl<SysDictTypeMapper, SysDi
                 .eq(SysDictType::getName, name)
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(name);
+            return ResponseVO.recordExistsError("Name", name);
         }
 
         val entity = SysDictTypeConvert.INSTANCE.convert(form);

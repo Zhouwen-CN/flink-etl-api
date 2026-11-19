@@ -46,7 +46,7 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
                 .eq(EtlJob::getName, name)
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(name);
+            return ResponseVO.recordExistsError("Name", name);
         }
 
         val etlProject = projectMapper.selectOneByQuery(

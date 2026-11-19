@@ -61,7 +61,7 @@ public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKno
                 .eq(AiKnowledge::getName, form.getName())
                 .exists();
         if (nameExists) {
-            return ResponseVO.recordExistsError(form.getName());
+            return ResponseVO.recordExistsError("Name", form.getName());
         }
 
         val vectorDb = vectorDatabaseMapper.selectOneById(form.getVectorDbId());
@@ -123,7 +123,7 @@ public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKno
                 .ne(AiKnowledge::getId, form.getId())
                 .exists();
         if (nameExists) {
-            return ResponseVO.recordExistsError(form.getName());
+            return ResponseVO.recordExistsError("Name", form.getName());
         }
 
         val entity = AiKnowledgeConvert.INSTANCE.convert(form);

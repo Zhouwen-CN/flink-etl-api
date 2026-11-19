@@ -53,7 +53,7 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
                 .eq(AiModel::getName, form.getName())
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(form.getName());
+            return ResponseVO.recordExistsError("Name", form.getName());
         }
         this.save(AiModelConvert.INSTANCE.convert(form));
         return ResponseVO.ok();
@@ -71,7 +71,7 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
                 .ne(AiModel::getId, form.getId())
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(form.getName());
+            return ResponseVO.recordExistsError("Name", form.getName());
         }
 
         val apiKey = form.getApiKey();

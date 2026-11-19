@@ -54,7 +54,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
                 .eq(SysDept::getName, name)
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(name);
+            return ResponseVO.recordExistsError("Name", name);
         }
 
         // 父部门不存在
@@ -96,7 +96,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
                 .ne(SysDept::getId, id)
                 .exists();
         if (nameExists) {
-            return ResponseVO.recordExistsError(form.getName());
+            return ResponseVO.recordExistsError("Name", form.getName());
         }
 
         // 更新

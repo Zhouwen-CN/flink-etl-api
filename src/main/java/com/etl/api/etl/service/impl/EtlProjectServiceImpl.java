@@ -33,7 +33,7 @@ public class EtlProjectServiceImpl extends ServiceImpl<EtlProjectMapper, EtlProj
                 .eq(EtlProject::getName, name)
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(name);
+            return ResponseVO.recordExistsError("Name", name);
         }
 
         val entity = EtlProjectConvert.INSTANCE.convert(form);

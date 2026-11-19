@@ -26,7 +26,7 @@ public class SysPermissionServiceImpl extends ServiceImpl<SysPermissionMapper, S
                 .eq(SysPermission::getCode, code)
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(code);
+            return ResponseVO.recordExistsError("Code", code);
         }
 
         val entity = SysPermissionConvert.INSTANCE.convert(form);

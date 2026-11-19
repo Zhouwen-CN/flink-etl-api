@@ -38,7 +38,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
                 .exists();
 
         if (exists) {
-            return ResponseVO.recordExistsError(code);
+            return ResponseVO.recordExistsError("Code", code);
         }
 
         val entity = SysRoleConvert.INSTANCE.convert(form);

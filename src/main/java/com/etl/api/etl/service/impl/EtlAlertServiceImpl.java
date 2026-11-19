@@ -37,7 +37,7 @@ public class EtlAlertServiceImpl extends ServiceImpl<EtlAlertMapper, EtlAlert> i
                 .eq(EtlAlert::getName, name)
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(name);
+            return ResponseVO.recordExistsError("Name", name);
         }
 
         val entity = EtlAlertConvert.INSTANCE.convert(form);

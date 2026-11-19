@@ -57,7 +57,7 @@ public class SysVarSettingServiceImpl extends ServiceImpl<SysVarSettingMapper, S
                 .eq(SysVarSetting::getName, name)
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(name);
+            return ResponseVO.recordExistsError("Name", name);
         }
 
         val entity = SysVarSettingConvert.INSTANCE.convert(form);

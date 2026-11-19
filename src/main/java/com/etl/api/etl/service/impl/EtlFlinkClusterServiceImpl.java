@@ -40,7 +40,7 @@ public class EtlFlinkClusterServiceImpl extends ServiceImpl<EtlFlinkClusterMappe
                 .exists();
 
         if (exists) {
-            return ResponseVO.recordExistsError(name);
+            return ResponseVO.recordExistsError("Name", name);
         }
 
         val entity = EtlFlinkClusterConvert.INSTANCE.convert(form);

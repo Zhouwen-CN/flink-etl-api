@@ -48,7 +48,7 @@ public class AiVectorDatabaseServiceImpl extends ServiceImpl<AiVectorDatabaseMap
                 .eq(AiVectorDatabase::getName, form.getName())
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(form.getName());
+            return ResponseVO.recordExistsError("Name", form.getName());
         }
 
         // 连接验证（含 type 白名单 + config_json 本地校验 + 只读探测）：失败整体保存失败，保证落库即连通
@@ -72,7 +72,7 @@ public class AiVectorDatabaseServiceImpl extends ServiceImpl<AiVectorDatabaseMap
                 .ne(AiVectorDatabase::getId, form.getId())
                 .exists();
         if (nameExists) {
-            return ResponseVO.recordExistsError(form.getName());
+            return ResponseVO.recordExistsError("Name", form.getName());
         }
 
         // 前端每次修改都会回传旧值：type 或 config_json 变更时重新连接验证，失败整体更新失败保持旧值

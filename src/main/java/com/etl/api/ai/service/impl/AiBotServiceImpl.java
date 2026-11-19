@@ -1,6 +1,5 @@
 package com.etl.api.ai.service.impl;
 
-import com.etl.api.ai.domain.validator.AiMcpConfigValidator;
 import com.etl.api.ai.domain.convert.AiBotConvert;
 import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
@@ -8,6 +7,7 @@ import com.etl.api.ai.domain.entity.AiMcpServer;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiBotCreateForm;
 import com.etl.api.ai.domain.form.AiBotUpdateForm;
+import com.etl.api.ai.domain.validator.AiMcpConfigValidator;
 import com.etl.api.ai.mapper.AiBotMapper;
 import com.etl.api.ai.mapper.AiBotMcpToolMapper;
 import com.etl.api.ai.mapper.AiMcpServerMapper;
@@ -78,7 +78,7 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
                 .eq(AiBot::getName, form.getName())
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(form.getName());
+            return ResponseVO.recordExistsError("Name", form.getName());
         }
         val entity = AiBotConvert.INSTANCE.convert(form);
         this.save(entity);
@@ -93,7 +93,7 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
                 .ne(AiBot::getId, form.getId())
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(form.getName());
+            return ResponseVO.recordExistsError("Name", form.getName());
         }
         // 不忽略null
         this.updateById(AiBotConvert.INSTANCE.convert(form), false);

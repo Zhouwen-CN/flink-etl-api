@@ -41,8 +41,8 @@ public final class ResponseVO<T> {
     }
 
     // 记录已存在错误
-    public static <T> ResponseVO<T> recordExistsError(Object identify) {
-        return error("记录已存在: " + identify);
+    public static <T> ResponseVO<T> recordExistsError(String fieldName, Object identify) {
+        return error("记录已存在: " + fieldName + "=" + identify);
     }
 
     // 记录未找到错误

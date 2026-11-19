@@ -121,7 +121,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .eq(SysUser::getUsername, username)
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(username);
+            return ResponseVO.recordExistsError("Username", username);
         }
 
         // 新增用户

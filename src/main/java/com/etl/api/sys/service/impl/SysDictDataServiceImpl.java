@@ -29,7 +29,7 @@ public class SysDictDataServiceImpl extends ServiceImpl<SysDictDataMapper, SysDi
                 .eq(SysDictData::getLabel, label)
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(typeId + "-" + label);
+            return ResponseVO.recordExistsError("TypeId/Label", typeId + "/" + label);
         }
 
         val entity = SysDictDataConvert.INSTANCE.convert(form);

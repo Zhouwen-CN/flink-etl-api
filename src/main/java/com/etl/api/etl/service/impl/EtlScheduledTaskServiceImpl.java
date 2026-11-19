@@ -44,7 +44,7 @@ public class EtlScheduledTaskServiceImpl extends ServiceImpl<EtlScheduledTaskMap
                 .where(ETL_SCHEDULED_TASK.NAME.eq(name).or(ETL_SCHEDULED_TASK.ETL_JOB_ID.eq(etlJobId)))
                 .exists();
         if (exists) {
-            return ResponseVO.recordExistsError(name + ":" + etlJobId);
+            return ResponseVO.recordExistsError("Name/EtlJobId", name + "/" + etlJobId);
         }
 
         val etlJob = jobMapper.selectOneByQuery(
