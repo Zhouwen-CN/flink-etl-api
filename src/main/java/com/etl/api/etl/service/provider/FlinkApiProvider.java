@@ -6,7 +6,7 @@ import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -43,9 +43,14 @@ public class FlinkApiProvider {
     }
 
     // 上传jar包
-    public String uploadJar(String jobManagerUrl, String path) {
+    public String uploadJar(String jobManagerUrl, String fileName, byte[] content) {
         val builder = new MultipartBodyBuilder();
-        builder.part("jarfile", new FileSystemResource(path));
+        builder.part("jarfile", new ByteArrayResource(content) {
+            @Override
+            public String getFilename() {
+                return fileName;
+            }
+        });
 
         JsonNode jsonNode;
         try {

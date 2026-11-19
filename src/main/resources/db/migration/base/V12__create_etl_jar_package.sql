@@ -3,7 +3,7 @@ create table T_ETL_JAR_PACKAGE
     id          bigint primary key auto_increment comment '自增主键',
     name        varchar(30)  not null comment 'jar包名称',
     file_name varchar(50)  not null comment '文件名',
-    file_path varchar(200) not null comment 'jar包地址',
+    file_content mediumblob not null comment 'jar包内容',
     main_class  varchar(100) not null comment '入口类',
     create_user varchar(30) default null comment '创建者',
     create_time datetime    default CURRENT_TIMESTAMP comment '创建时间',

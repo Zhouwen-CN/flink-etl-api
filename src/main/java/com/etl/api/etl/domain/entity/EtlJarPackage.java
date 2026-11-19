@@ -3,12 +3,15 @@ package com.etl.api.etl.domain.entity;
 import com.etl.api.sys.domain.base.BaseEntity;
 import com.etl.api.sys.domain.base.InsertListener;
 import com.etl.api.sys.domain.base.UpdateListener;
+import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -21,6 +24,8 @@ import java.io.Serializable;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Table(value = "T_ETL_JAR_PACKAGE", onInsert = InsertListener.class, onUpdate = UpdateListener.class)
 public class EtlJarPackage extends BaseEntity implements Serializable {
@@ -45,9 +50,10 @@ public class EtlJarPackage extends BaseEntity implements Serializable {
     private String fileName;
 
     /**
-     * jar包地址
+     * jar包内容（大字段，默认查询不加载，需通过 getFileContent 显式获取）
      */
-    private String filePath;
+    @Column(isLarge = true)
+    private byte[] fileContent;
 
     /**
      * 入口类

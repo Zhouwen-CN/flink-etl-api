@@ -3,6 +3,7 @@ package com.etl.api.etl.service.manager;
 import com.etl.api.etl.domain.dto.JobConfig;
 import com.etl.api.etl.domain.entity.EtlFlinkCluster;
 import com.etl.api.etl.domain.entity.EtlFlinkJarSync;
+import com.etl.api.etl.domain.entity.EtlJarPackage;
 import com.etl.api.etl.domain.entity.EtlJobInstance;
 import com.etl.api.etl.enumeration.ETLJobTypeEnum;
 import com.etl.api.etl.enumeration.FlinkJobStatusEnum;
@@ -25,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -90,14 +90,7 @@ public class EtlJobManager {
             throw new EtlJobException("Jar 包未找到: " + jarId);
         }
 
-        // jar包是否存在
-        val filePath = jarPackage.getFilePath();
-        val file = new File(filePath);
-        if (!file.exists()) {
-            throw new EtlJobException("Jar 包未找到: " + filePath);
-        }
-
-        // jar包同步表信息
+        // 集群侧jar包同步表信息
         val flinkJarSyncList = flinkJarSyncService.queryChain()
                 .eq(EtlFlinkJarSync::getClusterId, clusterId)
                 .eq(EtlFlinkJarSync::getJarName, jarPackage.getFileName())
@@ -119,7 +112,8 @@ public class EtlJobManager {
 
         if (clusterUploadedJar == null) {
             // 上传jar包，获取jarId，并且插入到同步表
-            val flinkJarId = flinkApiProvider.uploadJar(jobManagerUrl, filePath);
+            val fileContent = getJarContent(jarId, jarPackage);
+            val flinkJarId = flinkApiProvider.uploadJar(jobManagerUrl, jarPackage.getFileName(), fileContent);
             clusterUploadedJar = new EtlFlinkJarSync(clusterId, flinkJarId, jarPackage.getFileName(), System.currentTimeMillis());
             flinkJarSyncService.save(clusterUploadedJar);
         } else {
@@ -129,7 +123,8 @@ public class EtlJobManager {
             if (updateTime > uploaded + UPLOADED_OFFSET.toMillis()) {
                 // 重新上传jar包到flink，并更新同步表
                 flinkApiProvider.deleteJar(jobManagerUrl, clusterUploadedJar.getJarId());
-                val flinkJarId = flinkApiProvider.uploadJar(jobManagerUrl, filePath);
+                val fileContent = getJarContent(jarId, jarPackage);
+                val flinkJarId = flinkApiProvider.uploadJar(jobManagerUrl, jarPackage.getFileName(), fileContent);
                 clusterUploadedJar.setJarId(flinkJarId);
                 clusterUploadedJar.setUploaded(System.currentTimeMillis());
                 flinkJarSyncService.updateById(clusterUploadedJar);
@@ -208,5 +203,14 @@ public class EtlJobManager {
         }
 
         flinkApiProvider.cancelJob(flinkCluster.getJobManagerUrl(), jobInstanceId);
+    }
+
+    // 获取jar包内容
+    private byte[] getJarContent(Long jarId, EtlJarPackage jarPackage) {
+        val fileContent = jarPackageService.getFileContent(jarId);
+        if (fileContent == null) {
+            throw new EtlJobException("Jar 包内容不存在: " + jarPackage.getFileName());
+        }
+        return fileContent;
     }
 }

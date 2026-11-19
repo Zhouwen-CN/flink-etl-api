@@ -10,15 +10,14 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 
 /**
  * jar包管理表 服务层实现。
@@ -31,8 +30,6 @@ import java.util.jar.JarFile;
 public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, EtlJarPackage> implements EtlJarPackageService {
 
     private final EtlJobMapper jobMapper;
-    @Value("${custom.jar-package.location}")
-    private String jarPackageLocation;
 
     private ResponseVO<Void> saveJar(Long id, String name, MultipartFile uploadFile) {
         if (uploadFile == null) {
@@ -44,31 +41,40 @@ public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, E
             return ResponseVO.error("文件格式错误，请上传jar文件");
         }
 
-        val dist = new File(jarPackageLocation, uploadFile.getOriginalFilename());
+        byte[] fileContent;
+        String mainClass;
         try {
-            uploadFile.transferTo(dist);
-        } catch (Exception e) {
-            return ResponseVO.error("文件上传失败");
-        }
-
-        try (val jarFile = new JarFile(dist)) {
-            String mainClass = jarFile.getManifest().getMainAttributes()
-                    .getValue("Main-Class");
-
-            if (StringUtils.hasText(mainClass)) {
-                val jarPackage = EtlJarPackage.builder()
-                        .id(id)
-                        .name(name)
-                        .fileName(originalFilename)
-                        .filePath(dist.getPath())
-                        .mainClass(mainClass)
-                        .build();
-                this.saveOrUpdate(jarPackage);
+            fileContent = uploadFile.getBytes();
+            try (val jarStream = new JarInputStream(new ByteArrayInputStream(fileContent))) {
+                val manifest = jarStream.getManifest();
+                mainClass = manifest == null ? null : manifest.getMainAttributes().getValue("Main-Class");
             }
         } catch (IOException e) {
             return ResponseVO.error("未能获取jar包入口类: " + e.getMessage());
         }
+
+        if (!StringUtils.hasText(mainClass)) {
+            return ResponseVO.error("未能获取jar包入口类");
+        }
+
+        val jarPackage = EtlJarPackage.builder()
+                .id(id)
+                .name(name)
+                .fileName(originalFilename)
+                .fileContent(fileContent)
+                .mainClass(mainClass)
+                .build();
+        this.saveOrUpdate(jarPackage);
         return ResponseVO.ok();
+    }
+
+    @Override
+    public byte[] getFileContent(Long id) {
+        val jarPackage = queryChain()
+                .select(EtlJarPackage::getFileContent)
+                .eq(EtlJarPackage::getId, id)
+                .one();
+        return jarPackage == null ? null : jarPackage.getFileContent();
     }
 
     @Override
@@ -77,7 +83,23 @@ public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, E
     }
 
     @Override
+    public EtlJarPackage getById(Long id) {
+        return queryChain()
+                .eq(EtlJarPackage::getId, id)
+                .one();
+    }
+
+    @Override
     public ResponseVO<Void> modifyJar(Long id, String name, MultipartFile file) {
+        // 只传name，仅更新名称
+        if (file == null) {
+            val jarPackage = EtlJarPackage.builder()
+                    .id(id)
+                    .name(name)
+                    .build();
+            this.updateById(jarPackage);
+            return ResponseVO.ok();
+        }
         return this.saveJar(id, name, file);
     }
 

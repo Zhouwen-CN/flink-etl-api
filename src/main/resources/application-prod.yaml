@@ -28,8 +28,3 @@ sa-token:
   is-log: false
   # 日志等级（trace、debug、info、warn、error、fatal）
   log-level: info
-
-# 自定义配置
-custom:
-  jar-package:
-    location: /tmp/upload-jar #jar包上传路径
