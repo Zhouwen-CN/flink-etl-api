@@ -27,6 +27,7 @@ import redis.clients.jedis.UnifiedJedis;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -93,9 +94,12 @@ public class AiVectorStoreFactory {
      *
      * @param knowledge      知识库实体（提供派生集合名的 id 与固化维度）
      * @param vectorDatabase 向量数据库配置实体
+     * @param metadataKeys   需要持久化/过滤的 segment metadata key（Redis 侧必须显式声明；
+     *                       Milvus 动态字段自动存储，仅参与 Store 缓存 key），可为 null
      */
     public EmbeddingStore<TextSegment> getEmbeddingStore(AiKnowledge knowledge,
-                                                         AiVectorDatabase vectorDatabase) {
+                                                         AiVectorDatabase vectorDatabase,
+                                                         List<String> metadataKeys) {
         if (knowledge == null || vectorDatabase == null) {
             throw new AiVectorDbConfigException("知识库或向量数据库配置不能为空");
         }
@@ -111,18 +115,19 @@ public class AiVectorStoreFactory {
         val connection = getOrCreateConnection(connKey, vectorDbConfig);
 
         // 第二层：Store 包装（Redis 创建近乎零成本；Milvus 首次可能触发 collection RPC）
-        return getOrCreateStore(connKey, vectorDbConfig, connection, knowledge.getId(), dimension);
+        return getOrCreateStore(connKey, vectorDbConfig, connection, knowledge.getId(), dimension, metadataKeys);
     }
 
     /**
      * 获取或创建 Store 层包装（双检锁，镜像 {@link #getOrCreateConnection}）。
-     * Store 缓存 key 直接用知识库 id（集合名是其纯函数）；集合名由 create 方法按类型派生。
+     * Store 缓存 key 直接用知识库 id + metadataKeys（集合名是其纯函数）；集合名由 create 方法按类型派生。
      * 持锁期间校验连接未被并发 evict（配置更新/删除），防止缓存到引用已关闭连接的 Store。
      */
     private EmbeddingStore<TextSegment> getOrCreateStore(String connKey, AiVectorDbConfig vectorDbConfig,
                                                          SharedConnection connection,
-                                                         Long knowledgeId, Integer dimension) {
-        val storeKey = connKey + "|" + knowledgeId;
+                                                         Long knowledgeId, Integer dimension,
+                                                         List<String> metadataKeys) {
+        val storeKey = connKey + "|" + knowledgeId + "|" + (metadataKeys == null ? "" : String.join(",", metadataKeys));
         val existing = stores.get(storeKey);
         if (existing != null) {
             return existing;
@@ -142,7 +147,7 @@ public class AiVectorStoreFactory {
             }
             EmbeddingStore<TextSegment> created;
             if (vectorDbConfig instanceof RedisConfigDTO) {
-                created = createRedisStore(connection.jedis(), knowledgeId, dimension);
+                created = createRedisStore(connection.jedis(), knowledgeId, dimension, metadataKeys);
             } else if (vectorDbConfig instanceof MilvusConfigDTO) {
                 created = createMilvusStore(connection.milvusClient(), knowledgeId, dimension);
             } else {
@@ -247,14 +252,18 @@ public class AiVectorStoreFactory {
      * SDK 默认 prefix 是常量 "embedding:"，不设置会导致所有集合的数据 key 共享同一前缀、
      * 索引互相覆盖彼此的数据（跨知识库召回）。
      */
-    private EmbeddingStore<TextSegment> createRedisStore(UnifiedJedis jedis, Long knowledgeId, Integer dimension) {
+    private EmbeddingStore<TextSegment> createRedisStore(UnifiedJedis jedis, Long knowledgeId, Integer dimension,
+                                                         List<String> metadataKeys) {
         try {
-            return RedisEmbeddingStore.builder()
+            val builder = RedisEmbeddingStore.builder()
                     .unifiedJedis(jedis)
-                    .indexName(COLLECTION_NAME_PREFIX + "-" + knowledgeId)
-                    .prefix(COLLECTION_NAME_PREFIX + ":" + knowledgeId)
-                    .dimension(dimension)
-                    .build();
+                    .indexName(COLLECTION_NAME_PREFIX + "_" + knowledgeId)
+                    .prefix(COLLECTION_NAME_PREFIX + "_" + knowledgeId + ":")
+                    .dimension(dimension);
+            if (metadataKeys != null && !metadataKeys.isEmpty()) {
+                builder.metadataKeys(metadataKeys);
+            }
+            return builder.build();
         } catch (Exception e) {
             // 共享连接保持缓存（仍然有效），仅本次 Store 创建失败
             throw new AiVectorDbConfigException("Redis 向量库创建失败: " + e.getMessage());

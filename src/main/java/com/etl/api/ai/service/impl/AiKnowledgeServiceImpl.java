@@ -3,6 +3,7 @@ package com.etl.api.ai.service.impl;
 import com.etl.api.ai.config.AiChatModelFactory;
 import com.etl.api.ai.domain.convert.AiKnowledgeConvert;
 import com.etl.api.ai.domain.entity.AiKnowledge;
+import com.etl.api.ai.domain.entity.AiKnowledgeDoc;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiKnowledgeCreateForm;
 import com.etl.api.ai.domain.form.AiKnowledgeUpdateForm;
@@ -12,6 +13,7 @@ import com.etl.api.ai.exception.AiChatException;
 import com.etl.api.ai.mapper.AiKnowledgeMapper;
 import com.etl.api.ai.mapper.AiModelMapper;
 import com.etl.api.ai.mapper.AiVectorDatabaseMapper;
+import com.etl.api.ai.service.AiKnowledgeDocService;
 import com.etl.api.ai.service.AiKnowledgeService;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
@@ -46,6 +48,7 @@ public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKno
     private final AiVectorDatabaseMapper vectorDatabaseMapper;
     private final AiModelMapper modelMapper;
     private final AiChatModelFactory chatModelFactory;
+    private final AiKnowledgeDocService docService;
 
     @Override
     public PageVO<AiKnowledgeVO> getPage(Integer currentPage, Integer pageSize, String searchName) {
@@ -76,6 +79,11 @@ public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKno
         val embedModel = modelMapper.selectOneById(form.getEmbedModelId());
         if (embedModel == null) {
             return ResponseVO.recordNotFoundError("EmbedModelId", form.getEmbedModelId());
+        }
+
+        val chunkParamsError = validateChunkParams(form.getChunkSize(), form.getOverlapSize());
+        if (chunkParamsError != null) {
+            return ResponseVO.error(chunkParamsError);
         }
 
         // 维度探测：复用 ChatModelFactory.requireType 语义（类型不符抛 AiChatException），失败整体保存失败
@@ -122,6 +130,11 @@ public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKno
             return ResponseVO.recordExistsError("Name", form.getName());
         }
 
+        val chunkParamsError = validateChunkParams(form.getChunkSize(), form.getOverlapSize());
+        if (chunkParamsError != null) {
+            return ResponseVO.error(chunkParamsError);
+        }
+
         val entity = AiKnowledgeConvert.INSTANCE.convert(form);
         this.updateById(entity);
         log.info("更新知识库, id: {}, name: {}", entity.getId(), entity.getName());
@@ -130,9 +143,25 @@ public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKno
 
     @Override
     public ResponseVO<Void> removeKnowledge(Long id) {
-        // 后续文档模块落地时需补 AIFlowy beforeRemove 式级联——删向量库数据/chunk/document
+        // 知识库下仍有文档时不允许删除，需先清空全部文档
+        val hasDocs = docService.queryChain()
+                .eq(AiKnowledgeDoc::getKnowledgeId, id)
+                .exists();
+        if (hasDocs) {
+            return ResponseVO.error("删除失败，尚有文档依赖");
+        }
         this.removeById(id);
         log.info("删除知识库, id: {}", id);
         return ResponseVO.ok();
+    }
+
+    /**
+     * 分块参数约束校验（可空走 DDL 默认值；同时提供时须 overlap < chunk）
+     */
+    private String validateChunkParams(Integer chunkSize, Integer overlapSize) {
+        if (chunkSize != null && overlapSize != null && overlapSize >= chunkSize) {
+            return "分块参数非法: overlapSize(" + overlapSize + ") 必须小于 chunkSize(" + chunkSize + ")";
+        }
+        return null;
     }
 }

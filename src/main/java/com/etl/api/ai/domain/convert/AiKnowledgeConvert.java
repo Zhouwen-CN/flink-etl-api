@@ -3,7 +3,7 @@ package com.etl.api.ai.domain.convert;
 import com.etl.api.ai.domain.entity.AiKnowledge;
 import com.etl.api.ai.domain.form.AiKnowledgeCreateForm;
 import com.etl.api.ai.domain.form.AiKnowledgeUpdateForm;
-import com.etl.api.ai.domain.vo.AiKnowledgeVO;
+import com.etl.api.sys.domain.vo.DictionaryVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -21,4 +21,8 @@ public interface AiKnowledgeConvert {
     @Mapping(target = "embedModelId", ignore = true)
     @Mapping(target = "dimension", ignore = true)
     AiKnowledge convert(AiKnowledgeUpdateForm form);
+
+    @Mapping(target = "value", source = "id")
+    @Mapping(target = "label", source = "name")
+    DictionaryVO convert(AiKnowledge entity);
 }

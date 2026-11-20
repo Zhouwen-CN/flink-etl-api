@@ -32,7 +32,7 @@ public interface AiKnowledgeService extends IService<AiKnowledge> {
     ResponseVO<Void> updateKnowledge(AiKnowledgeUpdateForm form);
 
     /**
-     * 删除（本轮直接物理删除；后续文档模块落地时需补级联——删向量库数据/chunk/document）
+     * 删除（物理删除；知识库下仍有文档时拒绝，需先清空全部文档）
      */
     ResponseVO<Void> removeKnowledge(Long id);
 }

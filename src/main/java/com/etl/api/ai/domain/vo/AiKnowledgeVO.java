@@ -33,6 +33,12 @@ public class AiKnowledgeVO {
     @Schema(description = "相似度下限，0~1")
     private Double minScore;
 
+    @Schema(description = "单个分块的最大字符数")
+    private Integer chunkSize;
+
+    @Schema(description = "相邻分块的重叠字符数")
+    private Integer overlapSize;
+
     @Schema(description = "更新时间")
     private LocalDateTime updateTime;
 }

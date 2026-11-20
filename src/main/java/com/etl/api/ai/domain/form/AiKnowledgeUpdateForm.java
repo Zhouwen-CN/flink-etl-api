@@ -36,4 +36,14 @@ public class AiKnowledgeUpdateForm {
     @DecimalMax("1.0")
     @Schema(description = "相似度下限，0~1（默认0.20）")
     private Double minScore;
+
+    @Min(50)
+    @Max(10000)
+    @Schema(description = "单个分块的最大字符数（默认800）")
+    private Integer chunkSize;
+
+    @Min(0)
+    @Max(2000)
+    @Schema(description = "相邻分块的重叠字符数（默认200，须小于chunkSize）")
+    private Integer overlapSize;
 }

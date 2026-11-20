@@ -8,6 +8,8 @@ create table T_AI_KNOWLEDGE
     dimension          int         not null comment '向量维度（创建时探测固化）',
     recall_top_k       int         not null default 5 comment '最大召回条数',
     min_score          double      not null default 0.20 comment '相似度下限（LangChain4j minScore 语义，0~1）',
+    chunk_size         int         not null default 800 comment '单个分块的最大字符数（recursive 分块的 maxSegmentSize，LangChain4j 无 tokenizer 时按字符计）',
+    overlap_size       int         not null default 200 comment '相邻分块的重叠字符数（maxOverlapSize，须小于 chunk_size）',
     create_user        varchar(30)          default null comment '创建者',
     create_time        datetime             default CURRENT_TIMESTAMP comment '创建时间',
     update_user        varchar(30)          default null comment '修改者',

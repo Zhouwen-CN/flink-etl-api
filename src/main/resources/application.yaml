@@ -114,16 +114,28 @@ spring:
   # 线程池配置
   task:
     execution:
-      pool:
-        core-size: 1
-        max-size: 5
-        queue-capacity: 50
-        keep-alive: 60s
-        allow-core-thread-timeout: true
-      shutdown:
-        await-termination: true
-        await-termination-period: 30s
-      thread-name-prefix: quartz-
+      quartz:
+        pool:
+          core-size: 1
+          max-size: 5
+          queue-capacity: 50
+          keep-alive: 60s
+          allow-core-thread-timeout: true
+        shutdown:
+          await-termination: true
+          await-termination-period: 30s
+        thread-name-prefix: quartz-
+      ai:
+        pool:
+          core-size: 1
+          max-size: 5
+          queue-capacity: 50
+          keep-alive: 60s
+          allow-core-thread-timeout: true
+        shutdown:
+          await-termination: true
+          await-termination-period: 30s
+        thread-name-prefix: ai-
 
 # 可观测性
 management:

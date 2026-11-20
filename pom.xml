@@ -94,6 +94,17 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <!--
+                jedis 版本锁定：langchain4j-community-redis 1.23.0-beta33 按 jedis 7.5.3 编译
+                （UnifiedJedis.pipelined() 返回 AbstractPipeline），spring-boot-dependencies 会将其
+                仲裁为 6.0.0（返回 PipelineBase），运行期抛 NoSuchMethodError
+            -->
+            <dependency>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>7.5.3</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -181,6 +192,12 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-http-client-spring-restclient</artifactId>
+            <version>${langchain4j.beta.version}</version>
+        </dependency>
+        <!-- langchain4j document parser -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-document-parser-apache-tika</artifactId>
             <version>${langchain4j.beta.version}</version>
         </dependency>
         <!-- langchain4j vector store -->
