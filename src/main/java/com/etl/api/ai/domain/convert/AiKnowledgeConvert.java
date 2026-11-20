@@ -15,12 +15,10 @@ public interface AiKnowledgeConvert {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "dimension", ignore = true)
-    @Mapping(target = "collectionName", ignore = true)
     AiKnowledge convert(AiKnowledgeCreateForm form);
 
     @Mapping(target = "vectorDbId", ignore = true)
     @Mapping(target = "embedModelId", ignore = true)
     @Mapping(target = "dimension", ignore = true)
-    @Mapping(target = "collectionName", ignore = true)
     AiKnowledge convert(AiKnowledgeUpdateForm form);
 }

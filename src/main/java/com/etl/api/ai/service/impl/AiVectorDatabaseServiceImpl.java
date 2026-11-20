@@ -80,17 +80,11 @@ public class AiVectorDatabaseServiceImpl extends ServiceImpl<AiVectorDatabaseMap
         val configChanged = !Objects.equals(form.getConfigJson(), old.getConfigJson());
         if (typeChanged || configChanged) {
             vectorStoreFactory.verifyConnection(form.getType(), form.getConfigJson());
+            vectorStoreFactory.evictByConfigId(form.getId());
         }
 
         val entity = AiVectorDatabaseConvert.INSTANCE.convert(form);
-        // 未变更时保持原值（避免规范化后的文本覆盖原始配置）
-        entity.setType(typeChanged ? form.getType() : old.getType());
-        entity.setConfigJson(configChanged ? form.getConfigJson() : old.getConfigJson());
-
         this.updateById(entity);
-        if (typeChanged || configChanged) {
-            vectorStoreFactory.evictByConfigId(entity.getId());
-        }
         log.info("更新向量数据库, id: {}, name: {}, typeChanged: {}, configChanged: {}",
                 entity.getId(), entity.getName(), typeChanged, configChanged);
         return ResponseVO.ok();

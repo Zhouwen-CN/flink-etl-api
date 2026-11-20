@@ -27,7 +27,7 @@ import org.springframework.util.StringUtils;
  * AI 知识库表 服务层实现。
  *
  * <p>向量维度在创建时自动探测固化（对绑定 Embedding 模型调用一次 embed()）；
- * collection_name 由服务端在插入后按 kb_{id} 生成回填；
+ * 集合名/索引名不落库，由向量库工厂按知识库 id 派生（AiVectorStoreFactory create 方法）；
  * 创建时不主动连向量库建集合——LangChain4j Milvus/Redis store 均在首次使用时自动建集合/索引，惰性即可。
  *
  * @author chen
@@ -83,14 +83,10 @@ public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKno
 
         val entity = AiKnowledgeConvert.INSTANCE.convert(form);
         entity.setDimension(dimension);
-        entity.setCollectionName(""); // 不能为空
         this.save(entity);
-        // collection_name 服务端生成，仅允许 [A-Za-z0-9_]，插入后按 id 回填
-        entity.setCollectionName("kb_" + entity.getId());
-        this.updateById(entity);
-        log.info("新增知识库, id: {}, name: {}, vectorDbId: {}, embedModelId: {}, dimension: {}, collectionName: {}",
+        log.info("新增知识库, id: {}, name: {}, vectorDbId: {}, embedModelId: {}, dimension: {}",
                 entity.getId(), entity.getName(), entity.getVectorDbId(), entity.getEmbedModelId(),
-                entity.getDimension(), entity.getCollectionName());
+                entity.getDimension());
         return ResponseVO.ok();
     }
 

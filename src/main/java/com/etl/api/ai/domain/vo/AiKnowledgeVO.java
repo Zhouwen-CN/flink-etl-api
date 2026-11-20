@@ -21,9 +21,6 @@ public class AiKnowledgeVO {
     @Schema(description = "向量数据库id")
     private Long vectorDbId;
 
-    @Schema(description = "向量库集合名/索引名")
-    private String collectionName;
-
     @Schema(description = "Embedding模型id")
     private Long embedModelId;
 

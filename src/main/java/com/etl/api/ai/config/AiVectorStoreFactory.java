@@ -1,10 +1,11 @@
 package com.etl.api.ai.config;
 
+import com.etl.api.ai.domain.dto.AiVectorDbConfig;
 import com.etl.api.ai.domain.dto.MilvusConfigDTO;
 import com.etl.api.ai.domain.dto.RedisConfigDTO;
+import com.etl.api.ai.domain.entity.AiKnowledge;
 import com.etl.api.ai.domain.entity.AiVectorDatabase;
 import com.etl.api.ai.domain.validator.AiVectorDbConfigValidator;
-import com.etl.api.ai.enumeration.AiVectorDbTypeEnum;
 import com.etl.api.ai.exception.AiVectorDbConfigException;
 import dev.langchain4j.community.store.embedding.redis.RedisEmbeddingStore;
 import dev.langchain4j.data.segment.TextSegment;
@@ -28,20 +29,19 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Pattern;
 
 /**
  * 向量数据库客户端工厂（与 ChatModelFactory 并列）。
  *
- * <p>按 type 分发构建 {@link EmbeddingStore}，当前支持 Redis（Redis Stack）与 Milvus。
+ * <p>按 config 类型（instanceof）分发构建 {@link EmbeddingStore}，当前支持 Redis（Redis Stack）与 Milvus。
  * 缓存分两层，连接数从 O(集合数) 降到 O(配置数)：
  * <ul>
  *   <li>连接层：{@code configId|sha256(configJson)} -> 底层连接（UnifiedJedis / MilvusServiceClient），
  *       同一配置的全部集合共享一条连接（线程安全：Jedis 连接池 / Milvus gRPC channel）；</li>
- *   <li>Store 层：{@code 连接key|collectionName|dimension} -> EmbeddingStore，仅轻量包装，不含连接资源。</li>
+ *   <li>Store 层：{@code 连接key|knowledgeId} -> EmbeddingStore，仅轻量包装，不含连接资源。</li>
  * </ul>
  * configJson 摘要参与 key，改配置后新调用自然落到新 key（多实例部署无需失效广播）；
- * dimension 参与 Store key，避免同库不同维度冲突。并发场景下 per-key 双检锁防止重复建连。
+ * 并发场景下 per-key 双检锁防止重复建连。
  * 配置更新/删除后由调用方触发 {@link #evictByConfigId(Long)} 失效两层缓存并关闭连接。
  *
  * <p>注意：SDK 调用收敛在本工厂内，后续 LC4j / Milvus 升级只改本类。
@@ -64,9 +64,10 @@ public class AiVectorStoreFactory {
     private static final long MILVUS_CLOSE_TIMEOUT_SECONDS = 5;
 
     /**
-     * collectionName 白名单（Redis index / Milvus collection 命名约束）
+     * 集合名基础前缀，各 create 方法按自身命名约束拼接知识库 id（Knowledge Base）
      */
-    private static final Pattern COLLECTION_NAME_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
+    private static final String COLLECTION_NAME_PREFIX = "kb";
+
 
     private final AiVectorDbConfigValidator configValidator;
 
@@ -76,44 +77,52 @@ public class AiVectorStoreFactory {
     private final ConcurrentHashMap<String, SharedConnection> connections = new ConcurrentHashMap<>();
 
     /**
-     * Store 层缓存：连接key|collectionName|dimension -> EmbeddingStore（轻量包装，不含连接资源）
+     * Store 层缓存：连接key|knowledgeId -> EmbeddingStore（轻量包装，不含连接资源）
      */
     private final ConcurrentHashMap<String, EmbeddingStore<TextSegment>> stores = new ConcurrentHashMap<>();
 
     /**
-     * per-key 锁：两层 key 结构不相交（连接层 2 段 / Store 层 4 段），共用一个锁表
+     * per-key 锁：两层 key 结构不相交（连接层 2 段 / Store 层 3 段），共用一个锁表
      */
     private final ConcurrentHashMap<String, ReentrantLock> keyLocks = new ConcurrentHashMap<>();
 
     /**
-     * 获取 EmbeddingStore（带两层缓存复用）
+     * 获取 EmbeddingStore（带两层缓存复用）。
+     * 集合名由 create 方法按知识库 id 自行派生（Redis kb:{id} / Milvus kb_{id}，命名约束不同），
+     * dimension 创建时探测固化，均不可变且由知识库侧保证合法，此处不再逐次校验。
      *
-     * @param entity         向量数据库配置实体
-     * @param collectionName 集合名（Redis index / Milvus collection，仅字母/数字/下划线）
-     * @param dimension      向量维度（来自知识库绑定的 embedding 模型，首建后固化）
+     * @param knowledge      知识库实体（提供派生集合名的 id 与固化维度）
+     * @param vectorDatabase 向量数据库配置实体
      */
-    public EmbeddingStore<TextSegment> getEmbeddingStore(AiVectorDatabase entity,
-                                                         String collectionName, Integer dimension) {
-        if (entity == null) {
-            throw new AiVectorDbConfigException("向量数据库配置不能为空");
-        }
-        if (dimension == null || dimension <= 0) {
-            throw new AiVectorDbConfigException("向量维度 dimension 必须为正整数");
-        }
-        if (!StringUtils.hasText(collectionName) || !COLLECTION_NAME_PATTERN.matcher(collectionName).matches()) {
-            throw new AiVectorDbConfigException("collectionName 仅允许字母、数字、下划线: " + collectionName);
+    public EmbeddingStore<TextSegment> getEmbeddingStore(AiKnowledge knowledge,
+                                                         AiVectorDatabase vectorDatabase) {
+        if (knowledge == null || vectorDatabase == null) {
+            throw new AiVectorDbConfigException("知识库或向量数据库配置不能为空");
         }
 
         // 本地校验（type 白名单 + config_json 结构），失败即抛 AiVectorDbConfigException
-        val config = configValidator.validate(entity.getType(), entity.getConfigJson());
-        val dbType = requireSupportedType(entity.getType());
-        val connKey = connectionKey(entity.getId(), entity.getConfigJson());
+        val vectorDbConfig = configValidator.validate(vectorDatabase.getType(), vectorDatabase.getConfigJson());
+        // 连接层缓存key：configId|sha256(configJson)
+        val connKey = vectorDatabase.getId() + "|" + sha256Hex(vectorDatabase.getConfigJson());
+        // 维度
+        val dimension = knowledge.getDimension();
 
         // 第一层：共享连接（配置不变时，同一配置的全部集合复用同一条连接）
-        val connection = getOrCreateConnection(connKey, dbType, config);
+        val connection = getOrCreateConnection(connKey, vectorDbConfig);
 
         // 第二层：Store 包装（Redis 创建近乎零成本；Milvus 首次可能触发 collection RPC）
-        val storeKey = connKey + "|" + collectionName + "|" + dimension;
+        return getOrCreateStore(connKey, vectorDbConfig, connection, knowledge.getId(), dimension);
+    }
+
+    /**
+     * 获取或创建 Store 层包装（双检锁，镜像 {@link #getOrCreateConnection}）。
+     * Store 缓存 key 直接用知识库 id（集合名是其纯函数）；集合名由 create 方法按类型派生。
+     * 持锁期间校验连接未被并发 evict（配置更新/删除），防止缓存到引用已关闭连接的 Store。
+     */
+    private EmbeddingStore<TextSegment> getOrCreateStore(String connKey, AiVectorDbConfig vectorDbConfig,
+                                                         SharedConnection connection,
+                                                         Long knowledgeId, Integer dimension) {
+        val storeKey = connKey + "|" + knowledgeId;
         val existing = stores.get(storeKey);
         if (existing != null) {
             return existing;
@@ -131,10 +140,14 @@ public class AiVectorStoreFactory {
             if (connections.get(connKey) != connection) {
                 throw new AiVectorDbConfigException("向量数据库配置正在变更，请重试");
             }
-            val created = switch (dbType) {
-                case REDIS -> createRedisStore(connection.jedis(), collectionName, dimension);
-                case MILVUS -> createMilvusStore(connection.milvusClient(), collectionName, dimension);
-            };
+            EmbeddingStore<TextSegment> created;
+            if (vectorDbConfig instanceof RedisConfigDTO) {
+                created = createRedisStore(connection.jedis(), knowledgeId, dimension);
+            } else if (vectorDbConfig instanceof MilvusConfigDTO) {
+                created = createMilvusStore(connection.milvusClient(), knowledgeId, dimension);
+            } else {
+                throw new AiVectorDbConfigException("不支持的向量数据库配置类型: " + vectorDbConfig.getClass().getSimpleName());
+            }
             stores.put(storeKey, created);
             return created;
         } finally {
@@ -151,11 +164,13 @@ public class AiVectorStoreFactory {
      * @throws AiVectorDbConfigException 本地校验失败或连接验证失败（含具体原因）
      */
     public void verifyConnection(Integer type, String configJson) {
-        val dbType = requireSupportedType(type);
         val config = configValidator.validate(type, configJson);
-        switch (dbType) {
-            case REDIS -> verifyRedis((RedisConfigDTO) config);
-            case MILVUS -> verifyMilvus((MilvusConfigDTO) config);
+        if (config instanceof RedisConfigDTO redis) {
+            verifyRedis(redis);
+        } else if (config instanceof MilvusConfigDTO milvus) {
+            verifyMilvus(milvus);
+        } else {
+            throw new AiVectorDbConfigException("不支持的向量数据库配置类型: " + config.getClass().getSimpleName());
         }
     }
 
@@ -177,24 +192,10 @@ public class AiVectorStoreFactory {
         });
     }
 
-    private AiVectorDbTypeEnum requireSupportedType(Integer type) {
-        return AiVectorDbTypeEnum.of(type)
-                .orElseThrow(() -> new AiVectorDbConfigException(
-                        "不支持的向量数据库类型: " + type + "，仅允许: 1-redis、2-milvus"));
-    }
-
-    /**
-     * 连接层缓存key：configId|sha256(configJson)
-     * configJson 摘要进 key 保证改配置后新调用自然落到新 key
-     */
-    private String connectionKey(Long configId, String configJson) {
-        return configId + "|" + sha256Hex(configJson);
-    }
-
     /**
      * 获取或创建连接层共享连接（双检锁；创建失败不缓存，下次调用重试）
      */
-    private SharedConnection getOrCreateConnection(String connKey, AiVectorDbTypeEnum dbType, Object config) {
+    private SharedConnection getOrCreateConnection(String connKey, AiVectorDbConfig config) {
         val existing = connections.get(connKey);
         if (existing != null) {
             return existing;
@@ -208,10 +209,14 @@ public class AiVectorStoreFactory {
             if (cached != null) {
                 return cached;
             }
-            val created = switch (dbType) {
-                case REDIS -> new SharedConnection(createUnifiedJedis((RedisConfigDTO) config), null);
-                case MILVUS -> new SharedConnection(null, createMilvusClient((MilvusConfigDTO) config));
-            };
+            SharedConnection created;
+            if (config instanceof RedisConfigDTO redis) {
+                created = new SharedConnection(createUnifiedJedis(redis), null);
+            } else if (config instanceof MilvusConfigDTO milvus) {
+                created = new SharedConnection(null, createMilvusClient(milvus));
+            } else {
+                throw new AiVectorDbConfigException("不支持的向量数据库配置类型: " + config.getClass().getSimpleName());
+            }
             connections.put(connKey, created);
             return created;
         } finally {
@@ -237,13 +242,17 @@ public class AiVectorStoreFactory {
     // ---------------- Redis ----------------
 
     /**
-     * 构建 Redis EmbeddingStore（轻量包装共享连接，创建近乎零成本）
+     * 构建 Redis EmbeddingStore（轻量包装共享连接，创建近乎零成本）。
+     * 索引名按知识库 id 派生 kb:{id}（Redis 侧 ':' 合法）；prefix 必须显式跟随索引名——
+     * SDK 默认 prefix 是常量 "embedding:"，不设置会导致所有集合的数据 key 共享同一前缀、
+     * 索引互相覆盖彼此的数据（跨知识库召回）。
      */
-    private EmbeddingStore<TextSegment> createRedisStore(UnifiedJedis jedis, String collectionName, Integer dimension) {
+    private EmbeddingStore<TextSegment> createRedisStore(UnifiedJedis jedis, Long knowledgeId, Integer dimension) {
         try {
             return RedisEmbeddingStore.builder()
                     .unifiedJedis(jedis)
-                    .indexName(collectionName)
+                    .indexName(COLLECTION_NAME_PREFIX + "-" + knowledgeId)
+                    .prefix(COLLECTION_NAME_PREFIX + ":" + knowledgeId)
                     .dimension(dimension)
                     .build();
         } catch (Exception e) {
@@ -282,13 +291,14 @@ public class AiVectorStoreFactory {
 
     /**
      * 构建 Milvus EmbeddingStore（包装共享 gRPC channel）。
+     * collection 名按知识库 id 派生 kb_{id}（Milvus 命名仅字母/数字/下划线且不能以数字开头，':' 非法）。
      * MilvusEmbeddingStore 自身不可关闭，连接生命周期由连接层统一管理。
      */
-    private EmbeddingStore<TextSegment> createMilvusStore(MilvusServiceClient client, String collectionName, Integer dimension) {
+    private EmbeddingStore<TextSegment> createMilvusStore(MilvusServiceClient client, Long knowledgeId, Integer dimension) {
         try {
             return MilvusEmbeddingStore.builder()
                     .milvusClient(client)
-                    .collectionName(collectionName)
+                    .collectionName(COLLECTION_NAME_PREFIX + "_" + knowledgeId)
                     .dimension(dimension)
                     .metricType(MetricType.COSINE)
                     .build();

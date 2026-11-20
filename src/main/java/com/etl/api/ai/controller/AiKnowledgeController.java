@@ -90,7 +90,7 @@ public class AiKnowledgeController {
     }
 
     @SaCheckPermission("knowledge.update")
-    @Operation(summary = "更新", description = "vectorDbId/embedModelId/dimension/collectionName 不可变更")
+    @Operation(summary = "更新", description = "vectorDbId/embedModelId/dimension 不可变更；集合名按 id 派生")
     @PutMapping
     public ResponseVO<Void> modify(@RequestBody @Validated AiKnowledgeUpdateForm form) {
         return knowledgeService.updateKnowledge(form);

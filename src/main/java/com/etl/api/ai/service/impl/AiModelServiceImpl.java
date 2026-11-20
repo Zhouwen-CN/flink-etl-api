@@ -74,12 +74,10 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
             return ResponseVO.recordExistsError("Name", form.getName());
         }
 
-        val apiKey = form.getApiKey();
-        if (apiKey == null) {
-            form.setApiKey(aiModel.getApiKey());
-        }
+        // 失效模型实例缓存（baseUrl/apiKey/modelName 等可能已变更）
+        chatModelFactory.evictByModelId(form.getId());
 
-        this.updateById(AiModelConvert.INSTANCE.convert(form), false);
+        this.updateById(AiModelConvert.INSTANCE.convert(form));
         return ResponseVO.ok();
     }
 

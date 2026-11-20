@@ -27,7 +27,7 @@ public interface AiKnowledgeService extends IService<AiKnowledge> {
     ResponseVO<Void> addKnowledge(AiKnowledgeCreateForm form);
 
     /**
-     * 更新（绑定类字段 vectorDbId/embedModelId/dimension/collectionName 不可变更）
+     * 更新（绑定类字段 vectorDbId/embedModelId/dimension 不可变更；集合名按 id 派生）
      */
     ResponseVO<Void> updateKnowledge(AiKnowledgeUpdateForm form);
 

@@ -50,11 +50,6 @@ public class AiKnowledge extends BaseEntity implements Serializable {
     private Long vectorDbId;
 
     /**
-     * 向量库集合名/索引名（服务端生成 kb_{id}）
-     */
-    private String collectionName;
-
-    /**
      * Embedding模型id（T_AI_MODEL，type=2）
      */
     private Long embedModelId;

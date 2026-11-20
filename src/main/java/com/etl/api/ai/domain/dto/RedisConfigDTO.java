@@ -14,7 +14,7 @@ import lombok.Data;
  */
 @Data
 @Schema(description = "Redis 向量数据库连接配置")
-public class RedisConfigDTO {
+public class RedisConfigDTO implements AiVectorDbConfig {
 
     @Schema(description = "Redis 主机")
     private String host;
@@ -27,4 +27,9 @@ public class RedisConfigDTO {
 
     @Schema(description = "密码，可选")
     private String password;
+
+    @Override
+    public void validate() {
+        validateCommon();
+    }
 }
