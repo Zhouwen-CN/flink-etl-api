@@ -9,7 +9,7 @@ import com.etl.api.sys.domain.vo.ResponseVO;
 import com.etl.api.sys.mapper.SysRoleMapper;
 import com.etl.api.sys.mapper.SysRolePermissionMapper;
 import com.etl.api.sys.service.SysRoleService;
-import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -28,6 +28,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> implements SysRoleService {
 
+    /**
+     * 挂载表批量插入无链式 API（insertBatch），保留 mapper
+     */
     private final SysRolePermissionMapper rolePermissionMapper;
 
     @Override
@@ -67,10 +70,9 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
             return ResponseVO.modifyAdminError();
         }
         this.removeById(id);
-        rolePermissionMapper.deleteByQuery(
-                QueryWrapper.create()
-                        .eq(SysRolePermission::getRoleId, id)
-        );
+        UpdateChain.of(SysRolePermission.class)
+                .eq(SysRolePermission::getRoleId, id)
+                .remove();
         return ResponseVO.ok();
     }
 
@@ -80,11 +82,9 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
             return ResponseVO.modifyAdminError();
         }
         this.removeByIds(ids);
-        rolePermissionMapper.deleteByQuery(
-                QueryWrapper.create()
-                        .in(SysRolePermission::getRoleId, ids)
-
-        );
+        UpdateChain.of(SysRolePermission.class)
+                .in(SysRolePermission::getRoleId, ids)
+                .remove();
         return ResponseVO.ok();
     }
 
@@ -97,10 +97,9 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
                 .toList();
 
         if (isUpdate) {
-            rolePermissionMapper.deleteByQuery(
-                    QueryWrapper.create()
-                            .eq(SysRolePermission::getRoleId, roleId)
-            );
+            UpdateChain.of(SysRolePermission.class)
+                    .eq(SysRolePermission::getRoleId, roleId)
+                    .remove();
         }
         if (!rolePermissionList.isEmpty()) {
             rolePermissionMapper.insertBatch(rolePermissionList);

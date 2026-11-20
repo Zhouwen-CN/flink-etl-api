@@ -5,10 +5,9 @@ import com.etl.api.sys.domain.entity.SysDictData;
 import com.etl.api.sys.domain.entity.SysDictType;
 import com.etl.api.sys.domain.form.SysDictTypeCreateForm;
 import com.etl.api.sys.domain.vo.ResponseVO;
-import com.etl.api.sys.mapper.SysDictDataMapper;
 import com.etl.api.sys.mapper.SysDictTypeMapper;
 import com.etl.api.sys.service.SysDictTypeService;
-import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -25,7 +24,6 @@ import java.util.Collection;
 @Service
 @RequiredArgsConstructor
 public class SysDictTypeServiceImpl extends ServiceImpl<SysDictTypeMapper, SysDictType> implements SysDictTypeService {
-    private final SysDictDataMapper dictDataMapper;
 
     @Override
     public ResponseVO<Void> addDictType(SysDictTypeCreateForm form) {
@@ -44,11 +42,10 @@ public class SysDictTypeServiceImpl extends ServiceImpl<SysDictTypeMapper, SysDi
 
     @Override
     public ResponseVO<Void> removeDictType(Long id) {
-        val count = dictDataMapper.selectCountByQuery(
-                QueryWrapper.create()
-                        .eq(SysDictData::getTypeId, id)
-        );
-        if (count > 0) {
+        val exists = QueryChain.of(SysDictData.class)
+                .eq(SysDictData::getTypeId, id)
+                .exists();
+        if (exists) {
             return ResponseVO.error("删除失败，尚有字典数据依赖");
         }
         this.removeById(id);
@@ -57,11 +54,10 @@ public class SysDictTypeServiceImpl extends ServiceImpl<SysDictTypeMapper, SysDi
 
     @Override
     public ResponseVO<Void> removeBatchDictType(Collection<Long> ids) {
-        val count = dictDataMapper.selectCountByQuery(
-                QueryWrapper.create()
-                        .in(SysDictData::getTypeId, ids)
-        );
-        if (count > 0) {
+        val exists = QueryChain.of(SysDictData.class)
+                .in(SysDictData::getTypeId, ids)
+                .exists();
+        if (exists) {
             return ResponseVO.error("删除失败，尚有字典数据依赖");
         }
         this.removeByIds(ids);

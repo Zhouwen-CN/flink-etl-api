@@ -8,10 +8,9 @@ import com.etl.api.sys.domain.form.SysDeptUpdateForm;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.etl.api.sys.domain.vo.SysDeptVO;
 import com.etl.api.sys.mapper.SysDeptMapper;
-import com.etl.api.sys.mapper.SysUserMapper;
 import com.etl.api.sys.service.SysDeptService;
 import com.etl.api.sys.util.SaSessionUtil;
-import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -37,8 +36,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> implements SysDeptService {
-
-    private final SysUserMapper userMapper;
 
     @Override
     public ResponseVO<Void> addDept(SysDeptCreateForm form) {
@@ -121,10 +118,9 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         }
 
         // 存在用户引用不允许删除
-        val user = userMapper.selectOneByQuery(
-                QueryWrapper.create()
-                        .eq(SysUser::getDeptId, id)
-        );
+        val user = QueryChain.of(SysUser.class)
+                .eq(SysUser::getDeptId, id)
+                .one();
 
         if (user != null) {
             return ResponseVO.error("删除失败，尚有用户依赖");

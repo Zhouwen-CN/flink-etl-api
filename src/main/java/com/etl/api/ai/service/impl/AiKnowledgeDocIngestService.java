@@ -5,6 +5,7 @@ import com.etl.api.ai.domain.entity.AiKnowledgeDoc;
 import com.etl.api.ai.domain.entity.AiKnowledgeDocChunk;
 import com.etl.api.ai.enumeration.AiDocParseStatusEnum;
 import com.etl.api.ai.mapper.AiKnowledgeDocChunkMapper;
+import com.etl.api.ai.mapper.AiKnowledgeDocMapper;
 import com.etl.api.ai.service.manager.AiVectorStoreManager;
 import com.etl.api.sys.aop.NonTransaction;
 import com.mybatisflex.core.query.QueryChain;
@@ -63,6 +64,7 @@ public class AiKnowledgeDocIngestService {
      */
     private final AiKnowledgeDocChunkMapper chunkMapper;
     private final AiVectorStoreManager vectorStoreManager;
+    private final AiKnowledgeDocMapper knowledgeDocMapper;
 
     /**
      * ai 请求异步线程池（AiThreadPoolConfig.applicationTaskExecutor，bean 名与字段名一致按名称注入）
@@ -90,9 +92,7 @@ public class AiKnowledgeDocIngestService {
      */
     public void parseAndVectorize(Long documentId) {
         // 链式查询为 SELECT *，会带出 file_content 大字段（解析必需）
-        AiKnowledgeDoc knowledgeDoc = QueryChain.of(AiKnowledgeDoc.class)
-                .eq(AiKnowledgeDoc::getId, documentId)
-                .one();
+        AiKnowledgeDoc knowledgeDoc = knowledgeDocMapper.selectOneById(documentId);
         if (knowledgeDoc == null) {
             log.warn("解析任务对应文档不存在, documentId: {}", documentId);
             return;
