@@ -9,15 +9,14 @@ import com.etl.api.ai.domain.form.AiMcpServerUpdateForm;
 import com.etl.api.ai.domain.validator.AiMcpConfigValidator;
 import com.etl.api.ai.domain.vo.AiMcpSelectorVO;
 import com.etl.api.ai.domain.vo.AiMcpServerVO;
-import com.etl.api.ai.mapper.AiBotMcpToolMapper;
 import com.etl.api.ai.mapper.AiMcpServerMapper;
-import com.etl.api.ai.mapper.AiMcpToolMapper;
 import com.etl.api.ai.service.AiMcpServerService;
 import com.etl.api.ai.service.AiMcpToolService;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.paginate.Page;
-import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.QueryChain;
+import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +42,6 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
 
     private final AiMcpConfigValidator configValidator;
     private final AiMcpToolService mcpToolService;
-    private final AiMcpToolMapper mcpToolMapper;
-    private final AiBotMcpToolMapper botMcpToolMapper;
 
     @Override
     public PageVO<AiMcpServerVO> getPage(Integer currentPage, Integer pageSize, String searchName) {
@@ -114,11 +111,17 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
         this.removeById(id);
 
         // 物理删除该服务下的工具缓存，并级联清理挂载行（本迭代挂载表无数据，防御性清理）
-        val mcpToolList = mcpToolMapper.selectListByQuery(QueryWrapper.create().eq(AiMcpTool::getServerId, id));
+        val mcpToolList = QueryChain.of(AiMcpTool.class)
+                .eq(AiMcpTool::getServerId, id)
+                .list();
         if (!CollectionUtils.isEmpty(mcpToolList)) {
             val toolIds = mcpToolList.stream().map(AiMcpTool::getId).toList();
-            botMcpToolMapper.deleteByQuery(QueryWrapper.create().in(AiBotMcpTool::getToolId, toolIds));
-            mcpToolMapper.deleteByQuery(QueryWrapper.create().eq(AiMcpTool::getServerId, id));
+            UpdateChain.of(AiBotMcpTool.class)
+                    .in(AiBotMcpTool::getToolId, toolIds)
+                    .remove();
+            UpdateChain.of(AiMcpTool.class)
+                    .eq(AiMcpTool::getServerId, id)
+                    .remove();
             log.info("删除MCP服务, serverId: {}, removedToolCount: {}", id, mcpToolList.size());
         } else {
             log.info("删除MCP服务, serverId: {}", id);
@@ -149,9 +152,9 @@ public class AiMcpServerServiceImpl extends ServiceImpl<AiMcpServerMapper, AiMcp
         val servers = this.queryChain()
                 .orderBy(AiMcpServer::getId, true)
                 .list();
-        val toolsByServerId = mcpToolMapper.selectListByQuery(
-                        QueryWrapper.create().orderBy(AiMcpTool::getId, true)
-                )
+        val toolsByServerId = QueryChain.of(AiMcpTool.class)
+                .orderBy(AiMcpTool::getId, true)
+                .list()
                 .stream()
                 .collect(Collectors.groupingBy(AiMcpTool::getServerId));
 

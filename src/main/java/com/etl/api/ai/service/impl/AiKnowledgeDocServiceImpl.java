@@ -4,7 +4,6 @@ import com.etl.api.ai.domain.entity.AiKnowledgeDoc;
 import com.etl.api.ai.domain.entity.AiKnowledgeDocChunk;
 import com.etl.api.ai.domain.vo.AiKnowledgeDocVO;
 import com.etl.api.ai.enumeration.AiDocParseStatusEnum;
-import com.etl.api.ai.mapper.AiKnowledgeDocChunkMapper;
 import com.etl.api.ai.mapper.AiKnowledgeDocMapper;
 import com.etl.api.ai.service.AiKnowledgeDocService;
 import com.etl.api.ai.service.manager.AiVectorStoreManager;
@@ -12,7 +11,7 @@ import com.etl.api.ai.util.FileTypeDetectUtil;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.paginate.Page;
-import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +43,6 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
      */
     private static final long MAX_FILE_SIZE_BYTES = 50L * 1024 * 1024;
 
-    private final AiKnowledgeDocChunkMapper chunkMapper;
     private final AiKnowledgeDocIngestService ingestService;
     private final AiVectorStoreManager vectorStoreManager;
 
@@ -147,8 +145,9 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
                 .pageAs(Page.of(currentPage, pageSize), AiKnowledgeDocVO.class);
         // chunk_count 统计（页内 ≤ pageSize 条，逐条 count 简单可靠）
         page.getRecords().forEach(vo ->
-                vo.setChunkCount(chunkMapper.selectCountByQuery(QueryWrapper.create()
-                        .eq(AiKnowledgeDocChunk::getDocumentId, vo.getId()))));
+                vo.setChunkCount(QueryChain.of(AiKnowledgeDocChunk.class)
+                        .eq(AiKnowledgeDocChunk::getDocumentId, vo.getId())
+                        .count()));
         return PageVO.from(page);
     }
 

@@ -5,10 +5,9 @@ import com.etl.api.ai.domain.entity.AiKnowledgeDoc;
 import com.etl.api.ai.domain.entity.AiKnowledgeDocChunk;
 import com.etl.api.ai.enumeration.AiDocParseStatusEnum;
 import com.etl.api.ai.mapper.AiKnowledgeDocChunkMapper;
-import com.etl.api.ai.mapper.AiKnowledgeDocMapper;
-import com.etl.api.ai.mapper.AiKnowledgeMapper;
 import com.etl.api.ai.service.manager.AiVectorStoreManager;
 import com.etl.api.sys.aop.NonTransaction;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.update.UpdateChain;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.parser.apache.tika.ApacheTikaDocumentParser;
@@ -59,8 +58,9 @@ public class AiKnowledgeDocIngestService {
      */
     private final ApacheTikaDocumentParser tikaParser = new ApacheTikaDocumentParser();
 
-    private final AiKnowledgeMapper knowledgeMapper;
-    private final AiKnowledgeDocMapper docMapper;
+    /**
+     * 分块单条插入需回填自增 id（供失败清理），无链式 API 等价物，保留 mapper
+     */
     private final AiKnowledgeDocChunkMapper chunkMapper;
     private final AiVectorStoreManager vectorStoreManager;
 
@@ -89,14 +89,18 @@ public class AiKnowledgeDocIngestService {
      * chunk.id 作向量 ID）→ 更新 parse_status=SUCCESS + content。
      */
     public void parseAndVectorize(Long documentId) {
-        // selectOneById 为 SELECT *，会带出 file_content 大字段（解析必需）
-        AiKnowledgeDoc knowledgeDoc = docMapper.selectOneById(documentId);
+        // 链式查询为 SELECT *，会带出 file_content 大字段（解析必需）
+        AiKnowledgeDoc knowledgeDoc = QueryChain.of(AiKnowledgeDoc.class)
+                .eq(AiKnowledgeDoc::getId, documentId)
+                .one();
         if (knowledgeDoc == null) {
             log.warn("解析任务对应文档不存在, documentId: {}", documentId);
             return;
         }
 
-        AiKnowledge knowledge = knowledgeMapper.selectOneById(knowledgeDoc.getKnowledgeId());
+        AiKnowledge knowledge = QueryChain.of(AiKnowledge.class)
+                .eq(AiKnowledge::getId, knowledgeDoc.getKnowledgeId())
+                .one();
         if (knowledge == null) {
             updateStatus(documentId, AiDocParseStatusEnum.FAILED, "知识库不存在: " + knowledgeDoc.getKnowledgeId());
             return;
@@ -180,7 +184,9 @@ public class AiKnowledgeDocIngestService {
                     insertedChunkIds, e.getMessage());
         }
         try {
-            chunkMapper.deleteBatchByIds(insertedChunkIds);
+            UpdateChain.of(AiKnowledgeDocChunk.class)
+                    .in(AiKnowledgeDocChunk::getId, insertedChunkIds)
+                    .remove();
         } catch (Exception e) {
             log.warn("清理部分分块数据失败（不影响失败状态记录）, documentChunkIds: {}, cause: {}",
                     insertedChunkIds, e.getMessage());

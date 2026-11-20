@@ -6,13 +6,12 @@ import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiMcpToolUpdateForm;
 import com.etl.api.ai.domain.vo.AiMcpToolVO;
 import com.etl.api.ai.exception.AiMcpConfigException;
-import com.etl.api.ai.mapper.AiBotMcpToolMapper;
 import com.etl.api.ai.mapper.AiMcpToolMapper;
 import com.etl.api.ai.service.AiMcpToolService;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.paginate.Page;
-import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.http.client.HttpClient;
@@ -53,8 +52,6 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
      */
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
 
-    private final AiMcpToolMapper mcpToolMapper;
-    private final AiBotMcpToolMapper botMcpToolMapper;
     private final HttpClient aiHttpClient;
 
     @Override
@@ -84,9 +81,9 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
     public void syncTools(Long serverId, McpServerConfigDTO serverConfig) {
         List<ToolSpecification> specs = fetchTools(serverConfig);
 
-        val existing = mcpToolMapper.selectListByQuery(
-                        QueryWrapper.create().eq(AiMcpTool::getServerId, serverId)
-                )
+        val existing = this.queryChain()
+                .eq(AiMcpTool::getServerId, serverId)
+                .list()
                 .stream()
                 .collect(HashMap<String, AiMcpTool>::new, (m, t) -> m.put(t.getName(), t), Map::putAll);
 
@@ -95,7 +92,7 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
             val inputSchema = spec.toJson();
             val old = existing.remove(spec.name());
             if (old == null) {
-                mcpToolMapper.insert(AiMcpTool.builder()
+                this.save(AiMcpTool.builder()
                         .serverId(serverId)
                         .name(spec.name())
                         .description(description)
@@ -103,19 +100,23 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
                         .build());
             } else {
                 // 只覆盖同步类字段，不得覆盖用户配置的 output_template
-                mcpToolMapper.update(AiMcpTool.builder()
-                        .id(old.getId())
-                        .description(description)
-                        .inputSchema(inputSchema)
-                        .build());
+                UpdateChain.of(AiMcpTool.class)
+                        .set(AiMcpTool::getDescription, description)
+                        .set(AiMcpTool::getInputSchema, inputSchema)
+                        .eq(AiMcpTool::getId, old.getId())
+                        .update();
             }
         }
 
         // 服务端已消失的工具物理删除，并级联删除挂载行
         if (!existing.isEmpty()) {
             val staleIds = existing.values().stream().map(AiMcpTool::getId).toList();
-            botMcpToolMapper.deleteByQuery(QueryWrapper.create().in(AiBotMcpTool::getToolId, staleIds));
-            mcpToolMapper.deleteByQuery(QueryWrapper.create().in(AiMcpTool::getId, staleIds));
+            UpdateChain.of(AiBotMcpTool.class)
+                    .in(AiBotMcpTool::getToolId, staleIds)
+                    .remove();
+            UpdateChain.of(AiMcpTool.class)
+                    .in(AiMcpTool::getId, staleIds)
+                    .remove();
             log.info("MCP工具同步清理失效工具, serverId: {}, removedTools: {}", serverId, existing.keySet());
         }
 

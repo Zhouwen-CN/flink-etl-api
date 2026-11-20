@@ -5,19 +5,19 @@ import com.etl.api.ai.domain.convert.AiKnowledgeConvert;
 import com.etl.api.ai.domain.entity.AiKnowledge;
 import com.etl.api.ai.domain.entity.AiKnowledgeDoc;
 import com.etl.api.ai.domain.entity.AiModel;
+import com.etl.api.ai.domain.entity.AiVectorDatabase;
 import com.etl.api.ai.domain.form.AiKnowledgeCreateForm;
 import com.etl.api.ai.domain.form.AiKnowledgeUpdateForm;
 import com.etl.api.ai.domain.vo.AiKnowledgeVO;
 import com.etl.api.ai.enumeration.AiVectorDbTypeEnum;
 import com.etl.api.ai.exception.AiChatException;
 import com.etl.api.ai.mapper.AiKnowledgeMapper;
-import com.etl.api.ai.mapper.AiModelMapper;
-import com.etl.api.ai.mapper.AiVectorDatabaseMapper;
 import com.etl.api.ai.service.AiKnowledgeDocService;
 import com.etl.api.ai.service.AiKnowledgeService;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +45,6 @@ public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKno
      */
     private static final String DIMENSION_PROBE_TEXT = "dimension probe";
 
-    private final AiVectorDatabaseMapper vectorDatabaseMapper;
-    private final AiModelMapper modelMapper;
     private final AiChatModelFactory chatModelFactory;
     private final AiKnowledgeDocService docService;
 
@@ -67,7 +65,9 @@ public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKno
             return ResponseVO.recordExistsError("Name", form.getName());
         }
 
-        val vectorDb = vectorDatabaseMapper.selectOneById(form.getVectorDbId());
+        val vectorDb = QueryChain.of(AiVectorDatabase.class)
+                .eq(AiVectorDatabase::getId, form.getVectorDbId())
+                .one();
         if (vectorDb == null) {
             return ResponseVO.recordNotFoundError("VectorDbId", form.getVectorDbId());
         }
@@ -76,7 +76,9 @@ public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKno
             return ResponseVO.error("不支持的向量数据库类型: " + vectorDb.getType());
         }
 
-        val embedModel = modelMapper.selectOneById(form.getEmbedModelId());
+        val embedModel = QueryChain.of(AiModel.class)
+                .eq(AiModel::getId, form.getEmbedModelId())
+                .one();
         if (embedModel == null) {
             return ResponseVO.recordNotFoundError("EmbedModelId", form.getEmbedModelId());
         }

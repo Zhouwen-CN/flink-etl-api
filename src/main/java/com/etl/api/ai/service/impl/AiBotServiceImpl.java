@@ -10,11 +10,10 @@ import com.etl.api.ai.domain.form.AiBotUpdateForm;
 import com.etl.api.ai.domain.validator.AiMcpConfigValidator;
 import com.etl.api.ai.mapper.AiBotMapper;
 import com.etl.api.ai.mapper.AiBotMcpToolMapper;
-import com.etl.api.ai.mapper.AiMcpServerMapper;
-import com.etl.api.ai.mapper.AiMcpToolMapper;
 import com.etl.api.ai.service.AiBotService;
 import com.etl.api.sys.domain.vo.ResponseVO;
-import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.QueryChain;
+import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
@@ -66,9 +65,10 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
      */
     private static final String OUTPUT_TEMPLATE_PLACEHOLDER = "{result}";
 
+    /**
+     * 挂载表批量插入无链式 API（insertBatch），保留 mapper
+     */
     private final AiBotMcpToolMapper botMcpToolMapper;
-    private final AiMcpToolMapper mcpToolMapper;
-    private final AiMcpServerMapper mcpServerMapper;
     private final AiMcpConfigValidator configValidator;
     private final HttpClient aiHttpClient;
 
@@ -111,10 +111,9 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
                 .toList();
 
         if (isUpdate) {
-            botMcpToolMapper.deleteByQuery(
-                    QueryWrapper.create()
-                            .eq(AiBotMcpTool::getBotId, botId)
-            );
+            UpdateChain.of(AiBotMcpTool.class)
+                    .eq(AiBotMcpTool::getBotId, botId)
+                    .remove();
         }
 
         if (!botMcpToolList.isEmpty()) {
@@ -124,37 +123,33 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
 
     @Override
     public List<Long> getToolIds(Long botId) {
-        return botMcpToolMapper.selectListByQueryAs(
-                QueryWrapper.create()
-                        .select(AiBotMcpTool::getToolId)
-                        .eq(AiBotMcpTool::getBotId, botId),
-                Long.class
-        );
+        return QueryChain.of(AiBotMcpTool.class)
+                .select(AiBotMcpTool::getToolId)
+                .eq(AiBotMcpTool::getBotId, botId)
+                .listAs(Long.class);
     }
 
     @Override
     public List<AiServiceTool> buildChatTools(Long botId) {
-        val toolIds = botMcpToolMapper.selectListByQueryAs(
-                QueryWrapper.create()
-                        .select(AiBotMcpTool::getToolId)
-                        .eq(AiBotMcpTool::getBotId, botId),
-                Long.class
-        );
+        val toolIds = QueryChain.of(AiBotMcpTool.class)
+                .select(AiBotMcpTool::getToolId)
+                .eq(AiBotMcpTool::getBotId, botId)
+                .listAs(Long.class);
         if (CollectionUtils.isEmpty(toolIds)) {
             return List.of();
         }
 
-        val mcpToolList = mcpToolMapper.selectListByQuery(
-                QueryWrapper.create().in(AiMcpTool::getId, toolIds)
-        );
+        val mcpToolList = QueryChain.of(AiMcpTool.class)
+                .in(AiMcpTool::getId, toolIds)
+                .list();
         if (CollectionUtils.isEmpty(mcpToolList)) {
             return List.of();
         }
 
         val serverIds = mcpToolList.stream().map(AiMcpTool::getServerId).distinct().toList();
-        val configByServerId = mcpServerMapper.selectListByQuery(
-                        QueryWrapper.create().in(AiMcpServer::getId, serverIds)
-                )
+        val configByServerId = QueryChain.of(AiMcpServer.class)
+                .in(AiMcpServer::getId, serverIds)
+                .list()
                 .stream()
                 .collect(
                         HashMap<Long, String>::new,
