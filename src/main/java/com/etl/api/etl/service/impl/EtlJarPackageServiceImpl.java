@@ -3,10 +3,9 @@ package com.etl.api.etl.service.impl;
 import com.etl.api.etl.domain.entity.EtlJarPackage;
 import com.etl.api.etl.domain.entity.EtlJob;
 import com.etl.api.etl.mapper.EtlJarPackageMapper;
-import com.etl.api.etl.mapper.EtlJobMapper;
 import com.etl.api.etl.service.EtlJarPackageService;
 import com.etl.api.sys.domain.vo.ResponseVO;
-import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -28,8 +27,6 @@ import java.util.jar.JarInputStream;
 @Service
 @RequiredArgsConstructor
 public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, EtlJarPackage> implements EtlJarPackageService {
-
-    private final EtlJobMapper jobMapper;
 
     private ResponseVO<Void> saveJar(Long id, String name, MultipartFile uploadFile) {
         if (uploadFile == null) {
@@ -105,11 +102,10 @@ public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, E
 
     @Override
     public ResponseVO<Void> removeJar(Long id) {
-        val count = jobMapper.selectCountByQuery(
-                QueryWrapper.create()
-                        .eq(EtlJob::getJarId, id)
-        );
-        if (count > 0) {
+        val exists = QueryChain.of(EtlJob.class)
+                .eq(EtlJob::getJarId, id)
+                .exists();
+        if (exists) {
             return ResponseVO.error("删除失败，尚有任务依赖");
         }
 
@@ -119,11 +115,10 @@ public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, E
 
     @Override
     public ResponseVO<Void> removeJarBatch(Collection<Long> ids) {
-        val count = jobMapper.selectCountByQuery(
-                QueryWrapper.create()
-                        .in(EtlJob::getJarId, ids)
-        );
-        if (count > 0) {
+        val exists = QueryChain.of(EtlJob.class)
+                .in(EtlJob::getJarId, ids)
+                .exists();
+        if (exists) {
             return ResponseVO.error("删除失败，尚有任务依赖");
         }
 

@@ -6,9 +6,10 @@ import com.etl.api.etl.domain.form.EtlJobConfigRollbackForm;
 import com.etl.api.etl.domain.vo.EtlJobConfigVersionVO;
 import com.etl.api.etl.enumeration.ConfigOperationTypeEnum;
 import com.etl.api.etl.mapper.EtlJobConfigVersionMapper;
-import com.etl.api.etl.mapper.EtlJobMapper;
 import com.etl.api.etl.service.EtlJobConfigVersionService;
 import com.etl.api.sys.domain.vo.ResponseVO;
+import com.mybatisflex.core.query.QueryChain;
+import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +31,6 @@ import static com.mybatisflex.core.query.QueryMethods.max;
 @RequiredArgsConstructor
 public class EtlJobConfigVersionServiceImpl extends ServiceImpl<EtlJobConfigVersionMapper, EtlJobConfigVersion> implements EtlJobConfigVersionService {
 
-    private final EtlJobMapper etlJobMapper;
-
     @Override
     public ResponseVO<List<EtlJobConfigVersionVO>> listByJobId(Long jobId) {
         val list = this.queryChain()
@@ -52,17 +51,18 @@ public class EtlJobConfigVersionServiceImpl extends ServiceImpl<EtlJobConfigVers
             return ResponseVO.error("版本不存在: v" + form.getVersion());
         }
 
-        val job = etlJobMapper.selectOneById(jobId);
+        val job = QueryChain.of(EtlJob.class)
+                .eq(EtlJob::getId, jobId)
+                .one();
         if (job == null) {
             return ResponseVO.recordNotFoundError("ID", jobId);
         }
 
         // 目标版本配置写回任务表
-        val update = EtlJob.builder()
-                .id(jobId)
-                .config(targetVersion.getConfig())
-                .build();
-        etlJobMapper.insertOrUpdateSelective(update);
+        UpdateChain.of(EtlJob.class)
+                .set(EtlJob::getConfig, targetVersion.getConfig())
+                .eq(EtlJob::getId, jobId)
+                .update();
 
         // 回滚追加新版本
         this.saveVersion(jobId, targetVersion.getConfig(), ConfigOperationTypeEnum.ROLLBACK, targetVersion.getVersion());

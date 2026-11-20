@@ -9,7 +9,7 @@ import com.etl.api.etl.mapper.EtlAlertJobMapper;
 import com.etl.api.etl.mapper.EtlAlertMapper;
 import com.etl.api.etl.service.EtlAlertService;
 import com.etl.api.sys.domain.vo.ResponseVO;
-import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -28,6 +28,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EtlAlertServiceImpl extends ServiceImpl<EtlAlertMapper, EtlAlert> implements EtlAlertService {
 
+    /**
+     * 挂载表批量插入无链式 API（insertBatch），保留 mapper
+     */
     private final EtlAlertJobMapper alertJobMapper;
 
     @Override
@@ -69,10 +72,9 @@ public class EtlAlertServiceImpl extends ServiceImpl<EtlAlertMapper, EtlAlert> i
     }
 
     private void removeAlertJobList(Collection<Long> alertIds) {
-        alertJobMapper.deleteByQuery(
-                QueryWrapper.create()
-                        .in(EtlAlertJob::getAlertId, alertIds)
-        );
+        UpdateChain.of(EtlAlertJob.class)
+                .in(EtlAlertJob::getAlertId, alertIds)
+                .remove();
     }
 
     private void saveAlertJobList(List<Long> jobIds, Long alertId, boolean isUpdate) {

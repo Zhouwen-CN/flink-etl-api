@@ -8,12 +8,11 @@ import com.etl.api.etl.domain.entity.EtlProject;
 import com.etl.api.etl.domain.form.EtlJobCreateForm;
 import com.etl.api.etl.domain.form.EtlJobUpdateForm;
 import com.etl.api.etl.enumeration.ConfigOperationTypeEnum;
-import com.etl.api.etl.mapper.EtlJobInstanceMapper;
 import com.etl.api.etl.mapper.EtlJobMapper;
-import com.etl.api.etl.mapper.EtlProjectMapper;
 import com.etl.api.etl.service.EtlJobConfigVersionService;
 import com.etl.api.etl.service.EtlJobService;
 import com.etl.api.sys.domain.vo.ResponseVO;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +34,6 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> implements EtlJobService {
 
-    private final EtlJobInstanceMapper jobInstanceMapper;
-    private final EtlProjectMapper projectMapper;
     private final EtlJobConfigVersionService configVersionService;
 
     @Override
@@ -49,10 +46,9 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
             return ResponseVO.recordExistsError("Name", name);
         }
 
-        val etlProject = projectMapper.selectOneByQuery(
-                QueryWrapper.create()
-                        .eq(EtlProject::getId, form.getProjectId())
-        );
+        val etlProject = QueryChain.of(EtlProject.class)
+                .eq(EtlProject::getId, form.getProjectId())
+                .one();
 
         if (etlProject == null) {
             return ResponseVO.error("项目未找到: " + form.getProjectId());
@@ -83,11 +79,10 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
 
     @Override
     public ResponseVO<Void> removeJob(Long id) {
-        val count = jobInstanceMapper.selectCountByQuery(
-                QueryWrapper.create()
-                        .eq(EtlJobInstance::getJobId, id)
-        );
-        if (count > 0) {
+        val exists = QueryChain.of(EtlJobInstance.class)
+                .eq(EtlJobInstance::getJobId, id)
+                .exists();
+        if (exists) {
             return ResponseVO.error("删除失败，尚有任务实例依赖");
         }
         this.removeById(id);
@@ -100,11 +95,10 @@ public class EtlJobServiceImpl extends ServiceImpl<EtlJobMapper, EtlJob> impleme
 
     @Override
     public ResponseVO<Void> removeJobBatch(Collection<Long> ids) {
-        val count = jobInstanceMapper.selectCountByQuery(
-                QueryWrapper.create()
-                        .in(EtlJobInstance::getJobId, ids)
-        );
-        if (count > 0) {
+        val exists = QueryChain.of(EtlJobInstance.class)
+                .in(EtlJobInstance::getJobId, ids)
+                .exists();
+        if (exists) {
             return ResponseVO.error("删除失败，尚有任务实例依赖");
         }
         this.removeByIds(ids);

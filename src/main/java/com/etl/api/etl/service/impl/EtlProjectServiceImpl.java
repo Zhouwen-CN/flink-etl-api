@@ -4,11 +4,10 @@ import com.etl.api.etl.domain.convert.EtlProjectConvert;
 import com.etl.api.etl.domain.entity.EtlJob;
 import com.etl.api.etl.domain.entity.EtlProject;
 import com.etl.api.etl.domain.form.EtlProjectCreateForm;
-import com.etl.api.etl.mapper.EtlJobMapper;
 import com.etl.api.etl.mapper.EtlProjectMapper;
 import com.etl.api.etl.service.EtlProjectService;
 import com.etl.api.sys.domain.vo.ResponseVO;
-import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -23,8 +22,6 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class EtlProjectServiceImpl extends ServiceImpl<EtlProjectMapper, EtlProject> implements EtlProjectService {
-
-    private final EtlJobMapper jobMapper;
 
     @Override
     public ResponseVO<Void> addProject(EtlProjectCreateForm form) {
@@ -44,11 +41,10 @@ public class EtlProjectServiceImpl extends ServiceImpl<EtlProjectMapper, EtlProj
 
     @Override
     public ResponseVO<Void> removeProject(Long id) {
-        val count = jobMapper.selectCountByQuery(
-                QueryWrapper.create()
-                        .eq(EtlJob::getProjectId, id)
-        );
-        if (count > 0) {
+        val exists = QueryChain.of(EtlJob.class)
+                .eq(EtlJob::getProjectId, id)
+                .exists();
+        if (exists) {
             return ResponseVO.error("删除失败，尚有任务依赖");
         }
 
