@@ -1,9 +1,6 @@
 package com.etl.api.ai.service.manager;
 
-import com.etl.api.ai.domain.entity.AiKnowledgeDoc;
-import com.etl.api.ai.mapper.AiKnowledgeDocMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mybatisflex.core.query.QueryChain;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
@@ -19,7 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +27,7 @@ import java.util.Optional;
  *
  * <p>检索执行复用 {@link AiVectorStoreManager#buildContentRetriever}（各自携带该库的
  * embeddingModel 与 recall_top_k/min_score 配置，store 集合按知识库独立派生，无需 metadata 过滤）；
- * 结果带来源文档名（document_id 反查文档表）与相似度分数，供 LLM 引用。
+ * 结果带来源文档名（upsertChunk 随 metadata 固化）与相似度分数，供 LLM 引用。
  *
  * <p>本类位于 service.manager 包，不参与 service.impl 包事务切面；工具执行器跑在
  * langchain4j 工具循环内，参数解析失败/检索异常均返回错误文本交给 LLM 自行决策
@@ -143,20 +139,19 @@ public class AiKnowledgeSearchToolBuilder {
     }
 
     /**
-     * 结果格式化：带来源文档名与相似度分数，供 LLM 引用与回答时标注出处
+     * 结果格式化：来源文档名与相似度分数随 metadata 固化在向量数据上（upsertChunk 写入），
+     * 直接读取即可，无需来源反查
      */
     private String formatContents(List<Content> contents) {
         if (contents.isEmpty()) {
             return "知识库中未检索到相关内容。";
         }
 
-        val fileNameByDocumentId = loadFileNames(contents);
         val sb = new StringBuilder();
         for (int i = 0; i < contents.size(); i++) {
             val content = contents.get(i);
             val segment = content.textSegment();
-            val documentId = segment.metadata().getString(AiVectorStoreManager.METADATA_DOCUMENT_ID);
-            val fileName = fileNameByDocumentId.getOrDefault(documentId, "未知文档(id=" + documentId + ")");
+            val fileName = segment.metadata().getString(AiVectorStoreManager.METADATA_DOCUMENT_NAME);
             val score = content.metadata().get(ContentMetadata.SCORE);
             sb.append("[来源").append(i + 1).append("] 文档: ").append(fileName);
             if (score != null) {
@@ -165,31 +160,5 @@ public class AiKnowledgeSearchToolBuilder {
             sb.append('\n').append(segment.text()).append("\n\n");
         }
         return sb.toString().strip();
-    }
-
-    /**
-     * 按命中内容 metadata 中的 document_id 批量反查文档名（缺 metadata 的内容降级为未知文档）
-     */
-    private Map<String, String> loadFileNames(List<Content> contents) {
-        val documentIds = contents.stream()
-                .map(content -> content.textSegment().metadata()
-                        .getString(AiVectorStoreManager.METADATA_DOCUMENT_ID))
-                .filter(StringUtils::hasText)
-                .map(Long::valueOf)
-                .distinct()
-                .toList();
-        if (documentIds.isEmpty()) {
-            return Map.of();
-        }
-        return QueryChain.of(AiKnowledgeDoc.class)
-                .select(AiKnowledgeDoc::getId, AiKnowledgeDoc::getFileName)
-                .in(AiKnowledgeDoc::getId, documentIds)
-                .list()
-                .stream()
-                .collect(
-                        HashMap::new,
-                        (map, doc) -> map.put(String.valueOf(doc.getId()), doc.getFileName()),
-                        Map::putAll
-                );
     }
 }

@@ -44,16 +44,17 @@ import java.util.List;
 public class AiVectorStoreManager {
 
     /**
-     * segment metadata key（向量库持久化 + 检索过滤用）
+     * segment metadata key（向量库持久化 + 检索结果来源标注用）
      */
     public static final String METADATA_KNOWLEDGE_ID = "knowledge_id";
     public static final String METADATA_DOCUMENT_ID = "document_id";
+    public static final String METADATA_DOCUMENT_NAME = "document_name";
 
     /**
      * metadataKeys（构造 Redis store 时显式传入）
      */
     public static final List<String> METADATA_KEYS =
-            List.of(METADATA_KNOWLEDGE_ID, METADATA_DOCUMENT_ID);
+            List.of(METADATA_KNOWLEDGE_ID, METADATA_DOCUMENT_ID, METADATA_DOCUMENT_NAME);
 
     private final AiKnowledgeMapper knowledgeMapper;
     private final AiVectorDatabaseMapper vectorDatabaseMapper;
@@ -113,14 +114,17 @@ public class AiVectorStoreManager {
     /**
      * 写入/更新单个分块向量（remove + addAll 幂等 upsert，内部解析 model/store）
      *
-     * @param chunk   分块（须含 id/documentId/knowledgeId）
-     * @param content 向量化内容（可与 chunk.content 不同，如编辑后的新内容）
+     * @param chunk    分块（须含 id/documentId/knowledgeId）
+     * @param content  向量化内容（可与 chunk.content 不同，如编辑后的新内容）
+     * @param fileName 来源文档名（随 metadata 固化，检索结果直接携带，免来源反查）
      */
-    public void upsertChunk(AiKnowledgeDocChunk chunk, String content) {
+    public void upsertChunk(AiKnowledgeDocChunk chunk, String content, String fileName) {
         String vectorId = getVectorId(chunk.getDocumentId(), chunk.getId());
-        val segment = TextSegment.from(content, new Metadata()
+        val metadata = new Metadata()
                 .put(METADATA_KNOWLEDGE_ID, String.valueOf(chunk.getKnowledgeId()))
-                .put(METADATA_DOCUMENT_ID, String.valueOf(chunk.getDocumentId())));
+                .put(METADATA_DOCUMENT_ID, String.valueOf(chunk.getDocumentId()))
+                .put(METADATA_DOCUMENT_NAME, fileName);
+        val segment = TextSegment.from(content, metadata);
         Embedding embedding = getEmbeddingModel(chunk.getKnowledgeId()).embed(segment).content();
         EmbeddingStore<TextSegment> store = getEmbeddingStore(chunk.getKnowledgeId());
         store.remove(vectorId);

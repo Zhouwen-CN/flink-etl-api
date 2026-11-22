@@ -1,5 +1,6 @@
 package com.etl.api.ai.service.impl;
 
+import com.etl.api.ai.domain.entity.AiKnowledgeDoc;
 import com.etl.api.ai.domain.entity.AiKnowledgeDocChunk;
 import com.etl.api.ai.domain.form.AiKnowledgeDocChunkUpdateForm;
 import com.etl.api.ai.domain.vo.AiKnowledgeDocChunkVO;
@@ -9,6 +10,7 @@ import com.etl.api.ai.service.manager.AiVectorStoreManager;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +61,11 @@ public class AiKnowledgeDocChunkServiceImpl extends ServiceImpl<AiKnowledgeDocCh
         this.updateById(update);
 
         // 2. 重新向量化并用同一 vectorId 写回向量库（upsert 保持 id 与 metadata 稳定）
-        vectorStoreManager.upsertChunk(chunk, form.getContent());
+        val doc = QueryChain.of(AiKnowledgeDoc.class)
+                .select(AiKnowledgeDoc::getFileName)
+                .eq(AiKnowledgeDoc::getId, chunk.getDocumentId())
+                .one();
+        vectorStoreManager.upsertChunk(chunk, form.getContent(), doc == null ? null : doc.getFileName());
         log.info("分块已更新并重新向量化, chunkId: {}, documentId: {}", chunk.getId(), chunk.getDocumentId());
         return ResponseVO.ok();
     }

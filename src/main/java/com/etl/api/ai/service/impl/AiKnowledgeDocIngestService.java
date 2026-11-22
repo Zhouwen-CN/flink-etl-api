@@ -137,7 +137,7 @@ public class AiKnowledgeDocIngestService {
                 chunkMapper.insert(chunk);
                 val chunkId = chunk.getId();
                 insertedChunkIds.add(chunkId);
-                vectorStoreManager.upsertChunk(chunk, chunk.getContent());
+                vectorStoreManager.upsertChunk(chunk, chunk.getContent(), knowledgeDoc.getFileName());
             }
 
             // 4. 成功：固化全文 + SUCCESS
