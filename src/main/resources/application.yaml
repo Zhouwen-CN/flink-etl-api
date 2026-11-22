@@ -21,7 +21,6 @@ spring:
   # 邮箱配置
   mail:
     #host: 没有配置host，自动配置类就不会加载，参考：org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
-    host: ${MAIL_HOST:}
     port: ${MAIL_PORT:}
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}

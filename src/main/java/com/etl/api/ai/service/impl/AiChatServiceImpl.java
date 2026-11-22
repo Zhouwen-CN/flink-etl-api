@@ -1,7 +1,7 @@
 package com.etl.api.ai.service.impl;
 
-import com.etl.api.ai.config.AiChatMemoryStore;
 import com.etl.api.ai.config.AiAssistantService;
+import com.etl.api.ai.config.AiChatMemoryStore;
 import com.etl.api.ai.config.AiChatModelFactory;
 import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiModel;
@@ -20,11 +20,11 @@ import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.chat.response.StreamingHandle;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.tool.AiServiceTool;
 import dev.langchain4j.service.tool.ToolArgumentsErrorHandler;
 import dev.langchain4j.service.tool.ToolExecutionErrorHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -88,7 +88,7 @@ public class AiChatServiceImpl implements AiChatService {
         });
 
         // 挂载的 MCP 工具：ToolSpecification 来自本地缓存 input_schema，执行时临时建连调用远端
-        val chatTools = botService.buildChatTools(aiBot.getId());
+        List<AiServiceTool> chatTools = botService.buildChatTools(aiBot.getId());
 
         // 获取 ai service
         AiAssistantService assistantService = AiServices.builder(AiAssistantService.class)
@@ -96,8 +96,8 @@ public class AiChatServiceImpl implements AiChatService {
                 .systemMessageProvider(id -> aiBot.getSystemPrompt())
                 // 环境信息
                 .systemMessageTransformer(systemPrompt -> {
-                    val now = LocalDateTimeUtil.format(LocalDateTime.now());
-                    val osInfo = System.getProperty("os.name") + " " + System.getProperty("os.version");
+                    String now = LocalDateTimeUtil.format(LocalDateTime.now());
+                    String osInfo = System.getProperty("os.name") + " " + System.getProperty("os.version");
                     return """
                             %s
                             

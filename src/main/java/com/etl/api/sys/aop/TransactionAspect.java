@@ -62,12 +62,12 @@ public class TransactionAspect {
         Method method = signature.getMethod();
 
         // 检查实现类方法上的注解
-        if (method.isAnnotationPresent(NonTransaction.class)) {
+        if (method.isAnnotationPresent(IgnoreTransaction.class)) {
             return true;
         }
 
         // 检查实现类上的注解
-        if (targetClass.isAnnotationPresent(NonTransaction.class)) {
+        if (targetClass.isAnnotationPresent(IgnoreTransaction.class)) {
             return true;
         }
 
@@ -78,12 +78,12 @@ public class TransactionAspect {
 
                 // 检查接口方法上的注解
                 Method interfaceMethod = interfaceClass.getMethod(method.getName(), method.getParameterTypes());
-                if (interfaceMethod.isAnnotationPresent(NonTransaction.class)) {
+                if (interfaceMethod.isAnnotationPresent(IgnoreTransaction.class)) {
                     return true;
                 }
 
                 // 检查接口类上的注解
-                if (interfaceClass.isAnnotationPresent(NonTransaction.class)) {
+                if (interfaceClass.isAnnotationPresent(IgnoreTransaction.class)) {
                     return true;
                 }
             } catch (NoSuchMethodException e) {

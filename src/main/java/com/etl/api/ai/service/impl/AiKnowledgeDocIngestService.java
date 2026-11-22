@@ -7,7 +7,7 @@ import com.etl.api.ai.enumeration.AiDocParseStatusEnum;
 import com.etl.api.ai.mapper.AiKnowledgeDocChunkMapper;
 import com.etl.api.ai.mapper.AiKnowledgeDocMapper;
 import com.etl.api.ai.service.manager.AiVectorStoreManager;
-import com.etl.api.sys.aop.NonTransaction;
+import com.etl.api.sys.aop.IgnoreTransaction;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.update.UpdateChain;
 import dev.langchain4j.data.document.Document;
@@ -81,7 +81,7 @@ public class AiKnowledgeDocIngestService {
     /**
      * 提交异步解析（状态机 WAITING → PROCESSING → SUCCESS/FAILED，前端轮询 parse_status）
      */
-    @NonTransaction
+    @IgnoreTransaction
     public void submitParse(Long documentId) {
         applicationTaskExecutor.execute(() -> parseAndVectorize(documentId));
     }
@@ -90,7 +90,7 @@ public class AiKnowledgeDocIngestService {
      * 异步解析流水线：读 blob → Tika 提取全文 → recursive 分块 → 逐块（落库拿自增 id → 向量化 → 写向量库，
      * chunk.id 作向量 ID）→ 更新 parse_status=SUCCESS + content。
      */
-    public void parseAndVectorize(Long documentId) {
+    private void parseAndVectorize(Long documentId) {
         // 链式查询为 SELECT *，会带出 file_content 大字段（解析必需）
         AiKnowledgeDoc knowledgeDoc = knowledgeDocMapper.selectOneById(documentId);
         if (knowledgeDoc == null) {
