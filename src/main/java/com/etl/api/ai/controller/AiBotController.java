@@ -1,6 +1,8 @@
 package com.etl.api.ai.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.etl.api.ai.domain.convert.AiBotConvert;
+import com.etl.api.ai.domain.convert.AiKnowledgeConvert;
 import com.etl.api.ai.domain.convert.AiModelConvert;
 import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiModel;
@@ -10,6 +12,7 @@ import com.etl.api.ai.domain.vo.AiBotVO;
 import com.etl.api.ai.domain.vo.AiMcpSelectorVO;
 import com.etl.api.ai.enumeration.AiModelTypeEnum;
 import com.etl.api.ai.service.AiBotService;
+import com.etl.api.ai.service.AiKnowledgeService;
 import com.etl.api.ai.service.AiMcpServerService;
 import com.etl.api.ai.service.AiModelService;
 import com.etl.api.sys.domain.vo.DictionaryVO;
@@ -50,6 +53,7 @@ public class AiBotController {
     private final AiBotService botService;
     private final AiModelService modelService;
     private final AiMcpServerService mcpServerService;
+    private final AiKnowledgeService knowledgeService;
     private final SysDeptService deptService;
 
     @SaCheckPermission("bot.select")
@@ -91,6 +95,18 @@ public class AiBotController {
     }
 
     @SaCheckPermission("bot.select")
+    @Operation(summary = "知识库选择器", description = "扁平列表：label=知识库名称，value=知识库id，自动按当前部门过滤")
+    @GetMapping("/knowledge/selector")
+    public ResponseVO<List<DictionaryVO>> knowledgeSelector() {
+        val vos = knowledgeService.queryChain()
+                .list()
+                .stream()
+                .map(AiKnowledgeConvert.INSTANCE::convert)
+                .toList();
+        return ResponseVO.ok(vos);
+    }
+
+    @SaCheckPermission("bot.select")
     @Operation(summary = "部门选择器")
     @GetMapping("/dept/selector")
     public ResponseVO<List<SysDeptVO>> deptSelector() {
@@ -103,6 +119,13 @@ public class AiBotController {
     @GetMapping("/tool/{id}")
     public ResponseVO<List<Long>> getToolIds(@PathVariable @Parameter(description = "bot ID") Long id) {
         return ResponseVO.ok(botService.getToolIds(id));
+    }
+
+    @SaCheckPermission("bot.select")
+    @Operation(summary = "知识库ID列表", description = "根据bot_id查询绑定的知识库ID列表，用作前端数据回显")
+    @GetMapping("/knowledge/{id}")
+    public ResponseVO<List<Long>> getKnowledgeIds(@PathVariable @Parameter(description = "bot ID") Long id) {
+        return ResponseVO.ok(botService.getKnowledgeIds(id));
     }
 
     @SaCheckPermission("bot.insert")

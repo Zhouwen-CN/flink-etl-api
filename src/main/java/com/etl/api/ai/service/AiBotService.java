@@ -27,6 +27,11 @@ public interface AiBotService extends IService<AiBot> {
     List<Long> getToolIds(Long botId);
 
     /**
+     * 查询bot绑定的知识库ID列表（前端数据回显）
+     */
+    List<Long> getKnowledgeIds(Long botId);
+
+    /**
      * 构建 bot 挂载的 MCP 工具集合（聊天时提供给大模型）。
      *
      * <p>ToolSpecification 由缓存 input_schema 反序列化得到；执行器临时建连调用远端工具，

@@ -16,6 +16,7 @@ import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +91,23 @@ public class AiVectorStoreManager {
             throw new AiVectorDbConfigException("Embedding 模型不存在: " + knowledge.getEmbedModelId());
         }
         return chatModelFactory.getEmbeddingModel(embedModel);
+    }
+
+    /**
+     * 构建知识库检索器：maxResults/minScore 取知识库级配置（recall_top_k / min_score 字段，
+     * 即检索时生效的"最大召回条数/相似度下限"）。
+     *
+     * <p>store 集合按知识库独立派生（kb_{id}），检索天然只命中本库数据，无需 metadata 过滤；
+     * retriever 为轻量对象，每次构建（store/model 均来自工厂缓存），召回参数改动即生效。
+     */
+    public EmbeddingStoreContentRetriever buildContentRetriever(Long knowledgeId) {
+        AiKnowledge knowledge = requireKnowledge(knowledgeId);
+        return EmbeddingStoreContentRetriever.builder()
+                .embeddingStore(getEmbeddingStore(knowledgeId))
+                .embeddingModel(getEmbeddingModel(knowledgeId))
+                .maxResults(knowledge.getRecallTopK())
+                .minScore(knowledge.getMinScore())
+                .build();
     }
 
     /**

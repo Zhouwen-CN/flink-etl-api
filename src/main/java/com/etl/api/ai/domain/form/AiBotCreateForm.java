@@ -52,4 +52,8 @@ public class AiBotCreateForm {
     @NotNull
     @Schema(description = "工具ID列表")
     private List<Long> toolIds;
+
+    @NotNull
+    @Schema(description = "知识库ID列表（空列表 = 不绑定知识库）")
+    private List<Long> knowledgeIds;
 }
