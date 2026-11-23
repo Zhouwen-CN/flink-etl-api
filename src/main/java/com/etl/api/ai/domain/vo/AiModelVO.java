@@ -24,6 +24,9 @@ public class AiModelVO {
     @Schema(description = "大模型请求地址")
     private String baseUrl;
 
+    @Schema(description = "大模型 API KEY")
+    private String apiKey;
+
     @Schema(description = "模型名称，如 gpt-4o-mini")
     private String modelName;
 

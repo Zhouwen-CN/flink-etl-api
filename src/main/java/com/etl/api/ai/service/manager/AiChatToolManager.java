@@ -200,8 +200,6 @@ public class AiChatToolManager {
         }
 
         // 单个知识库检索器构建失败（向量库配置失效等）跳过该库，其余照常；全部失效时不注册。
-        // 知识库实体批量查询一次带出 recall_top_k/min_score/embedModelId/vectorDbId，
-        // 已删除/越界的挂载引用不会出现在结果里，自然跳过
         val knowledgeList = QueryChain.of(AiKnowledge.class)
                 .in(AiKnowledge::getId, knowledgeIds)
                 .list();

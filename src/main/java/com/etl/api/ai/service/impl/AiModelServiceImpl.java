@@ -77,7 +77,7 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
         // 失效模型实例缓存（baseUrl/apiKey/modelName 等可能已变更）
         chatModelFactory.evictByModelId(form.getId());
 
-        this.updateById(AiModelConvert.INSTANCE.convert(form));
+        this.updateById(AiModelConvert.INSTANCE.convert(form), false);
         return ResponseVO.ok();
     }
 

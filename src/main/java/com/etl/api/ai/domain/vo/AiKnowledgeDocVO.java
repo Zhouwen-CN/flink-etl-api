@@ -27,9 +27,6 @@ public class AiKnowledgeDocVO {
     @Schema(description = "解析失败原因")
     private String parseFailReason;
 
-    @Schema(description = "分块数量")
-    private Long chunkCount;
-
     @Schema(description = "更新时间")
     private LocalDateTime updateTime;
 }
