@@ -44,12 +44,6 @@ import java.util.List;
 public class AiKnowledgeDocIngestService {
 
     /**
-     * chunk_size / overlap_size 空值兜底（对齐 DDL 默认值）
-     */
-    private static final int DEFAULT_CHUNK_SIZE = 800;
-    private static final int DEFAULT_OVERLAP_SIZE = 200;
-
-    /**
      * parse_fail_reason 列长度
      */
     private static final int MAX_FAIL_REASON_LENGTH = 1024;
@@ -118,10 +112,7 @@ public class AiKnowledgeDocIngestService {
             }
 
             // 2. recursive 分块（按字符计，chunk_size/overlap_size 取知识库配置）
-            int chunkSize = knowledge.getChunkSize() != null ? knowledge.getChunkSize() : DEFAULT_CHUNK_SIZE;
-            int overlapSize = knowledge.getOverlapSize() != null ? knowledge.getOverlapSize() : DEFAULT_OVERLAP_SIZE;
-            List<TextSegment> splitSegments =
-                    DocumentSplitters.recursive(chunkSize, overlapSize).split(Document.from(text));
+            List<TextSegment> splitSegments = DocumentSplitters.recursive(knowledge.getChunkSize(), knowledge.getOverlapSize()).split(Document.from(text));
             if (splitSegments.isEmpty()) {
                 throw new IllegalStateException("分块结果为空，请检查文档内容与分块参数");
             }
