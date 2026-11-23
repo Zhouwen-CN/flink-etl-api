@@ -88,7 +88,7 @@ public final class AiMessageUtil {
         return ChatMessageSerializer.messageToJson(toolExecutionResultMessage);
     }
 
-    public static String metadata(ChatResponse response) {
+    public static String metadata(ChatResponse response, Integer contextWindow) {
         TokenUsage tokenUsage = response.tokenUsage();
         Integer inputTokenCount = tokenUsage.inputTokenCount();
         Integer outputTokenCount = tokenUsage.outputTokenCount();
@@ -99,7 +99,8 @@ public final class AiMessageUtil {
                         Map.of(
                                 "inputToken", inputTokenCount,
                                 "outputToken", outputTokenCount,
-                                "totalToken", totalTokenCount
+                                "totalToken", totalTokenCount,
+                                "contextWindow", contextWindow
                         )
                 ).build();
         return ChatMessageSerializer.messageToJson(aiMessage);

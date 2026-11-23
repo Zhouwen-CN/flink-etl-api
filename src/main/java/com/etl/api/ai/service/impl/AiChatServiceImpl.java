@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
@@ -50,14 +51,13 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequiredArgsConstructor
 public class AiChatServiceImpl implements AiChatService {
 
-    @Value("${custom.ai.max-memory-messages:100}")
-    private Integer maxMemoryMessages;
-
     private final AiChatModelFactory chatModelFactory;
     private final AiChatMemoryStore chatMemoryStore;
     private final AiBotService botService;
     private final AiModelService modelService;
     private final AiChatToolManager chatToolManager;
+    @Value("${custom.ai.max-memory-messages:100}")
+    private Integer maxMemoryMessages;
 
     @Override
     public SseEmitter streamChat(AiChatForm form) {
@@ -96,19 +96,21 @@ public class AiChatServiceImpl implements AiChatService {
         // 获取 ai service
         AiAssistantService assistantService = AiServices.builder(AiAssistantService.class)
                 .streamingChatModel(chatModelFactory.getStreamingChatModel(aiModel))
-                .systemMessageProvider(id -> aiBot.getSystemPrompt())
-                // 环境信息
-                .systemMessageTransformer(systemPrompt -> {
+                // 环境信息固定注入 provider（用户未配置系统提示词时也不丢环境信息）；
+                .systemMessageProvider(id -> {
                     String now = LocalDateTimeUtil.format(LocalDateTime.now());
                     String osInfo = System.getProperty("os.name") + " " + System.getProperty("os.version");
                     return """
-                            %s
-                            
                             # 环境信息
                             - 当前时间: %s (%s)
                             - 操作系统: %s
-                            """.formatted(systemPrompt, now, ZoneId.systemDefault(), osInfo);
+                            """.formatted(now, ZoneId.systemDefault(), osInfo);
                 })
+                .systemMessageTransformer(systemMessage ->
+                        StringUtils.hasText(aiBot.getSystemPrompt())
+                                ? systemMessage + "\n\n" + aiBot.getSystemPrompt()
+                                : systemMessage
+                )
                 .chatMemoryProvider(id -> MessageWindowChatMemory.builder()
                         .id(id)
                         .maxMessages(maxMemoryMessages)
@@ -155,7 +157,7 @@ public class AiChatServiceImpl implements AiChatService {
                 .beforeToolExecution(before -> sse.sendTool(AiMessageUtil.toolCall(before.request())))
                 // 工具执行后：推送执行结果
                 .onToolExecuted(execution -> sse.sendTool(AiMessageUtil.toolResult(execution)))
-                .onCompleteResponse(response -> sse.sendDone(AiMessageUtil.metadata(response)))
+                .onCompleteResponse(response -> sse.sendDone(AiMessageUtil.metadata(response, aiModel.getContextWindow())))
                 .onError(ex -> sse.sendError(ex.getMessage()))
                 .start();
 
