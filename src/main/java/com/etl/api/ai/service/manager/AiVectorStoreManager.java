@@ -73,8 +73,7 @@ public class AiVectorStoreManager {
     /**
      * 获取知识库对应的 EmbeddingStore（复用向量库工厂两层缓存）
      */
-    public EmbeddingStore<TextSegment> getEmbeddingStore(Long knowledgeId) {
-        AiKnowledge knowledge = requireKnowledge(knowledgeId);
+    private EmbeddingStore<TextSegment> getEmbeddingStore(AiKnowledge knowledge) {
         AiVectorDatabase vectorDatabase = vectorDatabaseMapper.selectOneById(knowledge.getVectorDbId());
         if (vectorDatabase == null) {
             throw new AiVectorDbConfigException("向量数据库配置不存在: " + knowledge.getVectorDbId());
@@ -83,10 +82,16 @@ public class AiVectorStoreManager {
     }
 
     /**
+     * 按知识库 id 获取 EmbeddingStore（写路径手中只有 knowledgeId 时的薄包装）
+     */
+    private EmbeddingStore<TextSegment> getEmbeddingStore(Long knowledgeId) {
+        return getEmbeddingStore(requireKnowledge(knowledgeId));
+    }
+
+    /**
      * 获取知识库绑定的 EmbeddingModel
      */
-    public EmbeddingModel getEmbeddingModel(Long knowledgeId) {
-        AiKnowledge knowledge = requireKnowledge(knowledgeId);
+    private EmbeddingModel getEmbeddingModel(AiKnowledge knowledge) {
         AiModel embedModel = modelMapper.selectOneById(knowledge.getEmbedModelId());
         if (embedModel == null) {
             throw new AiVectorDbConfigException("Embedding 模型不存在: " + knowledge.getEmbedModelId());
@@ -95,17 +100,24 @@ public class AiVectorStoreManager {
     }
 
     /**
+     * 按知识库 id 获取 EmbeddingModel（写路径手中只有 knowledgeId 时的薄包装）
+     */
+    private EmbeddingModel getEmbeddingModel(Long knowledgeId) {
+        return getEmbeddingModel(requireKnowledge(knowledgeId));
+    }
+
+    /**
      * 构建知识库检索器：maxResults/minScore 取知识库级配置（recall_top_k / min_score 字段，
      * 即检索时生效的"最大召回条数/相似度下限"）。
      *
      * <p>store 集合按知识库独立派生（kb_{id}），检索天然只命中本库数据，无需 metadata 过滤；
      * retriever 为轻量对象，每次构建（store/model 均来自工厂缓存），召回参数改动即生效。
+     * 知识库实体由调用方批量查询传入（如聊天工具组装），避免逐库单行查询。
      */
-    public EmbeddingStoreContentRetriever buildContentRetriever(Long knowledgeId) {
-        AiKnowledge knowledge = requireKnowledge(knowledgeId);
+    public EmbeddingStoreContentRetriever buildContentRetriever(AiKnowledge knowledge) {
         return EmbeddingStoreContentRetriever.builder()
-                .embeddingStore(getEmbeddingStore(knowledgeId))
-                .embeddingModel(getEmbeddingModel(knowledgeId))
+                .embeddingStore(getEmbeddingStore(knowledge))
+                .embeddingModel(getEmbeddingModel(knowledge))
                 .maxResults(knowledge.getRecallTopK())
                 .minScore(knowledge.getMinScore())
                 .build();

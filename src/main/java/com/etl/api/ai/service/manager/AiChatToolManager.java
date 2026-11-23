@@ -2,6 +2,7 @@ package com.etl.api.ai.service.manager;
 
 import com.etl.api.ai.domain.entity.AiBotKnowledge;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
+import com.etl.api.ai.domain.entity.AiKnowledge;
 import com.etl.api.ai.domain.entity.AiMcpServer;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.validator.AiMcpConfigValidator;
@@ -22,12 +23,14 @@ import dev.langchain4j.service.tool.AiServiceTool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -87,6 +90,13 @@ public class AiChatToolManager {
      * query 参数缺失/非法时的错误回传文本（交 LLM 重试）
      */
     private static final String INVALID_QUERY_MESSAGE = "参数错误: query 不能为空，请提供检索问题或关键词";
+
+    /**
+     * 多知识库合并召回的全局上限：各库各自按 recall_top_k 召回，绑定的库越多总量越大，
+     * 合并后必须截断，防止工具结果把模型上下文撑爆
+     */
+    @Value("${custom.ai.knowledge-max-results:10}")
+    private Integer knowledgeMaxResults = 10;
 
     private final AiVectorStoreManager vectorStoreManager;
     private final AiMcpConfigValidator configValidator;
@@ -189,14 +199,19 @@ public class AiChatToolManager {
             return;
         }
 
-        // 单个知识库检索器构建失败（被删/向量库配置失效）跳过该库，其余照常；全部失效时不注册
+        // 单个知识库检索器构建失败（向量库配置失效等）跳过该库，其余照常；全部失效时不注册。
+        // 知识库实体批量查询一次带出 recall_top_k/min_score/embedModelId/vectorDbId，
+        // 已删除/越界的挂载引用不会出现在结果里，自然跳过
+        val knowledgeList = QueryChain.of(AiKnowledge.class)
+                .in(AiKnowledge::getId, knowledgeIds)
+                .list();
         val retrieverList = new ArrayList<EmbeddingStoreContentRetriever>();
-        for (val knowledgeId : knowledgeIds) {
+        for (val knowledge : knowledgeList) {
             try {
-                retrieverList.add(vectorStoreManager.buildContentRetriever(knowledgeId));
+                retrieverList.add(vectorStoreManager.buildContentRetriever(knowledge));
             } catch (Exception e) {
                 log.warn("知识库检索器构建失败，跳过该知识库, knowledgeId: {}, cause: {}",
-                        knowledgeId, e.getMessage());
+                        knowledge.getId(), e.getMessage());
             }
         }
         if (retrieverList.isEmpty()) {
@@ -222,7 +237,8 @@ public class AiChatToolManager {
     }
 
     /**
-     * 执行多知识库检索并合并结果；异常兜底为错误文本回传 LLM
+     * 执行多知识库检索：各库先按自身 recall_top_k/min_score 召回，合并后按 score 全局
+     * 降序截断到 knowledgeMaxResults 条（单库绑定不会触发截断）；异常兜底为错误文本回传 LLM
      */
     private String executeKnowledgeSearch(ToolExecutionRequest request,
                                           List<EmbeddingStoreContentRetriever> retrieverList) {
@@ -234,13 +250,29 @@ public class AiChatToolManager {
             val contents = new ArrayList<Content>();
             for (val retriever : retrieverList) {
                 contents.addAll(retriever.retrieve(Query.from(query)));
-
             }
-            return formatContents(contents);
+            return formatContents(rankContents(contents));
         } catch (Exception e) {
             log.warn("知识库检索失败, tool: {}, error: {}", KNOWLEDGE_TOOL_NAME, e.getMessage());
             return "知识库检索失败: " + e.getMessage();
         }
+    }
+
+    /**
+     * 跨库合并排序：score 全局降序截断到 KNOWLEDGE_MAX_RESULTS。
+     * 注意各库可用不同 embedding model，score 量纲不同，跨库排序是启发式近似；
+     * 单 score 缺失按 0 兜底排末尾（EmbeddingStoreContentRetriever 正常都会写入 SCORE）。
+     */
+    private List<Content> rankContents(List<Content> contents) {
+        return contents.stream()
+                .sorted(Comparator.comparingDouble(AiChatToolManager::scoreOf).reversed())
+                .limit(knowledgeMaxResults)
+                .toList();
+    }
+
+    private static double scoreOf(Content content) {
+        val score = content.metadata().get(ContentMetadata.SCORE);
+        return score instanceof Number number ? number.doubleValue() : 0.0;
     }
 
     /**

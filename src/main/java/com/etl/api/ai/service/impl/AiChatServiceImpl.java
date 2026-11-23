@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequiredArgsConstructor
 public class AiChatServiceImpl implements AiChatService {
 
-    @Value("${custom.ai.max_memory_messages:100}")
+    @Value("${custom.ai.max-memory-messages:100}")
     private Integer maxMemoryMessages;
 
     private final AiChatModelFactory chatModelFactory;
