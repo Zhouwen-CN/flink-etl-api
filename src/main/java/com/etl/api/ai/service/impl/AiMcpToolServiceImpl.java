@@ -5,39 +5,30 @@ import com.etl.api.ai.domain.entity.AiBotMcpTool;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiMcpToolUpdateForm;
 import com.etl.api.ai.domain.vo.AiMcpToolVO;
-import com.etl.api.ai.exception.AiMcpConfigException;
 import com.etl.api.ai.mapper.AiMcpToolMapper;
 import com.etl.api.ai.service.AiMcpToolService;
+import com.etl.api.ai.service.manager.AiMcpToolManager;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.http.client.HttpClient;
-import dev.langchain4j.mcp.client.DefaultMcpClient;
-import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * AI MCP工具表 服务层实现。
  *
- * <p>同步工具：临时连接流程 StreamableHttpMcpTransport（自动探测 SSE / Streamable HTTP 协议，
- * 支持 customHeaders）→ DefaultMcpClient → listTools() → close()，客户端不驻留。
- * 建连（transport timeout + initialization timeout）与 listTools 各自超时 5s。
+ * <p>工具目录同步：临时建连与工具清单拉取统一走 {@link AiMcpToolManager#fetchTools}，
+ * 本类仅负责同步结果的持久化（新增/更新/清理失效工具及挂载行）。
  *
  * @author chen
  * @since 2026-11-17
@@ -47,12 +38,7 @@ import java.util.concurrent.TimeoutException;
 @RequiredArgsConstructor
 public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool> implements AiMcpToolService {
 
-    /**
-     * 建连 / 初始化 / listTools 各自的超时时间（PRD F1.6）
-     */
-    private static final Duration TIMEOUT = Duration.ofSeconds(5);
-
-    private final HttpClient aiHttpClient;
+    private final AiMcpToolManager mcpToolManager;
 
     @Override
     public PageVO<AiMcpToolVO> getPage(Integer currentPage, Integer pageSize, Long serverId, String searchName) {
@@ -79,7 +65,7 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
 
     @Override
     public void syncTools(Long serverId, McpServerConfigDTO serverConfig) {
-        List<ToolSpecification> specs = fetchTools(serverConfig);
+        List<ToolSpecification> specs = mcpToolManager.fetchTools(serverConfig);
 
         val existing = this.queryChain()
                 .eq(AiMcpTool::getServerId, serverId)
@@ -121,34 +107,5 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
         }
 
         log.info("MCP工具同步完成, serverId: {}, toolCount: {}", serverId, specs.size());
-    }
-
-    /**
-     * 建立临时连接拉取工具清单，用后即关。
-     */
-    private List<ToolSpecification> fetchTools(McpServerConfigDTO serverConfig) {
-        // transport 级 timeout 与显式 httpClient 互斥，超时统一配置在 AiHttpClientConfig
-        val transportBuilder = StreamableHttpMcpTransport.builder()
-                .url(serverConfig.getUrl().trim())
-                .httpClient(aiHttpClient);
-        val headers = serverConfig.getHeaders();
-        if (headers != null && !headers.isEmpty()) {
-            transportBuilder.customHeaders(headers);
-        }
-
-        try (McpClient client = new DefaultMcpClient.Builder()
-                .transport(transportBuilder.build())
-                .initializationTimeout(TIMEOUT)
-                .build()
-        ) {
-            return CompletableFuture.supplyAsync(client::listTools)
-                    .get(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            val cause = e.getCause() != null ? e.getCause() : e;
-            if (cause instanceof TimeoutException) {
-                throw new AiMcpConfigException("同步MCP工具失败: 连接或拉取工具清单超时（5s）");
-            }
-            throw new AiMcpConfigException("同步MCP工具失败（连接或拉取工具清单异常）: " + cause.getMessage());
-        }
     }
 }

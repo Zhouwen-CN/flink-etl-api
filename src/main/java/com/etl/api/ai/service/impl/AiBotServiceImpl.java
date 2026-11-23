@@ -12,7 +12,7 @@ import com.etl.api.ai.mapper.AiBotKnowledgeMapper;
 import com.etl.api.ai.mapper.AiBotMapper;
 import com.etl.api.ai.mapper.AiBotMcpToolMapper;
 import com.etl.api.ai.service.AiBotService;
-import com.etl.api.ai.service.manager.AiChatToolManager;
+import com.etl.api.ai.service.manager.AiMcpToolManager;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.update.UpdateChain;
@@ -33,7 +33,7 @@ import java.util.Set;
  * AI Bot表 服务层实现。
  *
  * <p>负责 bot CRUD 与挂载表维护；聊天工具组装见
- * {@link AiChatToolManager}。
+ * {@link AiMcpToolManager}。
  *
  * @author chen
  * @since 2026-11-13

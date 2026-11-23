@@ -1,11 +1,14 @@
 package com.etl.api.ai.service.manager;
 
+import com.etl.api.ai.domain.dto.McpServerConfigDTO;
 import com.etl.api.ai.domain.entity.AiBotKnowledge;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
 import com.etl.api.ai.domain.entity.AiKnowledge;
 import com.etl.api.ai.domain.entity.AiMcpServer;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.validator.AiMcpConfigValidator;
+import com.etl.api.ai.exception.AiMcpConfigException;
+import com.etl.api.ai.service.AiMcpToolService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.query.QueryChain;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -35,12 +38,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
- * 聊天工具组装器：为 bot 组装注册给 LLM 的工具集合，单一入口 {@link #build}。
+ * MCP 工具管理器：收口 MCP 临时建连（目录同步 {@link #fetchTools} / 聊天执行
+ * {@link #buildClient}），并为 bot 组装注册给 LLM 的工具集合，组装单一入口 {@link #build}。
  *
- * <p>MCP 工具部分：清单来自本地缓存（input_schema 反序列化，不实时 listTools）；
- * 执行时临时建连调用远端工具（与 AiMcpToolService 同步工具同一连接模式，用后即关）。
+ * <p>MCP 临时建连的统一收口点：聊天执行工具、{@link AiMcpToolService} 同步工具清单
+ * （{@link #fetchTools}）共用同一套 transport 构建与超时配置，客户端均不驻留。
+ * MCP 工具清单来自本地缓存（input_schema 反序列化，不实时 listTools）。
  *
  * <p>知识库检索工具部分（自研工具，非 MCP）：把 bot 绑定的知识库包装成
  * search_knowledge_base，LLM 自主决定何时检索、query 怎么改写；检索执行复用
@@ -56,7 +64,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AiChatToolManager {
+public class AiMcpToolManager {
 
     /**
      * 建连 / 初始化超时（与 AiMcpToolServiceImpl 一致）
@@ -263,7 +271,7 @@ public class AiChatToolManager {
      */
     private List<Content> rankContents(List<Content> contents) {
         return contents.stream()
-                .sorted(Comparator.comparingDouble(AiChatToolManager::scoreOf).reversed())
+                .sorted(Comparator.comparingDouble(AiMcpToolManager::scoreOf).reversed())
                 .limit(knowledgeMaxResults)
                 .toList();
     }
@@ -317,7 +325,7 @@ public class AiChatToolManager {
      * 临时建连执行 MCP 工具调用，结果按 output_template 包装；失败返回错误文本交给 LLM 自行决策
      */
     private String executeMcpTool(String configJson, String outputTemplate, ToolExecutionRequest request) {
-        try (McpClient client = buildClient(configJson)) {
+        try (McpClient client = buildClient(configValidator.validate(configJson))) {
             val toolResult = client.executeTool(request);
             val text = toolResult.resultText();
             val wrapped = StringUtils.hasText(outputTemplate)
@@ -330,10 +338,7 @@ public class AiChatToolManager {
         }
     }
 
-    private McpClient buildClient(String configJson) {
-        // 已保存的服务配置无需再校验，validate 仅用于反序列化为强类型配置
-        val serverConfig = configValidator.validate(configJson);
-
+    private McpClient buildClient(McpServerConfigDTO serverConfig) {
         // transport 级 timeout 与显式 httpClient 互斥，超时统一配置在 AiHttpClientConfig
         val transportBuilder = StreamableHttpMcpTransport.builder()
                 .url(serverConfig.getUrl().trim())
@@ -348,5 +353,22 @@ public class AiChatToolManager {
                 .initializationTimeout(MCP_INIT_TIMEOUT)
                 .toolExecutionTimeout(MCP_TOOL_EXECUTION_TIMEOUT)
                 .build();
+    }
+
+    /**
+     * 建立临时连接拉取工具清单，用后即关；供 {@link AiMcpToolService} 工具目录同步使用。
+     * listTools 与建连共用 MCP_INIT_TIMEOUT 超时，失败抛 AiMcpConfigException 由调用方透出。
+     */
+    public List<ToolSpecification> fetchTools(McpServerConfigDTO serverConfig) {
+        try (McpClient client = buildClient(serverConfig)) {
+            return CompletableFuture.supplyAsync(client::listTools)
+                    .get(MCP_INIT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            val cause = e.getCause() != null ? e.getCause() : e;
+            if (cause instanceof TimeoutException) {
+                throw new AiMcpConfigException("同步MCP工具失败: 连接或拉取工具清单超时（5s）");
+            }
+            throw new AiMcpConfigException("同步MCP工具失败（连接或拉取工具清单异常）: " + cause.getMessage());
+        }
     }
 }
