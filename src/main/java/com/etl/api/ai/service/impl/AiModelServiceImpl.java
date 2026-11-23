@@ -88,18 +88,8 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
         try {
             // apiKey 不存在时，通过 id 获取
             String apiKey = form.getApiKey();
-            if (!StringUtils.hasText(apiKey) && form.getId() != null) {
-                AiModel model = this.getById(form.getId());
-                if (model == null) {
-                    return ResponseVO.recordNotFoundError("ID", form.getId());
-                }
-                apiKey = model.getApiKey();
-            }
-
             String baseUrl = form.getBaseUrl();
-            if (baseUrl.endsWith("/")) {
-                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-            }
+
             val requestBuilder = HttpRequest.builder()
                     .method(HttpMethod.GET)
                     .url(baseUrl + "/models");
