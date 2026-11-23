@@ -9,7 +9,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
-import java.util.List;
+import java.util.Set;
 
 @Data
 @Schema(description = "新增AI Bot表单")
@@ -51,9 +51,9 @@ public class AiBotCreateForm {
 
     @NotNull
     @Schema(description = "工具ID列表")
-    private List<Long> toolIds;
+    private Set<Long> toolIds;
 
     @NotNull
     @Schema(description = "知识库ID列表（空列表 = 不绑定知识库）")
-    private List<Long> knowledgeIds;
+    private Set<Long> knowledgeIds;
 }

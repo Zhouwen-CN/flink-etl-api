@@ -10,6 +10,7 @@ import com.etl.api.ai.exception.AiChatException;
 import com.etl.api.ai.service.AiBotService;
 import com.etl.api.ai.service.AiChatService;
 import com.etl.api.ai.service.AiModelService;
+import com.etl.api.ai.service.manager.AiChatToolManager;
 import com.etl.api.ai.util.AiMessageUtil;
 import com.etl.api.ai.util.AiSseEmitterUtil;
 import com.etl.api.sys.util.LocalDateTimeUtil;
@@ -56,6 +57,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final AiChatMemoryStore chatMemoryStore;
     private final AiBotService botService;
     private final AiModelService modelService;
+    private final AiChatToolManager chatToolManager;
 
     @Override
     public SseEmitter streamChat(AiChatForm form) {
@@ -87,8 +89,9 @@ public class AiChatServiceImpl implements AiChatService {
             cancelQuietly(handleRef, conversationId);
         });
 
-        // 挂载的 MCP 工具：ToolSpecification 来自本地缓存 input_schema，执行时临时建连调用远端
-        List<AiServiceTool> chatTools = botService.buildChatTools(aiBot.getId());
+        // 聊天工具集合：MCP 工具（ToolSpecification 来自本地缓存 input_schema，执行时临时建连调用远端）
+        // + 知识库检索工具
+        List<AiServiceTool> chatTools = chatToolManager.build(aiBot.getId());
 
         // 获取 ai service
         AiAssistantService assistantService = AiServices.builder(AiAssistantService.class)

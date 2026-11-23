@@ -17,7 +17,6 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,8 +33,14 @@ import java.util.Objects;
 public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper, AiConversation> implements AiConversationService {
 
 
-    @Value("${custom.ai.title-system-prompt}")
-    private String titleSystemPrompt;
+
+    private static final String TITLE_SYSTEM_PROMPT = """
+            你是一个会话标题生成助手。请根据用户发送的第一条消息，生成一个简洁、准确的会话标题。
+            要求：
+            1. 不超过20个汉字；
+            2. 只返回标题文本本身，不要添加任何解释、前后引号或标点符号；
+            3. 准确概括用户的核心意图。
+            """;
 
     private static final String DEFAULT_TITLE = "新会话";
 
@@ -93,7 +98,7 @@ public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper,
 
     private String generateTitle(ChatModel chatModel, String userMessage) {
         ChatResponse response = chatModel.chat(List.of(
-                SystemMessage.from(titleSystemPrompt),
+                SystemMessage.from(TITLE_SYSTEM_PROMPT),
                 UserMessage.from(userMessage)
         ));
         String title = response.aiMessage().text();

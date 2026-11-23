@@ -3,7 +3,6 @@ package com.etl.api.ai.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
 import com.etl.api.ai.domain.convert.AiBotConvert;
-import com.etl.api.ai.domain.entity.AiBot;
 import com.etl.api.ai.domain.entity.AiConversation;
 import com.etl.api.ai.domain.entity.AiConversationMessage;
 import com.etl.api.ai.domain.form.AiChatForm;
