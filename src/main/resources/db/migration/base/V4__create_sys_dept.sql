@@ -11,7 +11,3 @@ create table T_SYS_DEPT
     update_time datetime              default current_timestamp comment '更新时间',
     unique index uk_sys_dept_name (name)
 ) comment '部门表';
-
--- 添加部门根节点
-insert into T_SYS_DEPT(id, name, parent_path)
-values (1, '海勃数科', '/1/');

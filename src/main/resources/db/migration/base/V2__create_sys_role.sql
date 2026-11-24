@@ -11,11 +11,6 @@ create table T_SYS_ROLE
     unique index uk_sys_role_name (code)
 ) comment '角色表';
 
-insert into T_SYS_ROLE(id, name, code, data_scope)
-values (1, '管理员', 'admin', 1);
-insert into T_SYS_ROLE(id, name, code)
-values (2, '开发', 'dev');
-
 create table T_SYS_USER_ROLE
 (
     id          bigint primary key auto_increment comment '自增主键',
@@ -27,8 +22,3 @@ create table T_SYS_USER_ROLE
     update_time datetime    default CURRENT_TIMESTAMP comment '更新时间',
     unique index uk_sys_user_role (user_id, role_id)
 ) comment '用户角色关系表';
-
-insert into T_SYS_USER_ROLE(id, role_id, user_id)
-values (1, 1, 1);
-insert into T_SYS_USER_ROLE(id, role_id, user_id)
-values (2, 2, 2);

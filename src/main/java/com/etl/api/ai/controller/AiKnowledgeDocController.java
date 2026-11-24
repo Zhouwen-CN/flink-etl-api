@@ -2,7 +2,6 @@ package com.etl.api.ai.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.etl.api.ai.domain.convert.AiKnowledgeConvert;
-import com.etl.api.ai.domain.entity.AiKnowledgeDoc;
 import com.etl.api.ai.domain.form.AiKnowledgeDocChunkUpdateForm;
 import com.etl.api.ai.domain.vo.AiKnowledgeDocChunkVO;
 import com.etl.api.ai.domain.vo.AiKnowledgeDocVO;
@@ -40,7 +39,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
 /**
  * AI 知识库文档控制器（上传即异步解析，前端轮询 parse_status）。
@@ -53,18 +51,16 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/ai/knowledge")
+@RequestMapping("/ai/doc")
 @Tag(name = "AI 知识库文档控制器")
 @RequiredArgsConstructor
 public class AiKnowledgeDocController {
-
-
 
     private final AiKnowledgeDocService docService;
     private final AiKnowledgeDocChunkService chunkService;
     private final AiKnowledgeService knowledgeService;
 
-    @SaCheckPermission("knowledge.select")
+    @SaCheckPermission("doc.select")
     @Operation(summary = "知识库选择器", description = "上传文档时选择目标知识库")
     @GetMapping("/selector")
     public ResponseVO<List<DictionaryVO>> knowledgeSelector() {
@@ -76,9 +72,9 @@ public class AiKnowledgeDocController {
         return ResponseVO.ok(vos);
     }
 
-    @SaCheckPermission("knowledge.insert")
+    @SaCheckPermission("doc.insert")
     @Operation(summary = "上传文档", description = "异步解析，返回即成功；解析状态轮询 GET /doc 列表")
-    @PostMapping(value = "/doc", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseVO<Void> addDoc(
             @RequestParam("knowledgeId") @Parameter(description = "知识库ID") Long knowledgeId,
             @RequestParam("file") @Parameter(description = "文档文件（pdf/docx/xlsx/md/txt）") MultipartFile file
@@ -86,9 +82,9 @@ public class AiKnowledgeDocController {
         return docService.addDoc(knowledgeId, file);
     }
 
-    @SaCheckPermission("knowledge.update")
+    @SaCheckPermission("doc.update")
     @Operation(summary = "更新文档", description = "替换文件并重走异步解析；旧向量与分块同步清理")
-    @PutMapping(value = "/doc", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseVO<Void> updateDoc(
             @RequestParam("docId") @Parameter(description = "文档ID") Long docId,
             @RequestParam("file") @Parameter(description = "文档文件（pdf/docx/xlsx/md/txt）") MultipartFile file
@@ -96,9 +92,9 @@ public class AiKnowledgeDocController {
         return docService.updateDoc(docId, file);
     }
 
-    @SaCheckPermission("knowledge.select")
+    @SaCheckPermission("doc.select")
     @Operation(summary = "文档分页", description = "含 chunk_count、parse_status，不带 blob 大字段")
-    @GetMapping("/doc")
+    @GetMapping
     public ResponseVO<PageVO<AiKnowledgeDocVO>> getDocPage(
             @RequestParam(value = "knowledgeId",required = false) @Parameter(description = "知识库ID") Long knowledgeId,
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
@@ -108,9 +104,9 @@ public class AiKnowledgeDocController {
         return ResponseVO.ok(docService.getPage(knowledgeId, currentPage, pageSize, searchFileName));
     }
 
-    @SaCheckPermission("knowledge.select")
+    @SaCheckPermission("doc.select")
     @Operation(summary = "下载原始文件", description = "单独查询 blob 大字段，返回文件流")
-    @GetMapping("/doc/download")
+    @GetMapping("/download")
     public ResponseEntity<byte[]> downloadDoc(
             @RequestParam("docId") @Parameter(description = "文档ID") Long docId
     ) {
@@ -127,9 +123,9 @@ public class AiKnowledgeDocController {
                 .body(doc.getFileContent());
     }
 
-    @SaCheckPermission("knowledge.select")
+    @SaCheckPermission("doc.select")
     @Operation(summary = "分块分页查看", description = "按 id 升序，即文档顺序；keyword 可选，按内容模糊匹配")
-    @GetMapping("/doc/chunk")
+    @GetMapping("/chunk")
     public ResponseVO<PageVO<AiKnowledgeDocChunkVO>> getChunkPage(
             @RequestParam("docId") @Parameter(description = "文档ID") Long docId,
             @RequestParam("currentPage") @Parameter(description = "当前页面") @Min(1) Integer currentPage,
@@ -139,30 +135,30 @@ public class AiKnowledgeDocController {
         return ResponseVO.ok(chunkService.getPage(docId, currentPage, pageSize, keyword));
     }
 
-    @SaCheckPermission("knowledge.update")
+    @SaCheckPermission("doc.update")
     @Operation(summary = "编辑分块", description = "改 DB 后用同一 chunk.id 同步重新向量化")
-    @PutMapping("/doc/chunk")
+    @PutMapping("/chunk")
     public ResponseVO<Void> updateChunk(@RequestBody @Validated AiKnowledgeDocChunkUpdateForm form) {
         return chunkService.updateChunkContent(form);
     }
 
-    @SaCheckPermission("knowledge.update")
+    @SaCheckPermission("doc.update")
     @Operation(summary = "删除分块", description = "先删向量库记录再删 DB")
-    @DeleteMapping("/doc/chunk/{chunkId}")
+    @DeleteMapping("/chunk/{chunkId}")
     public ResponseVO<Void> removeChunk(@PathVariable @Parameter(description = "分块ID") Long chunkId) {
         return chunkService.removeChunk(chunkId);
     }
 
-    @SaCheckPermission("knowledge.update")
+    @SaCheckPermission("doc.update")
     @Operation(summary = "重新解析", description = "删旧向量+旧分块后按知识库当前分块参数重走流水线")
-    @PostMapping("/doc/reparse/{docId}")
+    @PostMapping("/reparse/{docId}")
     public ResponseVO<Void> reparse(@PathVariable @Parameter(description = "文档ID") Long docId) {
         return docService.reparse(docId);
     }
 
-    @SaCheckPermission("knowledge.delete")
+    @SaCheckPermission("doc.delete")
     @Operation(summary = "删除文档", description = "级联删除向量库数据与分块")
-    @DeleteMapping("/doc/{docId}")
+    @DeleteMapping("/{docId}")
     public ResponseVO<Void> removeDoc(@PathVariable @Parameter(description = "文档ID") Long docId) {
         return docService.removeDoc(docId);
     }

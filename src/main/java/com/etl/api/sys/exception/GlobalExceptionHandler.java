@@ -5,7 +5,6 @@ import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.etl.api.sys.service.SysErrorLogService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.http.HttpStatus;
@@ -109,11 +108,7 @@ public class GlobalExceptionHandler {
      * 全局兜底异常处理
      */
     @ExceptionHandler
-    public ResponseEntity<ResponseVO<Void>> handlerException(Exception e, HttpServletRequest request) {
-        if (!request.getRequestURI().startsWith("/etl-platform/admin")) {
-            errorLogService.saveErrorLog(e);
-        }
-
+    public ResponseEntity<ResponseVO<Void>> handlerException(Exception e) {
         return ResponseEntity.status(HttpStatus.OK)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(ResponseVO.error(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));

@@ -13,10 +13,3 @@ create table T_SYS_USER
     update_time datetime    default CURRENT_TIMESTAMP comment '更新时间',
     unique index uk_sys_user_name (username)
 ) comment '用户表';
-
--- admin 密码：admin123
--- zhangsan 密码：zhangsan123
-insert into T_SYS_USER(id, username, password, nickname, gender, status)
-values (1, 'admin', 'EnC/6IK+x2W2KNDMckXlmg==', '超级管理员', 0, 1);
-insert into T_SYS_USER(id, username, password, nickname, gender, status)
-values (2, 'zhangsan', 'FpbV8C6ZJxqGkDGUqYNqkQ==', '张三', 1, 1);
