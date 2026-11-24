@@ -23,8 +23,11 @@ public interface EtlJarPackageService extends IService<EtlJarPackage> {
 
     ResponseVO<Void> removeJarBatch(Collection<Long> ids);
 
-    // 重写 getById：原生 selectOneById 是 SELECT *，会带出大字段，这里改走 queryChain 排除 blob，list() 也会排除 大字段
-    EtlJarPackage getById(Long id);
+    /**
+     * 按 id 查 jar 包元信息（走 queryChain 排除 large 字段 fileContent；
+     * 原生 getById/selectOneById 是 SELECT * 会带出 blob，jar 内容需用 {@link #getFileContent(Long)} 显式获取）
+     */
+    EtlJarPackage getJarById(Long id);
 
     ResponseVO<Void> modifyJar(Long id, String name, MultipartFile file);
 }

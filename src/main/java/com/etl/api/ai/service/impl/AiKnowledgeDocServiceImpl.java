@@ -88,7 +88,10 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
         if (file == null || file.isEmpty()) {
             return ResponseVO.error("请上传文件");
         }
-        val doc = this.getById(documentId);
+        // queryChain 路径排除 large 字段（isLarge 默认不 select），仅取元信息校验
+        val doc = this.queryChain()
+                .eq(AiKnowledgeDoc::getId, documentId)
+                .one();
         if (doc == null) {
             return ResponseVO.recordNotFoundError("DocumentId", documentId);
         }
@@ -154,8 +157,10 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
 
     @Override
     public ResponseVO<Void> reparse(Long documentId) {
-        // 常规查询不带 blob（重解析由异步流水线自行加载）
-        val doc = this.getById(documentId);
+        // queryChain 路径排除 large 字段（重解析由异步流水线自行加载 file_content）
+        val doc = this.queryChain()
+                .eq(AiKnowledgeDoc::getId, documentId)
+                .one();
         if (doc == null) {
             return ResponseVO.recordNotFoundError("DocumentId", documentId);
         }
@@ -177,7 +182,10 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
 
     @Override
     public ResponseVO<Void> removeDoc(Long documentId) {
-        val doc = this.getById(documentId);
+        // queryChain 路径排除 large 字段，仅校验存在性
+        val doc = this.queryChain()
+                .eq(AiKnowledgeDoc::getId, documentId)
+                .one();
         if (doc == null) {
             return ResponseVO.recordNotFoundError("DocumentId", documentId);
         }

@@ -80,7 +80,7 @@ public class EtlJarPackageServiceImpl extends ServiceImpl<EtlJarPackageMapper, E
     }
 
     @Override
-    public EtlJarPackage getById(Long id) {
+    public EtlJarPackage getJarById(Long id) {
         return queryChain()
                 .eq(EtlJarPackage::getId, id)
                 .one();

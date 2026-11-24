@@ -85,7 +85,7 @@ public class AiKnowledgeDocIngestService {
      * chunk.id 作向量 ID）→ 更新 parse_status=SUCCESS + content。
      */
     private void parseAndVectorize(Long documentId) {
-        // 链式查询为 SELECT *，会带出 file_content 大字段（解析必需）
+        // selectOneById 为 SELECT *，会带出 file_content 大字段（解析必需）
         AiKnowledgeDoc knowledgeDoc = knowledgeDocMapper.selectOneById(documentId);
         if (knowledgeDoc == null) {
             log.warn("解析任务对应文档不存在, documentId: {}", documentId);

@@ -85,7 +85,7 @@ public class EtlJobManager {
 
         // jar包信息
         val jarId = etlJob.getJarId();
-        val jarPackage = jarPackageService.getById(jarId);
+        val jarPackage = jarPackageService.getJarById(jarId);
         if (jarPackage == null) {
             throw new EtlJobException("Jar 包未找到: " + jarId);
         }

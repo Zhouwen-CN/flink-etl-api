@@ -63,6 +63,7 @@ public class AiKnowledgeDoc extends BaseEntity implements Serializable {
     /**
      * 解析后的全文
      */
+    @Column(isLarge = true)
     private String content;
 
     /**
