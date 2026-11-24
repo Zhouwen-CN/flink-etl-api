@@ -1,6 +1,6 @@
 package com.etl.api.ai.domain.validator;
 
-import com.etl.api.ai.domain.dto.McpServerConfigDTO;
+import com.etl.api.ai.domain.dto.AiMcpServerConfigDTO;
 import com.etl.api.ai.enumeration.AiMcpTransportTypeEnum;
 import com.etl.api.ai.exception.AiMcpConfigException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,7 +15,7 @@ import java.net.URI;
  * MCP config_json 校验器（Jackson 本地解析，不建连）。
  *
  * <p>config_json 为单个服务的平铺格式（type / url / headers），反序列化为
- * {@link McpServerConfigDTO} 时开启未知字段拒绝（stdio 字段、catalogSource 等一律报错）；
+ * {@link AiMcpServerConfigDTO} 时开启未知字段拒绝（stdio 字段、catalogSource 等一律报错）；
  * type 白名单限定远程传输；url 必须为合法 http/https。
  */
 @Component
@@ -29,7 +29,7 @@ public class AiMcpConfigValidator {
      *
      * @throws AiMcpConfigException 校验失败（含具体原因）
      */
-    public McpServerConfigDTO validate(String configJson) {
+    public AiMcpServerConfigDTO validate(String configJson) {
         val config = parse(configJson);
         validateType(config.getType());
         validateUrl(config.getUrl());
@@ -39,9 +39,9 @@ public class AiMcpConfigValidator {
     /**
      * 严格反序列化：未知字段（stdio 字段、catalogSource 等）直接报错
      */
-    private McpServerConfigDTO parse(String configJson) {
+    private AiMcpServerConfigDTO parse(String configJson) {
         try {
-            return objectMapper.readValue(configJson, McpServerConfigDTO.class);
+            return objectMapper.readValue(configJson, AiMcpServerConfigDTO.class);
         } catch (Exception e) {
             throw new AiMcpConfigException("MCP 配置JSON解析失败: " + e.getMessage());
         }

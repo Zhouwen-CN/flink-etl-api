@@ -24,7 +24,6 @@ import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,8 +63,8 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
         }
         val entity = AiBotConvert.INSTANCE.convert(form);
         this.save(entity);
-        insertBotMcpTools(entity.getId(), form.getToolIds(), false);
-        insertBotKnowledge(entity.getId(), form.getKnowledgeIds(), false);
+        saveBotMcpTools(entity.getId(), form.getToolIds(), false);
+        saveBotKnowledge(entity.getId(), form.getKnowledgeIds(), false);
         return ResponseVO.ok();
     }
 
@@ -84,8 +83,8 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
         }
         // 不忽略null
         this.updateById(AiBotConvert.INSTANCE.convert(form), false);
-        insertBotMcpTools(form.getId(), form.getToolIds(), true);
-        insertBotKnowledge(form.getId(), form.getKnowledgeIds(), true);
+        saveBotMcpTools(form.getId(), form.getToolIds(), true);
+        saveBotKnowledge(form.getId(), form.getKnowledgeIds(), true);
         return ResponseVO.ok();
     }
 
@@ -118,7 +117,7 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
         return ids.stream().filter(id -> !existingIds.contains(id)).toList();
     }
 
-    private void insertBotMcpTools(Long botId, Set<Long> toolIds, boolean isUpdate) {
+    private void saveBotMcpTools(Long botId, Set<Long> toolIds, boolean isUpdate) {
         val botMcpToolList = toolIds.stream()
                 .map(toolId -> AiBotMcpTool.builder()
                         .botId(botId)
@@ -137,7 +136,7 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
         }
     }
 
-    private void insertBotKnowledge(Long botId, Set<Long> knowledgeIds, boolean isUpdate) {
+    private void saveBotKnowledge(Long botId, Set<Long> knowledgeIds, boolean isUpdate) {
         val botKnowledgeList = knowledgeIds.stream()
                 .map(knowledgeId -> AiBotKnowledge.builder()
                         .botId(botId)
@@ -176,13 +175,13 @@ public class AiBotServiceImpl extends ServiceImpl<AiBotMapper, AiBot> implements
      * 删除 bot 时级联清理两张挂载表（MCP 工具挂载原为孤儿数据，顺带修复）
      */
     @Override
-    public boolean removeById(Serializable id) {
+    public void deleteBot(Long id) {
         UpdateChain.of(AiBotMcpTool.class)
                 .eq(AiBotMcpTool::getBotId, id)
                 .remove();
         UpdateChain.of(AiBotKnowledge.class)
                 .eq(AiBotKnowledge::getBotId, id)
                 .remove();
-        return super.removeById(id);
+        this.removeById(id);
     }
 }

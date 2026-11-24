@@ -146,7 +146,7 @@ public class AiBotController {
     @Operation(summary = "删除")
     @DeleteMapping("/{id}")
     public ResponseVO<Void> remove(@PathVariable @Parameter(description = "ID") Long id) {
-        botService.removeById(id);
+        botService.deleteBot(id);
         return ResponseVO.ok();
     }
 }

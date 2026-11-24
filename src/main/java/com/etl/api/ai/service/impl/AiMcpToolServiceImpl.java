@@ -1,6 +1,6 @@
 package com.etl.api.ai.service.impl;
 
-import com.etl.api.ai.domain.dto.McpServerConfigDTO;
+import com.etl.api.ai.domain.dto.AiMcpServerConfigDTO;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiMcpToolUpdateForm;
@@ -64,7 +64,7 @@ public class AiMcpToolServiceImpl extends ServiceImpl<AiMcpToolMapper, AiMcpTool
     }
 
     @Override
-    public void syncTools(Long serverId, McpServerConfigDTO serverConfig) {
+    public void syncTools(Long serverId, AiMcpServerConfigDTO serverConfig) {
         List<ToolSpecification> specs = mcpToolManager.fetchTools(serverConfig);
 
         val existing = this.queryChain()

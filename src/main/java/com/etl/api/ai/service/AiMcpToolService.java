@@ -1,6 +1,6 @@
 package com.etl.api.ai.service;
 
-import com.etl.api.ai.domain.dto.McpServerConfigDTO;
+import com.etl.api.ai.domain.dto.AiMcpServerConfigDTO;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.form.AiMcpToolUpdateForm;
 import com.etl.api.ai.domain.vo.AiMcpToolVO;
@@ -38,5 +38,5 @@ public interface AiMcpToolService extends IService<AiMcpTool> {
      * @param serverConfig 单个服务的连接配置（已经过 McpConfigValidator 校验）
      * @throws AiMcpConfigException 建连或拉取工具清单失败
      */
-    void syncTools(Long serverId, McpServerConfigDTO serverConfig);
+    void syncTools(Long serverId, AiMcpServerConfigDTO serverConfig);
 }

@@ -1,6 +1,6 @@
 package com.etl.api.ai.service.manager;
 
-import com.etl.api.ai.domain.dto.McpServerConfigDTO;
+import com.etl.api.ai.domain.dto.AiMcpServerConfigDTO;
 import com.etl.api.ai.domain.entity.AiBotKnowledge;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
 import com.etl.api.ai.domain.entity.AiKnowledge;
@@ -338,7 +338,7 @@ public class AiMcpToolManager {
         }
     }
 
-    private McpClient buildClient(McpServerConfigDTO serverConfig) {
+    private McpClient buildClient(AiMcpServerConfigDTO serverConfig) {
         // transport 级 timeout 与显式 httpClient 互斥，超时统一配置在 AiHttpClientConfig
         val transportBuilder = StreamableHttpMcpTransport.builder()
                 .url(serverConfig.getUrl().trim())
@@ -359,7 +359,7 @@ public class AiMcpToolManager {
      * 建立临时连接拉取工具清单，用后即关；供 {@link AiMcpToolService} 工具目录同步使用。
      * listTools 与建连共用 MCP_INIT_TIMEOUT 超时，失败抛 AiMcpConfigException 由调用方透出。
      */
-    public List<ToolSpecification> fetchTools(McpServerConfigDTO serverConfig) {
+    public List<ToolSpecification> fetchTools(AiMcpServerConfigDTO serverConfig) {
         try (McpClient client = buildClient(serverConfig)) {
             return CompletableFuture.supplyAsync(client::listTools)
                     .get(MCP_INIT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);

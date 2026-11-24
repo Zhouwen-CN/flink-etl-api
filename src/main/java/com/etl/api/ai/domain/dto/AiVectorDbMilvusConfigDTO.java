@@ -15,7 +15,7 @@ import org.springframework.util.StringUtils;
  */
 @Data
 @Schema(description = "Milvus 向量数据库连接配置")
-public class MilvusConfigDTO implements AiVectorDbConfig {
+public class AiVectorDbMilvusConfigDTO implements AiVectorDbConfig {
 
     @Schema(description = "Milvus 主机（必填）")
     private String host;

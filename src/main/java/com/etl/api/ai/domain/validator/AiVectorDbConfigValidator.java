@@ -1,8 +1,8 @@
 package com.etl.api.ai.domain.validator;
 
 import com.etl.api.ai.domain.dto.AiVectorDbConfig;
-import com.etl.api.ai.domain.dto.MilvusConfigDTO;
-import com.etl.api.ai.domain.dto.RedisConfigDTO;
+import com.etl.api.ai.domain.dto.AiVectorDbMilvusConfigDTO;
+import com.etl.api.ai.domain.dto.AiVectorDbRedisConfigDTO;
 import com.etl.api.ai.enumeration.AiVectorDbTypeEnum;
 import com.etl.api.ai.exception.AiVectorDbConfigException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,13 +11,10 @@ import lombok.val;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import static com.etl.api.ai.enumeration.AiVectorDbTypeEnum.MILVUS;
-import static com.etl.api.ai.enumeration.AiVectorDbTypeEnum.REDIS;
-
 /**
  * 向量数据库 config_json 校验器（Jackson 本地解析，不建连）。
  *
- * <p>按 type 反序列化为对应强类型 DTO（映射收敛在 {@link AiVectorDbTypeEnum#dtoClass()}），
+ * <p>按 type 反序列化为对应强类型 DTO
  * 反序列化时开启未知字段拒绝，字段规则收敛在各 DTO 的 {@code validate()}
  * （公共 host/port 规则在 {@link AiVectorDbConfig#validateCommon()}）。
  * 后续扩展其他向量库类型时：新增 DTO 实现 AiVectorDbConfig + 枚举项登记 dtoClass 即可。
@@ -60,8 +57,8 @@ public class AiVectorDbConfigValidator {
      */
     private Class<? extends AiVectorDbConfig> dtoClass(AiVectorDbTypeEnum dbType) {
         return switch (dbType) {
-            case REDIS -> RedisConfigDTO.class;
-            case MILVUS -> MilvusConfigDTO.class;
+            case REDIS -> AiVectorDbRedisConfigDTO.class;
+            case MILVUS -> AiVectorDbMilvusConfigDTO.class;
         };
     }
 

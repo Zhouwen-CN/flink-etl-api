@@ -15,7 +15,7 @@ import java.util.Map;
  * @since 2026-11-18
  */
 @Data
-public class McpServerConfigDTO {
+public class AiMcpServerConfigDTO {
 
     /**
      * 传输类型，白名单见 {@link AiMcpTransportTypeEnum}

@@ -21,6 +21,11 @@ public interface AiBotService extends IService<AiBot> {
     ResponseVO<Void> updateAiBot(AiBotUpdateForm form);
 
     /**
+     * 删除 bot 并级联清理两张挂载表
+     */
+    void deleteBot(Long id);
+
+    /**
      * 查询bot挂载的工具ID列表（前端数据回显）
      */
     List<Long> getToolIds(Long botId);

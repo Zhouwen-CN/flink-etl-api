@@ -14,7 +14,7 @@ import lombok.Data;
  */
 @Data
 @Schema(description = "Redis 向量数据库连接配置")
-public class RedisConfigDTO implements AiVectorDbConfig {
+public class AiVectorDbRedisConfigDTO implements AiVectorDbConfig {
 
     @Schema(description = "Redis 主机")
     private String host;

@@ -1,8 +1,8 @@
 package com.etl.api.ai.config;
 
 import com.etl.api.ai.domain.dto.AiVectorDbConfig;
-import com.etl.api.ai.domain.dto.MilvusConfigDTO;
-import com.etl.api.ai.domain.dto.RedisConfigDTO;
+import com.etl.api.ai.domain.dto.AiVectorDbMilvusConfigDTO;
+import com.etl.api.ai.domain.dto.AiVectorDbRedisConfigDTO;
 import com.etl.api.ai.domain.entity.AiKnowledge;
 import com.etl.api.ai.domain.entity.AiVectorDatabase;
 import com.etl.api.ai.domain.validator.AiVectorDbConfigValidator;
@@ -22,7 +22,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.HostAndPort;
+import redis.clients.jedis.RedisClient;
 import redis.clients.jedis.UnifiedJedis;
+
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -146,9 +148,9 @@ public class AiVectorStoreFactory {
                 throw new AiVectorDbConfigException("向量数据库配置正在变更，请重试");
             }
             EmbeddingStore<TextSegment> created;
-            if (vectorDbConfig instanceof RedisConfigDTO) {
+            if (vectorDbConfig instanceof AiVectorDbRedisConfigDTO) {
                 created = createRedisStore(connection.jedis(), knowledgeId, dimension, metadataKeys);
-            } else if (vectorDbConfig instanceof MilvusConfigDTO) {
+            } else if (vectorDbConfig instanceof AiVectorDbMilvusConfigDTO) {
                 created = createMilvusStore(connection.milvusClient(), knowledgeId, dimension);
             } else {
                 throw new AiVectorDbConfigException("不支持的向量数据库配置类型: " + vectorDbConfig.getClass().getSimpleName());
@@ -170,9 +172,9 @@ public class AiVectorStoreFactory {
      */
     public void verifyConnection(Integer type, String configJson) {
         val config = configValidator.validate(type, configJson);
-        if (config instanceof RedisConfigDTO redis) {
+        if (config instanceof AiVectorDbRedisConfigDTO redis) {
             verifyRedis(redis);
-        } else if (config instanceof MilvusConfigDTO milvus) {
+        } else if (config instanceof AiVectorDbMilvusConfigDTO milvus) {
             verifyMilvus(milvus);
         } else {
             throw new AiVectorDbConfigException("不支持的向量数据库配置类型: " + config.getClass().getSimpleName());
@@ -215,9 +217,9 @@ public class AiVectorStoreFactory {
                 return cached;
             }
             SharedConnection created;
-            if (config instanceof RedisConfigDTO redis) {
+            if (config instanceof AiVectorDbRedisConfigDTO redis) {
                 created = new SharedConnection(createUnifiedJedis(redis), null);
-            } else if (config instanceof MilvusConfigDTO milvus) {
+            } else if (config instanceof AiVectorDbMilvusConfigDTO milvus) {
                 created = new SharedConnection(null, createMilvusClient(milvus));
             } else {
                 throw new AiVectorDbConfigException("不支持的向量数据库配置类型: " + config.getClass().getSimpleName());
@@ -271,22 +273,24 @@ public class AiVectorStoreFactory {
     }
 
     /**
-     * 构建 UnifiedJedis（host+port，带 5s 超时；连接池惰性建连）
+     * 构建 RedisClient（host+port，带 5s 超时；连接池惰性建连）。
+     * RedisClient 为 UnifiedJedis 子类，RedisEmbeddingStore 仍按 UnifiedJedis 接收。
      */
-    private UnifiedJedis createUnifiedJedis(RedisConfigDTO config) {
-        val builder = DefaultJedisClientConfig.builder()
-                .connectionTimeoutMillis(REDIS_TIMEOUT_MILLIS)
-                .socketTimeoutMillis(REDIS_TIMEOUT_MILLIS);
-        if (StringUtils.hasText(config.getUsername())) {
-            builder.user(config.getUsername().trim());
-        }
-        if (StringUtils.hasText(config.getPassword())) {
-            builder.password(config.getPassword().trim());
-        }
-        return new UnifiedJedis(new HostAndPort(config.getHost().trim(), config.getPort()), builder.build());
+    private UnifiedJedis createUnifiedJedis(AiVectorDbRedisConfigDTO config) {
+        return RedisClient.builder()
+                .hostAndPort(new HostAndPort(config.getHost(), config.getPort()))
+                .clientConfig(
+                        DefaultJedisClientConfig.builder()
+                                .connectionTimeoutMillis(REDIS_TIMEOUT_MILLIS)
+                                .socketTimeoutMillis(REDIS_TIMEOUT_MILLIS)
+                                .user(config.getUsername())
+                                .password(config.getPassword())
+                                .build()
+                )
+                .build();
     }
 
-    private void verifyRedis(RedisConfigDTO config) {
+    private void verifyRedis(AiVectorDbRedisConfigDTO config) {
         try (UnifiedJedis jedis = createUnifiedJedis(config)) {
             jedis.ftList();
         } catch (AiVectorDbConfigException e) {
@@ -320,7 +324,7 @@ public class AiVectorStoreFactory {
     /**
      * 构建 MilvusServiceClient（host+port，鉴权可选，databaseName 可选）
      */
-    private MilvusServiceClient createMilvusClient(MilvusConfigDTO config) {
+    private MilvusServiceClient createMilvusClient(AiVectorDbMilvusConfigDTO config) {
         val builder = ConnectParam.newBuilder()
                 .withHost(config.getHost().trim())
                 .withPort(config.getPort());
@@ -336,7 +340,7 @@ public class AiVectorStoreFactory {
     /**
      * Milvus 连接验证：连接 + hasCollection 只读探测（Success 即连通），finally close
      */
-    private void verifyMilvus(MilvusConfigDTO config) {
+    private void verifyMilvus(AiVectorDbMilvusConfigDTO config) {
         MilvusServiceClient client = null;
         try {
             client = createMilvusClient(config);
