@@ -1,8 +1,10 @@
 package com.etl.api.ai.service.impl;
 
 import com.etl.api.ai.domain.entity.AiKnowledgeDoc;
+import com.etl.api.ai.domain.entity.AiKnowledgeDocChunk;
 import com.etl.api.ai.domain.vo.AiKnowledgeDocVO;
 import com.etl.api.ai.enumeration.AiDocParseStatusEnum;
+import com.etl.api.ai.mapper.AiKnowledgeDocChunkMapper;
 import com.etl.api.ai.mapper.AiKnowledgeDocMapper;
 import com.etl.api.ai.service.AiKnowledgeDocService;
 import com.etl.api.ai.service.manager.AiVectorStoreManager;
@@ -10,6 +12,7 @@ import com.etl.api.ai.util.FileTypeDetectUtil;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -43,6 +47,7 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
 
     private final AiKnowledgeDocIngestService ingestService;
     private final AiVectorStoreManager vectorStoreManager;
+    private final AiKnowledgeDocChunkMapper chunkMapper;
 
     @Override
     public ResponseVO<Void> addDoc(Long knowledgeId, MultipartFile file) {
@@ -118,7 +123,7 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
         }
 
         // 校验全部通过后才清旧数据：删旧向量+旧分块（新文件即将重走解析）
-        vectorStoreManager.removeByDocument(documentId);
+        this.removeByDocumentId(documentId);
 
         // UpdateChain 显式 set null，清掉旧全文与失败原因（updateById 默认忽略 null 字段）
         UpdateChain.of(AiKnowledgeDoc.class)
@@ -166,7 +171,7 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
         }
 
         // 清空该文档的向量与分块后重走流水线（分块参数取知识库当前配置）
-        vectorStoreManager.removeByDocument(documentId);
+        this.removeByDocumentId(documentId);
 
         val update = AiKnowledgeDoc.builder()
                 .id(documentId)
@@ -191,10 +196,22 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
         }
 
         // 先删向量库与分块，再删文档本身
-        vectorStoreManager.removeByDocument(documentId);
-
+        this.removeByDocumentId(documentId);
         this.removeById(documentId);
         log.info("删除文档, id: {}, knowledgeId: {}", documentId, doc.getKnowledgeId());
         return ResponseVO.ok();
+    }
+
+    private void removeByDocumentId(Long documentId){
+        List<String> vectorIds = chunkMapper.selectListByQueryAs(
+                QueryWrapper.create()
+                        .select(AiKnowledgeDocChunk::getVectorId)
+                        .eq(AiKnowledgeDocChunk::getDocumentId, documentId),
+                String.class
+        );
+        vectorStoreManager.removeChunks(vectorIds);
+        chunkMapper.deleteByQuery(
+                QueryWrapper.create().eq(AiKnowledgeDocChunk::getDocumentId, documentId)
+        );
     }
 }

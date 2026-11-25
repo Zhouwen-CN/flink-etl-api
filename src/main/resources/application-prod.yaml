@@ -36,17 +36,17 @@ custom:
     vector-db:
       type: milvus
       milvus:
-        host: ${MILVUS_HOST}
-        port: ${MILVUS_PORT:19530}
-        username: ${MILVUS_USERNAME:root}
-        password: ${MILVUS_PASSWORD}
-        database-name: ${MILVUS_DATABASE:default}
-        collection-name: ${MILVUS_COLLECTION:knowledge_chunks} # 全局唯一共享集合名
-        dimension: ${MILVUS_DIMENSION:1024} # 向量维度，须与 Embedding 模型输出维度一致（bge-small-zh-v1.5-q 为 512）
+        host: ${EMBEDDING_STORE_HOST}
+        port: ${EMBEDDING_STORE_PORT:19530}
+        username: ${EMBEDDING_STORE_USERNAME:root}
+        password: ${EMBEDDING_STORE_PASSWORD}
+        database-name: ${EMBEDDING_STORE_DATABASE:default}
+        collection-name: ${EMBEDDING_STORE_COLLECTION:knowledge_chunks} # 全局唯一共享集合名
+        dimension: ${EMBEDDING_STORE_DIMENSION:1024} # 向量维度，须与 Embedding 模型输出维度一致（bge-small-zh-v1.5-q 为 512）
     # Embedding 模型（全局唯一共享实例，配置变更需重启生效；type: onnx-内置本地模型 / openai-OpenAI兼容接口）
     embedding:
       type: openai
       openai:
-        base-url: ${EMBEDDING_BASE_URL}
-        api-key: ${EMBEDDING_API_KEY}
+        base-url: ${EMBEDDING_MODEL_BASE_URL}
+        api-key: ${EMBEDDING_MODEL_API_KEY}
         model-name: ${EMBEDDING_MODEL_NAME}

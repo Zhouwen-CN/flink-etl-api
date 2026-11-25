@@ -2,8 +2,6 @@ package com.etl.api.ai.service.manager;
 
 import com.etl.api.ai.config.AiContentRetrievalProperties;
 import com.etl.api.ai.domain.entity.AiKnowledgeDocChunk;
-import com.etl.api.ai.mapper.AiKnowledgeDocChunkMapper;
-import com.mybatisflex.core.query.QueryWrapper;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
@@ -49,7 +47,6 @@ public class AiVectorStoreManager {
     private final EmbeddingModel embeddingModel;
     private final EmbeddingStore<TextSegment> embeddingStore;
     private final AiContentRetrievalProperties retrievalProperties;
-    private final AiKnowledgeDocChunkMapper chunkMapper;
 
     /**
      * 构建 segment metadata（knowledge_id 检索隔离 / document_id 来源 / document_name 检索结果直接携带）
@@ -136,24 +133,5 @@ public class AiVectorStoreManager {
             return;
         }
         embeddingStore.removeAll(vectorIds);
-    }
-
-    /**
-     * 删除某文档在向量库中的全部向量与分块表数据（文档删除/重解析级联；不删文档本身）
-     *
-     * <p>先删向量库再删分块表：向量删除失败时 DB 分块仍在（vector_id 可重试清理）；反之若先删 DB 则向量成孤儿。
-     */
-    public void removeByDocument(Long documentId) {
-        List<String> vectorIds = chunkMapper.selectListByQueryAs(
-                QueryWrapper.create()
-                        .select(AiKnowledgeDocChunk::getVectorId)
-                        .eq(AiKnowledgeDocChunk::getDocumentId, documentId),
-                String.class
-        );
-
-        removeChunks(vectorIds);
-        chunkMapper.deleteByQuery(
-                QueryWrapper.create().eq(AiKnowledgeDocChunk::getDocumentId, documentId)
-        );
     }
 }
