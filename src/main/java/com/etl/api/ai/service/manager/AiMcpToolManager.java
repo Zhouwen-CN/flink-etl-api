@@ -3,7 +3,6 @@ package com.etl.api.ai.service.manager;
 import com.etl.api.ai.domain.dto.AiMcpServerConfigDTO;
 import com.etl.api.ai.domain.entity.AiBotKnowledge;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
-import com.etl.api.ai.domain.entity.AiKnowledge;
 import com.etl.api.ai.domain.entity.AiMcpServer;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.validator.AiMcpConfigValidator;
@@ -26,7 +25,6 @@ import dev.langchain4j.service.tool.AiServiceTool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -52,8 +50,9 @@ import java.util.concurrent.TimeoutException;
  *
  * <p>知识库检索工具部分（自研工具，非 MCP）：把 bot 绑定的知识库包装成
  * search_knowledge_base，LLM 自主决定何时检索、query 怎么改写；检索执行复用
- * {@link AiVectorStoreManager#buildContentRetriever}（各自携带该库的 embeddingModel
- * 与 recall_top_k/min_score 配置），结果带来源文档名与相似度分数供 LLM 引用。
+ * {@link AiVectorStoreManager#buildContentRetriever}（全局唯一模型/集合/检索参数，
+ * 经 knowledge_id IsIn metadata 过滤限定 bot 挂载的知识库范围），结果带来源文档名与
+ * 相似度分数供 LLM 引用。
  *
  * <p>本类位于 service.manager 包，不参与 service.impl 包事务切面；工具执行器跑在
  * langchain4j 工具循环内，参数解析失败/调用异常均返回错误文本交给 LLM 自行决策。
@@ -98,13 +97,6 @@ public class AiMcpToolManager {
      * query 参数缺失/非法时的错误回传文本（交 LLM 重试）
      */
     private static final String INVALID_QUERY_MESSAGE = "参数错误: query 不能为空，请提供检索问题或关键词";
-
-    /**
-     * 多知识库合并召回的全局上限：各库各自按 recall_top_k 召回，绑定的库越多总量越大，
-     * 合并后必须截断，防止工具结果把模型上下文撑爆
-     */
-    @Value("${custom.ai.knowledge-max-results:10}")
-    private Integer knowledgeMaxResults = 10;
 
     private final AiVectorStoreManager vectorStoreManager;
     private final AiMcpConfigValidator configValidator;
@@ -207,27 +199,14 @@ public class AiMcpToolManager {
             return;
         }
 
-        // 单个知识库检索器构建失败（向量库配置失效等）跳过该库，其余照常；全部失效时不注册。
-        val knowledgeList = QueryChain.of(AiKnowledge.class)
-                .in(AiKnowledge::getId, knowledgeIds)
-                .list();
-        val retrieverList = new ArrayList<EmbeddingStoreContentRetriever>();
-        for (val knowledge : knowledgeList) {
-            try {
-                retrieverList.add(vectorStoreManager.buildContentRetriever(knowledge));
-            } catch (Exception e) {
-                log.warn("知识库检索器构建失败，跳过该知识库, knowledgeId: {}, cause: {}",
-                        knowledge.getId(), e.getMessage());
-            }
-        }
-        if (retrieverList.isEmpty()) {
-            return;
-        }
+        // 全局唯一模型/集合/检索参数（yaml 配置），不管挂载多少知识库都是一个检索器，
+        // 经 knowledge_id IsIn metadata 过滤限定召回范围
+        val retriever = vectorStoreManager.buildContentRetriever(knowledgeIds);
 
         result.add(AiServiceTool.builder()
                 .toolSpecification(knowledgeToolSpec())
                 .toolExecutor((ToolExecutionRequest request, Object memoryId) ->
-                        executeKnowledgeSearch(request, retrieverList))
+                        executeKnowledgeSearch(request, retriever))
                 .build());
     }
 
@@ -243,20 +222,17 @@ public class AiMcpToolManager {
     }
 
     /**
-     * 执行多知识库检索：各库先按自身 recall_top_k/min_score 召回，合并后按 score 全局
-     * 降序截断到 knowledgeMaxResults 条（单库绑定不会触发截断）；异常兜底为错误文本回传 LLM
+     * 执行知识库检索：单检索器按 metadata IsIn 过滤召回（bot 挂载的全部知识库），
+     * 结果按 score 降序返回；异常兜底为错误文本回传 LLM
      */
     private String executeKnowledgeSearch(ToolExecutionRequest request,
-                                          List<EmbeddingStoreContentRetriever> retrieverList) {
+                                          EmbeddingStoreContentRetriever retriever) {
         val query = extractQuery(request.arguments());
         if (!StringUtils.hasText(query)) {
             return INVALID_QUERY_MESSAGE;
         }
         try {
-            val contents = new ArrayList<Content>();
-            for (val retriever : retrieverList) {
-                contents.addAll(retriever.retrieve(Query.from(query)));
-            }
+            val contents = retriever.retrieve(Query.from(query));
             return formatContents(rankContents(contents));
         } catch (Exception e) {
             log.warn("知识库检索失败, tool: {}, error: {}", KNOWLEDGE_TOOL_NAME, e.getMessage());
@@ -265,14 +241,12 @@ public class AiMcpToolManager {
     }
 
     /**
-     * 跨库合并排序：score 全局降序截断到 KNOWLEDGE_MAX_RESULTS。
-     * 注意各库可用不同 embedding model，score 量纲不同，跨库排序是启发式近似；
+     * 结果排序：score 降序（各文档来自同一 Embedding 模型，score 量纲一致）。
      * 单 score 缺失按 0 兜底排末尾（EmbeddingStoreContentRetriever 正常都会写入 SCORE）。
      */
     private List<Content> rankContents(List<Content> contents) {
         return contents.stream()
                 .sorted(Comparator.comparingDouble(AiMcpToolManager::scoreOf).reversed())
-                .limit(knowledgeMaxResults)
                 .toList();
     }
 

@@ -95,17 +95,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
-            <!--
-                jedis 版本锁定：langchain4j-community-redis 1.23.0-beta33 按 jedis 7.5.3 编译
-                （UnifiedJedis.pipelined() 返回 AbstractPipeline），spring-boot-dependencies 会将其
-                仲裁为 6.0.0（返回 PipelineBase），运行期抛 NoSuchMethodError
-            -->
-            <dependency>
-                <groupId>redis.clients</groupId>
-                <artifactId>jedis</artifactId>
-                <version>7.5.3</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -204,11 +193,6 @@
         <!-- langchain4j vector store -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-community-redis</artifactId>
-            <version>${langchain4j.beta.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-milvus</artifactId>
             <version>${langchain4j.beta.version}</version>
             <exclusions>
@@ -218,6 +202,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-embeddings</artifactId>
+            <version>1.20.2-beta30</version>
+        </dependency>
+
 
         <!-- spring doc -->
         <dependency>

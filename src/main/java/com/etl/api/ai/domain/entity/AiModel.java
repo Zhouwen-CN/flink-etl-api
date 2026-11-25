@@ -40,11 +40,6 @@ public class AiModel extends BaseEntity implements Serializable {
     private String name;
 
     /**
-     * 模型类型: 1-Chat, 2-Embedding
-     */
-    private Integer type;
-
-    /**
      * 接口格式: 1-OpenAI Chat Completions, 2-OpenAI Responses, 3-Anthropic Messages
      */
     private Integer format;

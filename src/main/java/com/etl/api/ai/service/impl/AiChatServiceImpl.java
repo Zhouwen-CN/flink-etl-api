@@ -56,7 +56,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final AiBotService botService;
     private final AiModelService modelService;
     private final AiMcpToolManager mcpToolManager;
-    @Value("${custom.ai.max-memory-messages:100}")
+    @Value("${custom.ai.chat.max-memory-messages:100}")
     private Integer maxMemoryMessages;
 
     @Override

@@ -5,12 +5,10 @@ import com.etl.api.ai.domain.convert.AiBotConvert;
 import com.etl.api.ai.domain.convert.AiKnowledgeConvert;
 import com.etl.api.ai.domain.convert.AiModelConvert;
 import com.etl.api.ai.domain.entity.AiBot;
-import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiBotCreateForm;
 import com.etl.api.ai.domain.form.AiBotUpdateForm;
 import com.etl.api.ai.domain.vo.AiBotVO;
 import com.etl.api.ai.domain.vo.AiMcpSelectorVO;
-import com.etl.api.ai.enumeration.AiModelTypeEnum;
 import com.etl.api.ai.service.AiBotService;
 import com.etl.api.ai.service.AiKnowledgeService;
 import com.etl.api.ai.service.AiMcpServerService;
@@ -79,7 +77,6 @@ public class AiBotController {
     @GetMapping("/model/selector")
     public ResponseVO<List<DictionaryVO>> getModelSelector() {
         val vos = modelService.queryChain()
-                .eq(AiModel::getType, AiModelTypeEnum.CHAT.getCode())
                 .list()
                 .stream()
                 .map(AiModelConvert.INSTANCE::convert)

@@ -19,7 +19,7 @@ import java.io.Serializable;
  * AI 知识库文档分块表 实体类。
  *
  * <p>块只由解析流水线按切分顺序写入，自增 id 顺序恒等于文档顺序；
- * id 同时作为向量库中的文档 ID。
+ * vectorId 由向量库 generateIds 生成并在入库时固化，编辑/删除按其直接操作向量。
  *
  * @author chen
  * @since 2026-11-20
@@ -36,10 +36,15 @@ public class AiKnowledgeDocChunk extends BaseEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 自增主键（同时作为向量库文档ID）
+     * 自增主键
      */
     @Id(keyType = KeyType.Auto)
     private Long id;
+
+    /**
+     * 向量库文档ID（embeddingStore.generateIds 生成）
+     */
+    private String vectorId;
 
     /**
      * 文档id（T_AI_KNOWLEDGE_DOC）

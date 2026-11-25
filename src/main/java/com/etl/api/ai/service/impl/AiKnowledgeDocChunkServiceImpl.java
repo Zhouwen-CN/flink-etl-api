@@ -65,7 +65,7 @@ public class AiKnowledgeDocChunkServiceImpl extends ServiceImpl<AiKnowledgeDocCh
                 .select(AiKnowledgeDoc::getFileName)
                 .eq(AiKnowledgeDoc::getId, chunk.getDocumentId())
                 .one();
-        vectorStoreManager.upsertChunk(chunk, form.getContent(), doc == null ? null : doc.getFileName());
+        vectorStoreManager.upsertChunk(chunk, form.getContent(), doc.getFileName());
         log.info("分块已更新并重新向量化, chunkId: {}, documentId: {}", chunk.getId(), chunk.getDocumentId());
         return ResponseVO.ok();
     }
@@ -77,7 +77,7 @@ public class AiKnowledgeDocChunkServiceImpl extends ServiceImpl<AiKnowledgeDocCh
             return ResponseVO.recordNotFoundError("ChunkId", chunkId);
         }
         // 先删向量库再删 DB
-        vectorStoreManager.removeChunk(chunk.getKnowledgeId(), chunk.getDocumentId(), chunkId);
+        vectorStoreManager.removeChunk(chunk.getVectorId());
 
         this.removeById(chunkId);
         log.info("删除分块, chunkId: {}, documentId: {}", chunkId, chunk.getDocumentId());

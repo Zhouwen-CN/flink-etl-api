@@ -14,12 +14,8 @@ public interface AiKnowledgeConvert {
     AiKnowledgeConvert INSTANCE = Mappers.getMapper(AiKnowledgeConvert.class);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "dimension", ignore = true)
     AiKnowledge convert(AiKnowledgeCreateForm form);
 
-    @Mapping(target = "vectorDbId", ignore = true)
-    @Mapping(target = "embedModelId", ignore = true)
-    @Mapping(target = "dimension", ignore = true)
     AiKnowledge convert(AiKnowledgeUpdateForm form);
 
     @Mapping(target = "value", source = "id")

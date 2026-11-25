@@ -1,23 +1,17 @@
 package com.etl.api.ai.service.impl;
 
-import com.etl.api.ai.config.AiChatModelFactory;
 import com.etl.api.ai.domain.convert.AiKnowledgeConvert;
 import com.etl.api.ai.domain.entity.AiKnowledge;
 import com.etl.api.ai.domain.entity.AiKnowledgeDoc;
-import com.etl.api.ai.domain.entity.AiModel;
-import com.etl.api.ai.domain.entity.AiVectorDatabase;
 import com.etl.api.ai.domain.form.AiKnowledgeCreateForm;
 import com.etl.api.ai.domain.form.AiKnowledgeUpdateForm;
 import com.etl.api.ai.domain.vo.AiKnowledgeVO;
-import com.etl.api.ai.enumeration.AiVectorDbTypeEnum;
-import com.etl.api.ai.exception.AiChatException;
 import com.etl.api.ai.mapper.AiKnowledgeMapper;
 import com.etl.api.ai.service.AiKnowledgeDocService;
 import com.etl.api.ai.service.AiKnowledgeService;
 import com.etl.api.sys.domain.vo.PageVO;
 import com.etl.api.sys.domain.vo.ResponseVO;
 import com.mybatisflex.core.paginate.Page;
-import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,9 +22,9 @@ import org.springframework.util.StringUtils;
 /**
  * AI 知识库表 服务层实现。
  *
- * <p>向量维度在创建时自动探测固化（对绑定 Embedding 模型调用一次 embed()）；
- * 集合名/索引名不落库，由向量库工厂按知识库 id 派生（AiVectorStoreFactory create 方法）；
- * 创建时不主动连向量库建集合——LangChain4j Milvus/Redis store 均在首次使用时自动建集合/索引，惰性即可。
+ * <p>Embedding 模型、向量集合与检索参数均由 yaml 全局配置（AiEmbeddingConfig / AiVectorDbConfig /
+ * AiRetrievalProperties），知识库仅保留名称/描述与分块参数；创建时不主动连向量库建集合——
+ * LangChain4j Milvus store 在首次使用时自动建集合，惰性即可。
  *
  * @author chen
  * @since 2026-11-19
@@ -40,12 +34,6 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKnowledge> implements AiKnowledgeService {
 
-    /**
-     * 维度探测固定文本，长度不影响向量维度
-     */
-    private static final String DIMENSION_PROBE_TEXT = "dimension probe";
-
-    private final AiChatModelFactory chatModelFactory;
     private final AiKnowledgeDocService docService;
 
     @Override
@@ -65,56 +53,15 @@ public class AiKnowledgeServiceImpl extends ServiceImpl<AiKnowledgeMapper, AiKno
             return ResponseVO.recordExistsError("Name", form.getName());
         }
 
-        val vectorDb = QueryChain.of(AiVectorDatabase.class)
-                .eq(AiVectorDatabase::getId, form.getVectorDbId())
-                .one();
-        if (vectorDb == null) {
-            return ResponseVO.recordNotFoundError("VectorDbId", form.getVectorDbId());
-        }
-        val dbType = AiVectorDbTypeEnum.of(vectorDb.getType());
-        if (dbType.isEmpty()) {
-            return ResponseVO.error("不支持的向量数据库类型: " + vectorDb.getType());
-        }
-
-        val embedModel = QueryChain.of(AiModel.class)
-                .eq(AiModel::getId, form.getEmbedModelId())
-                .one();
-        if (embedModel == null) {
-            return ResponseVO.recordNotFoundError("EmbedModelId", form.getEmbedModelId());
-        }
-
         val chunkParamsError = validateChunkParams(form.getChunkSize(), form.getOverlapSize());
         if (chunkParamsError != null) {
             return ResponseVO.error(chunkParamsError);
         }
 
-        // 维度探测：复用 ChatModelFactory.requireType 语义（类型不符抛 AiChatException），失败整体保存失败
-        val dimension = probeDimension(embedModel);
-
         val entity = AiKnowledgeConvert.INSTANCE.convert(form);
-        entity.setDimension(dimension);
         this.save(entity);
-        log.info("新增知识库, id: {}, name: {}, vectorDbId: {}, embedModelId: {}, dimension: {}",
-                entity.getId(), entity.getName(), entity.getVectorDbId(), entity.getEmbedModelId(),
-                entity.getDimension());
+        log.info("新增知识库, id: {}, name: {}", entity.getId(), entity.getName());
         return ResponseVO.ok();
-    }
-
-    /**
-     * 对绑定的 Embedding 模型做一次真实调用取向量维度并固化到知识库
-     */
-    private int probeDimension(AiModel embedModel) {
-        try {
-            return chatModelFactory.getEmbeddingModel(embedModel)
-                    .embed(DIMENSION_PROBE_TEXT)
-                    .content()
-                    .vector()
-                    .length;
-        } catch (AiChatException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AiChatException("Embedding 维度探测失败: " + e.getMessage());
-        }
     }
 
     @Override

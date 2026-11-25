@@ -9,8 +9,11 @@ import java.time.LocalDateTime;
 @Schema(description = "AI 知识库文档分块视图")
 public class AiKnowledgeDocChunkVO {
 
-    @Schema(description = "自增主键（同时为向量库文档ID）")
+    @Schema(description = "自增主键")
     private Long id;
+
+    @Schema(description = "向量库文档ID")
+    private String vectorId;
 
     @Schema(description = "文档id")
     private Long documentId;

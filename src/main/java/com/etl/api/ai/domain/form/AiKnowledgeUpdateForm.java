@@ -1,8 +1,6 @@
 package com.etl.api.ai.domain.form;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -11,7 +9,7 @@ import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
 @Data
-@Schema(description = "更新AI 知识库表单（vectorDbId/embedModelId 不可变更，服务端忽略其传值）")
+@Schema(description = "更新AI 知识库表单")
 public class AiKnowledgeUpdateForm {
 
     @NotNull
@@ -26,16 +24,6 @@ public class AiKnowledgeUpdateForm {
     @Length(max = 255)
     @Schema(description = "知识库描述")
     private String description;
-
-    @Min(1)
-    @Max(100)
-    @Schema(description = "最大召回条数（默认5）")
-    private Integer recallTopK;
-
-    @DecimalMin("0.0")
-    @DecimalMax("1.0")
-    @Schema(description = "相似度下限，0~1（默认0.20）")
-    private Double minScore;
 
     @Min(50)
     @Max(10000)

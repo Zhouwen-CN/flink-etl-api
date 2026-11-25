@@ -30,7 +30,7 @@ import java.util.List;
  *
  * <p>异步流水线（ai 请求异步线程池 applicationTaskExecutor）：任何一步失败 → parse_status=FAILED + parse_fail_reason，
  * 并尽力清理已写入的分块/向量。向量库读写统一经 {@link AiVectorStoreManager}，
- * 向量 ID 格式 doc_{documentId}:chk_{chunkId}（AiVectorStoreManager 统一生成）。
+ * 向量 ID 由 embeddingStore.generateIds 生成并固化到分块表 vector_id 列。
  *
  * <p>分块参数（chunk_size/overlap_size）取知识库级配置；LangChain4j 1.23.0-beta33 的
  * DocumentSplitters.recursive(int,int) 无 tokenizer 重载，按字符计大小。
@@ -54,7 +54,7 @@ public class AiKnowledgeDocIngestService {
     private final ApacheTikaDocumentParser tikaParser = new ApacheTikaDocumentParser();
 
     /**
-     * 分块单条插入需回填自增 id（供失败清理），无链式 API 等价物，保留 mapper
+     * 分块批量插入（无需回填自增 id，向量 ID 来自 embeddingStore.generateIds），保留 mapper
      */
     private final AiKnowledgeDocChunkMapper chunkMapper;
     private final AiVectorStoreManager vectorStoreManager;
@@ -81,8 +81,8 @@ public class AiKnowledgeDocIngestService {
     }
 
     /**
-     * 异步解析流水线：读 blob → Tika 提取全文 → recursive 分块 → 逐块（落库拿自增 id → 向量化 → 写向量库，
-     * chunk.id 作向量 ID）→ 更新 parse_status=SUCCESS + content。
+     * 异步解析流水线：读 blob → Tika 提取全文 → recursive 分块 → generateIds 生成向量 ID →
+     * 批量写向量库 → 批量落分块表（含 vector_id）→ 更新 parse_status=SUCCESS + content。
      */
     private void parseAndVectorize(Long documentId) {
         // selectOneById 为 SELECT *，会带出 file_content 大字段（解析必需）
@@ -100,8 +100,8 @@ public class AiKnowledgeDocIngestService {
             return;
         }
 
-        // chunk.id 在落库后回填，用于失败时清理
-        List<Long> insertedChunkIds = new ArrayList<>();
+        // 向量 ID 在写入向量库前生成，失败清理按其补偿删除（分块表按 documentId 兜底清理）
+        List<String> insertedVectorIds = null;
         try {
             updateStatus(knowledgeDoc.getId(), AiDocParseStatusEnum.PROCESSING, null);
 
@@ -117,30 +117,33 @@ public class AiKnowledgeDocIngestService {
                 throw new IllegalStateException("分块结果为空，请检查文档内容与分块参数");
             }
 
-            // 3. 逐块流水线：落库回填自增 id（insertBatch 不回填主键）→ 向量化 → 写向量库（id 即向量文档 ID）
-            //    model/store 由 manager 内部解析，配置缺失在首块 upsert 即失败，insertedChunkIds 兜底清理
-            for (TextSegment splitSegment : splitSegments) {
-                AiKnowledgeDocChunk chunk = AiKnowledgeDocChunk.builder()
+            // 3. 批量向量入库：generateIds 生成向量 ID → embedAll 批量向量化 → addAll 一次写入
+            val contents = splitSegments.stream().map(TextSegment::text).toList();
+            insertedVectorIds = vectorStoreManager.insertChunkVectors(
+                    contents, knowledgeDoc.getKnowledgeId(), knowledgeDoc.getId(), knowledgeDoc.getFileName());
+
+            // 4. 批量落分块表（vector_id 一一对应固化）
+            val chunks = new ArrayList<AiKnowledgeDocChunk>();
+            for (int i = 0; i < contents.size(); i++) {
+                chunks.add(AiKnowledgeDocChunk.builder()
+                        .vectorId(insertedVectorIds.get(i))
                         .documentId(knowledgeDoc.getId())
                         .knowledgeId(knowledgeDoc.getKnowledgeId())
-                        .content(splitSegment.text())
-                        .build();
-                chunkMapper.insert(chunk);
-                val chunkId = chunk.getId();
-                insertedChunkIds.add(chunkId);
-                vectorStoreManager.upsertChunk(chunk, chunk.getContent(), knowledgeDoc.getFileName());
+                        .content(contents.get(i))
+                        .build());
             }
+            chunkMapper.insertBatch(chunks);
 
-            // 4. 成功：固化全文 + SUCCESS
+            // 5. 成功：固化全文 + SUCCESS
             UpdateChain.of(AiKnowledgeDoc.class)
                     .set(AiKnowledgeDoc::getContent, text)
                     .set(AiKnowledgeDoc::getParseStatus, AiDocParseStatusEnum.SUCCESS.getCode())
                     .eq(AiKnowledgeDoc::getId, knowledgeDoc.getId())
                     .update();
-            log.info("文档解析向量化完成, documentId: {}, chunks: {}", knowledgeDoc.getId(), insertedChunkIds.size());
+            log.info("文档解析向量化完成, documentId: {}, chunks: {}", knowledgeDoc.getId(), contents.size());
         } catch (Exception e) {
             log.error("文档解析向量化失败, documentId: {}", knowledgeDoc.getId(), e);
-            cleanupPartialData(knowledgeDoc.getKnowledgeId(), knowledgeDoc.getId(), insertedChunkIds);
+            cleanupPartialData(knowledgeDoc.getId(), insertedVectorIds);
             updateStatus(knowledgeDoc.getId(), AiDocParseStatusEnum.FAILED, truncate(e.getMessage()));
         }
     }
@@ -162,25 +165,25 @@ public class AiKnowledgeDocIngestService {
     }
 
     /**
-     * 失败清理：尽力删除已写入的分块与其向量（向量删除失败不影响 FAILED 状态落库）
+     * 失败清理：按向量 ID 尽力删除已写入的向量，分块表按 documentId 兜底清理
+     * （向量删除失败不影响 FAILED 状态落库）
      */
-    private void cleanupPartialData(Long knowledgeId, Long documentId, List<Long> insertedChunkIds) {
-        if (insertedChunkIds.isEmpty()) {
-            return;
-        }
-        try {
-            vectorStoreManager.removeChunks(knowledgeId, documentId, insertedChunkIds);
-        } catch (Exception e) {
-            log.warn("清理部分向量数据失败（不影响失败状态记录）, documentChunkIds: {}, cause: {}",
-                    insertedChunkIds, e.getMessage());
+    private void cleanupPartialData(Long documentId, List<String> insertedVectorIds) {
+        if (insertedVectorIds != null && !insertedVectorIds.isEmpty()) {
+            try {
+                vectorStoreManager.removeChunks(insertedVectorIds);
+            } catch (Exception e) {
+                log.warn("清理部分向量数据失败（不影响失败状态记录）, documentId: {}, cause: {}",
+                        documentId, e.getMessage());
+            }
         }
         try {
             UpdateChain.of(AiKnowledgeDocChunk.class)
-                    .in(AiKnowledgeDocChunk::getId, insertedChunkIds)
+                    .eq(AiKnowledgeDocChunk::getDocumentId, documentId)
                     .remove();
         } catch (Exception e) {
-            log.warn("清理部分分块数据失败（不影响失败状态记录）, documentChunkIds: {}, cause: {}",
-                    insertedChunkIds, e.getMessage());
+            log.warn("清理部分分块数据失败（不影响失败状态记录）, documentId: {}, cause: {}",
+                    documentId, e.getMessage());
         }
     }
 

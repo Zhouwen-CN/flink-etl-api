@@ -22,12 +22,12 @@ public interface AiKnowledgeService extends IService<AiKnowledge> {
     PageVO<AiKnowledgeVO> getPage(Integer currentPage, Integer pageSize, String searchName);
 
     /**
-     * 新增（含 Embedding 维度探测，探测失败整体保存失败，保证落库配置可用）
+     * 新增
      */
     ResponseVO<Void> addKnowledge(AiKnowledgeCreateForm form);
 
     /**
-     * 更新（绑定类字段 vectorDbId/embedModelId/dimension 不可变更；集合名按 id 派生）
+     * 更新
      */
     ResponseVO<Void> updateKnowledge(AiKnowledgeUpdateForm form);
 

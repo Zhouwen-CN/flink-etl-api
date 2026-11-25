@@ -23,24 +23,6 @@ public class AiKnowledgeCreateForm {
     @Schema(description = "知识库描述")
     private String description;
 
-    @NotNull
-    @Schema(description = "向量数据库id")
-    private Long vectorDbId;
-
-    @NotNull
-    @Schema(description = "Embedding模型id")
-    private Long embedModelId;
-
-    @Min(1)
-    @Max(100)
-    @Schema(description = "最大召回条数（默认5）")
-    private Integer recallTopK;
-
-    @DecimalMin("0.0")
-    @DecimalMax("1.0")
-    @Schema(description = "相似度下限，0~1（默认0.20）")
-    private Double minScore;
-
     @Min(50)
     @Max(10000)
     @Schema(description = "单个分块的最大字符数（默认800）")

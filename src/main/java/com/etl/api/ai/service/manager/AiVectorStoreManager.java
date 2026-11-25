@@ -1,16 +1,8 @@
 package com.etl.api.ai.service.manager;
 
-import com.etl.api.ai.config.AiChatModelFactory;
-import com.etl.api.ai.config.AiVectorStoreFactory;
-import com.etl.api.ai.domain.entity.AiKnowledge;
+import com.etl.api.ai.config.AiContentRetrievalProperties;
 import com.etl.api.ai.domain.entity.AiKnowledgeDocChunk;
-import com.etl.api.ai.domain.entity.AiModel;
-import com.etl.api.ai.domain.entity.AiVectorDatabase;
-import com.etl.api.ai.exception.AiVectorDbConfigException;
 import com.etl.api.ai.mapper.AiKnowledgeDocChunkMapper;
-import com.etl.api.ai.mapper.AiKnowledgeMapper;
-import com.etl.api.ai.mapper.AiModelMapper;
-import com.etl.api.ai.mapper.AiVectorDatabaseMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
@@ -18,6 +10,8 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.filter.Filter;
+import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -29,11 +23,13 @@ import java.util.List;
 /**
  * 向量库操作管理器：统一收口知识库向量库的读写。
  *
- * <p>业务服务不直接持有 EmbeddingStore，store/model 解析、metadata 构建、分块向量 upsert/删除
- * 均经此类调用。vectorId 格式 doc_{documentId}:chk_{chunkId}（{@link #getVectorId} 统一生成），
- * segment metadata 携带 knowledge_id / document_id（Redis store 需显式声明 metadataKeys，见 AiVectorStoreFactory）。
+ * <p>EmbeddingStore / EmbeddingModel / 检索参数均为全局唯一配置（yaml 装配，直接注入），
+ * 所有知识库数据写入同一集合；向量 ID 由 {@code embeddingStore.generateIds(int)} 生成并
+ * 固化在分块表 vector_id 列（DB 是 chunk ↔ vector 映射的唯一事实来源），编辑/删除按其直接操作；
+ * segment metadata 携带 knowledge_id / document_id / document_name，
+ * 检索经 knowledge_id IsIn 过滤实现知识库范围隔离。
  *
- * <p>LangChain4j EmbeddingStore 无统一 update 语义，upsert 用 remove + addAll(ids) 组合模拟。
+ * <p>LangChain4j EmbeddingStore 无统一 update 语义，编辑用 remove + addAll(同一 vectorId) 模拟。
  *
  * @author chen
  * @since 2026-11-20
@@ -44,149 +40,120 @@ import java.util.List;
 public class AiVectorStoreManager {
 
     /**
-     * segment metadata key（向量库持久化 + 检索结果来源标注用）
+     * segment metadata key（向量库持久化 + 检索结果来源标注/知识库隔离过滤用）
      */
     public static final String METADATA_KNOWLEDGE_ID = "knowledge_id";
     public static final String METADATA_DOCUMENT_ID = "document_id";
     public static final String METADATA_DOCUMENT_NAME = "document_name";
 
-    /**
-     * metadataKeys（构造 Redis store 时显式传入）
-     */
-    public static final List<String> METADATA_KEYS =
-            List.of(METADATA_KNOWLEDGE_ID, METADATA_DOCUMENT_ID, METADATA_DOCUMENT_NAME);
-
-    private final AiKnowledgeMapper knowledgeMapper;
-    private final AiVectorDatabaseMapper vectorDatabaseMapper;
-    private final AiModelMapper modelMapper;
-    private final AiChatModelFactory chatModelFactory;
-    private final AiVectorStoreFactory vectorStoreFactory;
+    private final EmbeddingModel embeddingModel;
+    private final EmbeddingStore<TextSegment> embeddingStore;
+    private final AiContentRetrievalProperties retrievalProperties;
     private final AiKnowledgeDocChunkMapper chunkMapper;
 
     /**
-     * 知识库分块向量 ID：doc_{documentId}:chk_{chunkId}（向量 ID 必须能反查 DB 记录，禁止外部手工拼接）
+     * 构建 segment metadata（knowledge_id 检索隔离 / document_id 来源 / document_name 检索结果直接携带）
      */
-    private static String getVectorId(Long documentId, Long chunkId) {
-        return "doc_" + documentId + ":chk_" + chunkId;
+    private static Metadata buildMetadata(Long knowledgeId, Long documentId, String fileName) {
+        return new Metadata()
+                .put(METADATA_KNOWLEDGE_ID, String.valueOf(knowledgeId))
+                .put(METADATA_DOCUMENT_ID, String.valueOf(documentId))
+                .put(METADATA_DOCUMENT_NAME, fileName);
     }
 
     /**
-     * 获取知识库对应的 EmbeddingStore（复用向量库工厂两层缓存）
+     * 知识库隔离过滤条件：metadata.knowledge_id 在给定知识库 id 集合内（共享集合下限定召回范围）
      */
-    private EmbeddingStore<TextSegment> getEmbeddingStore(AiKnowledge knowledge) {
-        AiVectorDatabase vectorDatabase = vectorDatabaseMapper.selectOneById(knowledge.getVectorDbId());
-        if (vectorDatabase == null) {
-            throw new AiVectorDbConfigException("向量数据库配置不存在: " + knowledge.getVectorDbId());
-        }
-        return vectorStoreFactory.getEmbeddingStore(knowledge, vectorDatabase, METADATA_KEYS);
+    private static Filter knowledgeIdFilter(Collection<Long> knowledgeIds) {
+        return MetadataFilterBuilder.metadataKey(METADATA_KNOWLEDGE_ID)
+                .isIn(knowledgeIds.stream().map(String::valueOf).toList());
     }
 
     /**
-     * 按知识库 id 获取 EmbeddingStore（写路径手中只有 knowledgeId 时的薄包装）
-     */
-    private EmbeddingStore<TextSegment> getEmbeddingStore(Long knowledgeId) {
-        return getEmbeddingStore(requireKnowledge(knowledgeId));
-    }
-
-    /**
-     * 获取知识库绑定的 EmbeddingModel
-     */
-    private EmbeddingModel getEmbeddingModel(AiKnowledge knowledge) {
-        AiModel embedModel = modelMapper.selectOneById(knowledge.getEmbedModelId());
-        if (embedModel == null) {
-            throw new AiVectorDbConfigException("Embedding 模型不存在: " + knowledge.getEmbedModelId());
-        }
-        return chatModelFactory.getEmbeddingModel(embedModel);
-    }
-
-    /**
-     * 按知识库 id 获取 EmbeddingModel（写路径手中只有 knowledgeId 时的薄包装）
-     */
-    private EmbeddingModel getEmbeddingModel(Long knowledgeId) {
-        return getEmbeddingModel(requireKnowledge(knowledgeId));
-    }
-
-    /**
-     * 构建知识库检索器：maxResults/minScore 取知识库级配置（recall_top_k / min_score 字段，
-     * 即检索时生效的"最大召回条数/相似度下限"）。
+     * 构建知识库检索器：无论挂载多少知识库均返回一个 retriever，
+     * 经 knowledge_id IsIn metadata 过滤限定召回范围；
+     * maxResults/minScore 取全局检索配置（custom.ai.retrieval）。
      *
-     * <p>store 集合按知识库独立派生（kb_{id}），检索天然只命中本库数据，无需 metadata 过滤；
-     * retriever 为轻量对象，每次构建（store/model 均来自工厂缓存），召回参数改动即生效。
-     * 知识库实体由调用方批量查询传入（如聊天工具组装），避免逐库单行查询。
+     * <p>retriever 为轻量对象，每次构建（store/model 均为共享实例），检索参数改动重启生效。
      */
-    public EmbeddingStoreContentRetriever buildContentRetriever(AiKnowledge knowledge) {
+    public EmbeddingStoreContentRetriever buildContentRetriever(Collection<Long> knowledgeIds) {
         return EmbeddingStoreContentRetriever.builder()
-                .embeddingStore(getEmbeddingStore(knowledge))
-                .embeddingModel(getEmbeddingModel(knowledge))
-                .maxResults(knowledge.getRecallTopK())
-                .minScore(knowledge.getMinScore())
+                .embeddingStore(embeddingStore)
+                .embeddingModel(embeddingModel)
+                .maxResults(retrievalProperties.getMaxResults())
+                .minScore(retrievalProperties.getMinScore())
+                .filter(knowledgeIdFilter(knowledgeIds))
                 .build();
     }
 
     /**
-     * 写入/更新单个分块向量（remove + addAll 幂等 upsert，内部解析 model/store）
+     * 批量写入文档分块向量（解析入库流水线用）：segments 携带 metadata，embedAll 批量向量化，
+     * generateIds 生成向量 ID 后 addAll 一次写入；返回向量 ID 列表（调用方固化到分块表 vector_id 列）。
      *
-     * @param chunk    分块（须含 id/documentId/knowledgeId）
+     * @param contents   分块内容列表（顺序即向量 ID 顺序）
+     * @param knowledgeId 知识库id（metadata）
+     * @param documentId  文档id（metadata）
+     * @param fileName    来源文档名（metadata）
+     * @return 与 contents 一一对应的向量 ID 列表
+     */
+    public List<String> insertChunkVectors(List<String> contents, Long knowledgeId, Long documentId, String fileName) {
+        val segments = contents.stream()
+                .map(content -> TextSegment.from(content, buildMetadata(knowledgeId, documentId, fileName)))
+                .toList();
+        val embeddings = embeddingModel.embedAll(segments).content();
+        val vectorIds = embeddingStore.generateIds(segments.size());
+        embeddingStore.addAll(vectorIds, embeddings, segments);
+        return vectorIds;
+    }
+
+    /**
+     * 写入/更新单个分块向量（remove + addAll 同一 vectorId 模拟 upsert，id 与 metadata 保持稳定）
+     *
+     * @param chunk    分块（须含 vectorId/knowledgeId/documentId）
      * @param content  向量化内容（可与 chunk.content 不同，如编辑后的新内容）
      * @param fileName 来源文档名（随 metadata 固化，检索结果直接携带，免来源反查）
      */
     public void upsertChunk(AiKnowledgeDocChunk chunk, String content, String fileName) {
-        String vectorId = getVectorId(chunk.getDocumentId(), chunk.getId());
-        val metadata = new Metadata()
-                .put(METADATA_KNOWLEDGE_ID, String.valueOf(chunk.getKnowledgeId()))
-                .put(METADATA_DOCUMENT_ID, String.valueOf(chunk.getDocumentId()))
-                .put(METADATA_DOCUMENT_NAME, fileName);
+        val metadata = buildMetadata(chunk.getKnowledgeId(), chunk.getDocumentId(), fileName);
         val segment = TextSegment.from(content, metadata);
-        Embedding embedding = getEmbeddingModel(chunk.getKnowledgeId()).embed(segment).content();
-        EmbeddingStore<TextSegment> store = getEmbeddingStore(chunk.getKnowledgeId());
-        store.remove(vectorId);
-        store.addAll(List.of(vectorId), List.of(embedding), List.of(segment));
+        Embedding embedding = embeddingModel.embed(segment).content();
+        embeddingStore.remove(chunk.getVectorId());
+        embeddingStore.addAll(List.of(chunk.getVectorId()), List.of(embedding), List.of(segment));
     }
 
     /**
      * 删除单个分块向量
      */
-    public void removeChunk(Long knowledgeId, Long documentId, Long chunkId) {
-        getEmbeddingStore(knowledgeId).remove(getVectorId(documentId, chunkId));
+    public void removeChunk(String vectorId) {
+        embeddingStore.remove(vectorId);
     }
 
     /**
-     * 按分块 id 批量删除向量（单文档范围：vectorId 含 documentId，供失败清理与文档删除/重解析级联使用）
+     * 按向量 ID 批量删除向量
      */
-    public void removeChunks(Long knowledgeId, Long documentId, Collection<Long> chunkIds) {
-        if (chunkIds == null || chunkIds.isEmpty()) {
+    public void removeChunks(Collection<String> vectorIds) {
+        if (vectorIds == null || vectorIds.isEmpty()) {
             return;
         }
-        List<String> ids = chunkIds.stream()
-                .map(chunkId -> getVectorId(documentId, chunkId))
-                .toList();
-        getEmbeddingStore(knowledgeId).removeAll(ids);
+        embeddingStore.removeAll(vectorIds);
     }
 
     /**
      * 删除某文档在向量库中的全部向量与分块表数据（文档删除/重解析级联；不删文档本身）
      *
-     * <p>先删向量库再删分块表：向量删除失败时 DB 分块仍在，可重试清理；反之若先删 DB 则向量成孤儿。
+     * <p>先删向量库再删分块表：向量删除失败时 DB 分块仍在（vector_id 可重试清理）；反之若先删 DB 则向量成孤儿。
      */
-    public void removeByDocument(Long knowledgeId, Long documentId) {
-        List<Long> chunkIds = chunkMapper.selectListByQueryAs(
+    public void removeByDocument(Long documentId) {
+        List<String> vectorIds = chunkMapper.selectListByQueryAs(
                 QueryWrapper.create()
-                        .select(AiKnowledgeDocChunk::getId)
+                        .select(AiKnowledgeDocChunk::getVectorId)
                         .eq(AiKnowledgeDocChunk::getDocumentId, documentId),
-                Long.class
+                String.class
         );
 
-        removeChunks(knowledgeId, documentId, chunkIds);
+        removeChunks(vectorIds);
         chunkMapper.deleteByQuery(
                 QueryWrapper.create().eq(AiKnowledgeDocChunk::getDocumentId, documentId)
         );
-    }
-
-    private AiKnowledge requireKnowledge(Long knowledgeId) {
-        AiKnowledge knowledge = knowledgeMapper.selectOneById(knowledgeId);
-        if (knowledge == null) {
-            throw new AiVectorDbConfigException("知识库不存在: " + knowledgeId);
-        }
-        return knowledge;
     }
 }

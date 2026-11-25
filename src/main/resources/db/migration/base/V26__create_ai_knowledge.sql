@@ -1,13 +1,8 @@
 create table T_AI_KNOWLEDGE
 (
     id                 bigint primary key auto_increment comment '自增主键',
-    vector_db_id bigint      not null comment '向量数据库id（T_AI_VECTOR_DATABASE）',
-    embed_model_id     bigint      not null comment 'Embedding模型id（T_AI_MODEL，type=2）',
     name               varchar(50) not null comment '知识库名称',
     description        varchar(255)         default null comment '知识库描述',
-    dimension          int         not null comment '向量维度（创建时探测固化）',
-    recall_top_k int    not null comment '最大召回条数',
-    min_score    double not null comment '相似度下限（LangChain4j minScore 语义，0~1）',
     chunk_size   int    not null comment '单个分块的最大字符数（recursive 分块的 maxSegmentSize，LangChain4j 无 tokenizer 时按字符计）',
     overlap_size int    not null comment '相邻分块的重叠字符数（maxOverlapSize，须小于 chunk_size）',
     create_user        varchar(30)          default null comment '创建者',

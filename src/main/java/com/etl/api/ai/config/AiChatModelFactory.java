@@ -2,16 +2,12 @@ package com.etl.api.ai.config;
 
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.enumeration.AiModelFormatEnum;
-import com.etl.api.ai.enumeration.AiModelTypeEnum;
-import com.etl.api.ai.exception.AiChatException;
 import dev.langchain4j.micrometer.metrics.listeners.MicrometerMetricsChatModelListener;
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
-import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiResponsesChatModel;
 import dev.langchain4j.model.openai.OpenAiResponsesStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
@@ -28,9 +24,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 /**
- * 根据传入的 {@link AiModel} 配置装配 ChatModel/EmbeddingModel。
- * Chat 模型按 format 区分接口协议，Embedding 固定走 OpenAI /v1/embeddings；
- * temperature/topP/maxTokens 等采样参数不落模型配置，
+ * 根据传入的 {@link AiModel} 配置装配 ChatModel（Embedding 模型由 yaml 配置经 AiEmbeddingConfig 装配）。
+ * Chat 模型按 format 区分接口协议；temperature/topP/maxTokens 等采样参数不落模型配置，
  * 由调用方通过 ChatRequest 传递。
  *
  * <p>模型实例线程安全无状态（自带 HTTP client/连接池），按 {@code modelId|api类型|sha256(配置摘要)}
@@ -53,7 +48,6 @@ public class AiChatModelFactory {
      */
     private final ConcurrentHashMap<String, ChatModel> chatModels = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, StreamingChatModel> streamingChatModels = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, EmbeddingModel> embeddingModels = new ConcurrentHashMap<>();
 
     /**
      * per-key 锁：三个缓存的 key 带不同 api 类型段，共用一张锁表
@@ -69,7 +63,6 @@ public class AiChatModelFactory {
      * 按模型配置获取 ChatModel（缓存复用），参考 dev.langchain4j 下各 Builder
      */
     public ChatModel getChatModel(AiModel model) {
-        requireType(model, AiModelTypeEnum.CHAT);
         return getOrCreate(chatModels, configKey(model, "chat"), model, m -> {
             AiModelFormatEnum format = AiModelFormatEnum.of(m.getFormat());
             return switch (format) {
@@ -84,7 +77,6 @@ public class AiChatModelFactory {
      * 按模型配置获取 StreamingChatModel（缓存复用），参考 dev.langchain4j 下各 Builder
      */
     public StreamingChatModel getStreamingChatModel(AiModel model) {
-        requireType(model, AiModelTypeEnum.CHAT);
         return getOrCreate(streamingChatModels, configKey(model, "streaming"), model, m -> {
             AiModelFormatEnum format = AiModelFormatEnum.of(m.getFormat());
             return switch (format) {
@@ -93,14 +85,6 @@ public class AiChatModelFactory {
                 case ANTHROPIC_MESSAGES -> buildAnthropicStreamingMessagesModel(m);
             };
         });
-    }
-
-    /**
-     * 按模型配置获取 EmbeddingModel（缓存复用），固定走 OpenAI 兼容的 /v1/embeddings 协议
-     */
-    public EmbeddingModel getEmbeddingModel(AiModel model) {
-        requireType(model, AiModelTypeEnum.EMBEDDING);
-        return getOrCreate(embeddingModels, configKey(model, "embedding"), model, this::buildOpenAiEmbeddingModel);
     }
 
     /**
@@ -113,18 +97,6 @@ public class AiChatModelFactory {
         String prefix = modelId + "|";
         chatModels.keySet().removeIf(key -> key.startsWith(prefix));
         streamingChatModels.keySet().removeIf(key -> key.startsWith(prefix));
-        embeddingModels.keySet().removeIf(key -> key.startsWith(prefix));
-    }
-
-    /**
-     * 校验模型类型，防止用错模型（如拿 Embedding 模型去对话）
-     */
-    private void requireType(AiModel model, AiModelTypeEnum expected) {
-        AiModelTypeEnum actual = AiModelTypeEnum.of(model.getType());
-        if (actual != expected) {
-            throw new AiChatException(
-                    "模型[" + model.getName() + "]类型为 " + actual + "，不能用作 " + expected + " 模型");
-        }
     }
 
     /**
@@ -173,19 +145,6 @@ public class AiChatModelFactory {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 算法不可用", e);
         }
-    }
-
-    /**
-     * OpenAI 兼容 /v1/embeddings，参考 OpenAiEmbeddingModel.Builder
-     */
-    private EmbeddingModel buildOpenAiEmbeddingModel(AiModel model) {
-        return OpenAiEmbeddingModel.builder()
-                .baseUrl(model.getBaseUrl())
-                .apiKey(model.getApiKey())
-                .modelName(model.getModelName())
-                .logRequests(isLogging)
-                .logResponses(isLogging)
-                .build();
     }
 
     /**

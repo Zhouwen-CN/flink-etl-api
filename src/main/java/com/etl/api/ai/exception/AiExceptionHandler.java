@@ -24,12 +24,4 @@ public class AiExceptionHandler {
     public ResponseVO<Void> mcpConfigExceptionHandler(AiMcpConfigException e) {
         return ResponseVO.error(e.getMessage());
     }
-
-    /**
-     * 向量数据库配置异常（config_json 校验失败、连接验证失败）
-     */
-    @ExceptionHandler(AiVectorDbConfigException.class)
-    public ResponseVO<Void> vectorDbConfigExceptionHandler(AiVectorDbConfigException e) {
-        return ResponseVO.error(e.getMessage());
-    }
 }

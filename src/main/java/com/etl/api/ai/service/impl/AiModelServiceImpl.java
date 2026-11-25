@@ -6,7 +6,6 @@ import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiModelCreateForm;
 import com.etl.api.ai.domain.form.AiModelSelectorForm;
 import com.etl.api.ai.domain.form.AiModelUpdateForm;
-import com.etl.api.ai.enumeration.AiModelTypeEnum;
 import com.etl.api.ai.mapper.AiModelMapper;
 import com.etl.api.ai.service.AiModelService;
 import com.etl.api.sys.domain.vo.ResponseVO;
@@ -44,7 +43,7 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
     private final HttpClient aiHttpClient;
     private final ObjectMapper objectMapper;
 
-    @Value("${custom.ai.model-test-message:hi}")
+    @Value("${custom.ai.chat.model-test-message:hi}")
     private String modelTestMessage;
 
     @Override
@@ -117,23 +116,11 @@ public class AiModelServiceImpl extends ServiceImpl<AiModelMapper, AiModel> impl
             return ResponseVO.recordNotFoundError("ID", modelId);
         }
         try {
-            val result = switch (AiModelTypeEnum.of(model.getType())) {
-                case CHAT -> chatModelFactory.getChatModel(model).chat(modelTestMessage);
-                case EMBEDDING -> testEmbedding(model);
-            };
-            return ResponseVO.ok(result);
+            return ResponseVO.ok(chatModelFactory.getChatModel(model).chat(modelTestMessage));
         } catch (Exception e) {
             // 如 dev.langchain4j.exception.AuthenticationException
             log.warn("模型[{}]测试失败: {}", model.getName(), e.getMessage());
             return ResponseVO.error(e.getMessage());
         }
-    }
-
-    private String testEmbedding(AiModel model) {
-        float[] vector = chatModelFactory.getEmbeddingModel(model)
-                .embed(modelTestMessage)
-                .content()
-                .vector();
-        return "嵌入成功，向量维度: " + vector.length;
     }
 }

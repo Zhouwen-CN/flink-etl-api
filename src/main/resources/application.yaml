@@ -255,6 +255,10 @@ custom:
       enable: true
       cron: "0/5 * * * * ?"
   ai:
-    model-test-message: hi
-    max-memory-messages: 100
-    knowledge-max-results: 10
+    chat:
+      model-test-message: hi
+      max-memory-messages: 100
+    # 知识库检索参数（全局唯一；检索器经 knowledge_id IsIn 过滤限定 bot 挂载的知识库范围）
+    retrieval:
+      max-results: 5 # 单次检索最大召回条数
+      min-score: 0.6 # 相似度下限，0~1

@@ -27,3 +27,16 @@ sa-token:
   # 日志等级（trace、debug、info、warn、error、fatal）
   log-level: debug
 
+
+custom:
+  ai:
+    # 向量数据库（全局唯一共享实例，配置变更需重启生效；type: memory-内置内存（开发/测试） / milvus）
+    vector-db:
+      type: memory
+    # Embedding 模型（全局唯一共享实例，配置变更需重启生效；type: onnx-内置本地模型 / openai-OpenAI兼容接口）
+    embedding:
+      type: onnx
+      onnx:
+        model-path: D://env//bge-small-zh-v1.5-q.onnx # ONNX 模型文件路径
+        tokenizer-path: D://env//bge-small-zh-v1.5-q-tokenizer.json
+        pooling-mode: cls # 向量池化方式：CLS-取[CLS]位置向量 / MEAN-全序列均值（bge 系列用 CLS）

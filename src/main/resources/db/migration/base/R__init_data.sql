@@ -225,16 +225,6 @@ values (79, '更新文档', 'doc.update');
 insert into T_SYS_PERMISSION(id, name, code)
 values (80, '删除文档', 'doc.delete');
 
--- ai vectordb
-insert into T_SYS_PERMISSION(id, name, code)
-values (81, '查询向量库', 'vectordb.select');
-insert into T_SYS_PERMISSION(id, name, code)
-values (82, '新增向量库', 'vectordb.insert');
-insert into T_SYS_PERMISSION(id, name, code)
-values (83, '更新向量库', 'vectordb.update');
-insert into T_SYS_PERMISSION(id, name, code)
-values (84, '删除向量库', 'vectordb.delete');
-
 -- 角色权限关系
 insert into T_SYS_ROLE_PERMISSION(id, role_id, permission_id)
 values (1, 1, 1);
@@ -252,10 +242,6 @@ insert into T_SYS_DICT_TYPE(id, name, remark, status)
 values (3, 'etl_job_type', '任务类型', 1);
 insert into T_SYS_DICT_TYPE(id, name, remark, status)
 values (4, 'ai_api_format', 'ai接口格式', 1);
-insert into T_SYS_DICT_TYPE(id, name, remark, status)
-values (5, 'ai_model_type', 'ai模型类型', 1);
-insert into T_SYS_DICT_TYPE(id, name, remark, status)
-values (6, 'ai_vectordb_type', 'ai向量数据库类型', 1);
 
 -- 字典数据
 -- 性别
@@ -287,18 +273,6 @@ insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (10, 4, 'OpenAI Responses', 2, 2);
 insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
 values (11, 4, 'Anthropic Messages', 3, 3);
-
--- ai模型类型
-insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
-values (12, 5, 'Chat', 1, 1);
-insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
-values (13, 5, 'Embedding', 2, 2);
-
--- ai向量数据库类型
-insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
-values (14, 6, 'Redis', 1, 1);
-insert into T_SYS_DICT_DATA(id, type_id, label, `value`, sort_id)
-values (15, 6, 'Milvus', 2, 2);
 
 -- 变量配置
 INSERT INTO T_SYS_VAR_SETTING (id, name, `value`, status)

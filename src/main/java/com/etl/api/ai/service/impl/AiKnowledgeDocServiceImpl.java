@@ -118,7 +118,7 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
         }
 
         // 校验全部通过后才清旧数据：删旧向量+旧分块（新文件即将重走解析）
-        vectorStoreManager.removeByDocument(doc.getKnowledgeId(), documentId);
+        vectorStoreManager.removeByDocument(documentId);
 
         // UpdateChain 显式 set null，清掉旧全文与失败原因（updateById 默认忽略 null 字段）
         UpdateChain.of(AiKnowledgeDoc.class)
@@ -166,7 +166,7 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
         }
 
         // 清空该文档的向量与分块后重走流水线（分块参数取知识库当前配置）
-        vectorStoreManager.removeByDocument(doc.getKnowledgeId(), documentId);
+        vectorStoreManager.removeByDocument(documentId);
 
         val update = AiKnowledgeDoc.builder()
                 .id(documentId)
@@ -191,7 +191,7 @@ public class AiKnowledgeDocServiceImpl extends ServiceImpl<AiKnowledgeDocMapper,
         }
 
         // 先删向量库与分块，再删文档本身
-        vectorStoreManager.removeByDocument(doc.getKnowledgeId(), documentId);
+        vectorStoreManager.removeByDocument(documentId);
 
         this.removeById(documentId);
         log.info("删除文档, id: {}, knowledgeId: {}", documentId, doc.getKnowledgeId());
