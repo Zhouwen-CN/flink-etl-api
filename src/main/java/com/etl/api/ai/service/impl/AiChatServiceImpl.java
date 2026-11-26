@@ -198,10 +198,7 @@ public class AiChatServiceImpl implements AiChatService {
                 .eq(AiBotKnowledge::getBotId, botId)
                 .listAs(Long.class);
 
-        return contentRetrieverManager.getRetrievalAugmentor(
-                chatModelFactory.getChatModel(model),
-                knowledgeIds
-        );
+        return contentRetrieverManager.getRetrievalAugmentor(knowledgeIds);
     }
 
     /**

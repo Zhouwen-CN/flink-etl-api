@@ -258,7 +258,12 @@ custom:
     chat:
       model-test-message: hi
       max-memory-messages: 100
-    # 知识库检索参数（全局唯一；检索器经 knowledge_id IsIn 过滤限定 bot 挂载的知识库范围）
+    # 轻量模型，负责生成标题、内容检索路由
+    lite-model:
+      base-url: ${LITE_MODEL_BASE_URL}
+      api-key: ${LITE_MODEL_API_KEY}
+      model-name: ${LITE_MODEL_NAME}
+    # 知识库检索参数
     retrieval:
       max-results: 5 # 单次检索最大召回条数
       min-score: 0.6 # 相似度下限，0~1

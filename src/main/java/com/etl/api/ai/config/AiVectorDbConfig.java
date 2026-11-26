@@ -7,6 +7,7 @@ import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
@@ -30,6 +31,7 @@ import org.springframework.util.StringUtils;
  */
 @Configuration
 @RequiredArgsConstructor
+@EnableConfigurationProperties(AiVectorDbProperties.class)
 public class AiVectorDbConfig {
 
     private final AiVectorDbProperties vectorDbProperties;

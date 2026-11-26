@@ -40,6 +40,3 @@ custom:
         model-path: D://env//bge-small-zh-v1.5-q.onnx # ONNX 模型文件路径
         tokenizer-path: D://env//bge-small-zh-v1.5-q-tokenizer.json
         pooling-mode: cls # 向量池化方式：CLS-取[CLS]位置向量 / MEAN-全序列均值（bge 系列用 CLS）
-    web-search:
-      tavily:
-        api-key: ${WEB_SEARCH_TAVILY_API_KEY}

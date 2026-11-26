@@ -32,8 +32,6 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper, AiConversation> implements AiConversationService {
 
-
-
     private static final String TITLE_SYSTEM_PROMPT = """
             你是一个会话标题生成助手。请根据用户发送的第一条消息，生成一个简洁、准确的会话标题。
             要求：
@@ -44,28 +42,12 @@ public class AiConversationServiceImpl extends ServiceImpl<AiConversationMapper,
 
     private static final String DEFAULT_TITLE = "新会话";
 
-    private final AiBotService botService;
-    private final AiModelService modelService;
-    private final AiChatModelFactory chatModelFactory;
     private final AiConversationMessageService conversationMessageService;
+    private final ChatModel chatModel;
 
     @Override
     public AiConversation createConversation(Long botId, String message) {
-        AiBot aiBot = botService.getById(botId);
-        if (aiBot == null) {
-            throw new AiChatException("Bot不存在: " + botId);
-        }
-        if (!Boolean.TRUE.equals(aiBot.getStatus())) {
-            throw new AiChatException("Bot已停用: " + aiBot.getName());
-        }
-        AiModel aiModel = modelService.getById(aiBot.getModelId());
-        if (aiModel == null) {
-            throw new AiChatException("模型不存在: " + aiBot.getModelId());
-        }
-
-        ChatModel chatModel = chatModelFactory.getChatModel(aiModel);
         String title = generateTitle(chatModel, message);
-
         AiConversation conversation = AiConversation.builder()
                 .userId(StpUtil.getLoginIdAsLong())
                 .botId(botId)

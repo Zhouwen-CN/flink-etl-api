@@ -3,7 +3,6 @@ package com.etl.api.ai.config;
 import lombok.Data;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 
 /**
@@ -16,7 +15,6 @@ import org.springframework.util.StringUtils;
  * @since 2026-11-25
  */
 @Data
-@Configuration
 @ConfigurationProperties(prefix = "custom.ai.vector-db")
 public class AiVectorDbProperties implements InitializingBean {
 
