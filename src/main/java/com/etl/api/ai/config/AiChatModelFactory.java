@@ -28,9 +28,9 @@ import java.util.function.Function;
  * Chat 模型按 format 区分接口协议；temperature/topP/maxTokens 等采样参数不落模型配置，
  * 由调用方通过 ChatRequest 传递。
  *
- * <p>模型实例线程安全无状态（自带 HTTP client/连接池），按 {@code modelId|api类型|sha256(配置摘要)}
+ * <p>模型实例线程安全无状态（自带 HTTP client/连接池），按 {@code modelId|api类型|sha256(baseUrl|modelName)}
  * 缓存复用：每次请求新建实例会放弃 HTTP 连接复用，重复 TCP/TLS 握手推高首 token 延迟。
- * 配置摘要参与 key，改配置后新调用自然落新 key（多实例部署无需失效广播）；
+ * baseUrl/modelName 参与摘要，改配置后新调用自然落新 key（多实例部署无需失效广播）；
  * 更新配置后由 AiModelServiceImpl 触发 {@link #evictByModelId(Long)} 移除旧实例。
  *
  * @author chen
@@ -44,7 +44,7 @@ public class AiChatModelFactory {
     private static final int DEFAULT_ANTHROPIC_MAX_TOKENS = 4096;
 
     /**
-     * 模型实例缓存：modelId|api类型|sha256(配置摘要) -> 模型对象（自带 HTTP client/连接池）
+     * 模型实例缓存：modelId|api类型|sha256(baseUrl|modelName) -> 模型对象（自带 HTTP client/连接池）
      */
     private final ConcurrentHashMap<String, ChatModel> chatModels = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, StreamingChatModel> streamingChatModels = new ConcurrentHashMap<>();
@@ -100,11 +100,11 @@ public class AiChatModelFactory {
     }
 
     /**
-     * 模型缓存key：modelId|api类型|sha256(配置摘要)
-     * baseUrl/apiKey/modelName/format 参与摘要，改配置后新调用自然落新 key
+     * 模型缓存key：modelId|api类型|sha256(baseUrl|modelName)
+     * baseUrl/modelName 参与摘要，改配置后新调用自然落新 key；apiKey 变更依赖 evictByModelId 失效
      */
     private String configKey(AiModel model, String apiType) {
-        String digest = model.getBaseUrl() + "|" + model.getApiKey() + "|" + model.getModelName() + "|" + model.getFormat();
+        String digest = model.getBaseUrl() + "|" + model.getModelName();
         return model.getId() + "|" + apiType + "|" + sha256Hex(digest);
     }
 

@@ -17,8 +17,8 @@ public interface AiAssistantService extends ChatMemoryAccess {
      *
      * @param conversationId 会话ID（作为聊天记忆ID）
      * @param contents       用户消息内容列表（文本 + 多模态图片）
-     * @param params         配置参数
+     * @param requestParams  请求参数
      * @return TokenStream
      */
-    TokenStream streamingChat(@MemoryId Long conversationId, @UserMessage List<Content> contents, ChatRequestParameters params);
+    TokenStream streamingChat(@MemoryId Long conversationId, @UserMessage List<Content> contents, ChatRequestParameters requestParams);
 }

@@ -1,14 +1,12 @@
 package com.etl.api.ai.service.manager;
 
 import com.etl.api.ai.domain.dto.AiMcpServerConfigDTO;
-import com.etl.api.ai.domain.entity.AiBotKnowledge;
 import com.etl.api.ai.domain.entity.AiBotMcpTool;
 import com.etl.api.ai.domain.entity.AiMcpServer;
 import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.validator.AiMcpConfigValidator;
 import com.etl.api.ai.exception.AiMcpConfigException;
 import com.etl.api.ai.service.AiMcpToolService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.query.QueryChain;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
@@ -16,11 +14,6 @@ import dev.langchain4j.http.client.HttpClient;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
-import dev.langchain4j.rag.content.Content;
-import dev.langchain4j.rag.content.ContentMetadata;
-import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
-import dev.langchain4j.rag.query.Query;
 import dev.langchain4j.service.tool.AiServiceTool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +24,6 @@ import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,11 +40,8 @@ import java.util.concurrent.TimeoutException;
  * （{@link #fetchTools}）共用同一套 transport 构建与超时配置，客户端均不驻留。
  * MCP 工具清单来自本地缓存（input_schema 反序列化，不实时 listTools）。
  *
- * <p>知识库检索工具部分（自研工具，非 MCP）：把 bot 绑定的知识库包装成
- * search_knowledge_base，LLM 自主决定何时检索、query 怎么改写；检索执行复用
- * {@link AiVectorStoreManager#buildContentRetriever}（全局唯一模型/集合/检索参数，
- * 经 knowledge_id IsIn metadata 过滤限定 bot 挂载的知识库范围），结果带来源文档名与
- * 相似度分数供 LLM 引用。
+ * <p>知识库检索不走本类（原 search_knowledge_base 工具已下线）：RAG 管道经
+ * {@link AiContentRetrieverManager} 组装 RetrievalAugmentor 注入检索内容。
  *
  * <p>本类位于 service.manager 包，不参与 service.impl 包事务切面；工具执行器跑在
  * langchain4j 工具循环内，参数解析失败/调用异常均返回错误文本交给 LLM 自行决策。
@@ -80,61 +69,23 @@ public class AiMcpToolManager {
      */
     private static final String OUTPUT_TEMPLATE_PLACEHOLDER = "{result}";
 
-    /**
-     * 知识库检索工具名（固定；注册前保证与 MCP 工具名不冲突）
-     */
-    private static final String KNOWLEDGE_TOOL_NAME = "search_knowledge_base";
-
-    /**
-     * 检索工具描述（决定 LLM 是否调用与何时调用，需明确触发时机与兜底行为）
-     */
-    private static final String KNOWLEDGE_TOOL_DESCRIPTION = """
-            搜索该助手绑定的知识库文档内容。当用户提问涉及文档、资料、制度、数据说明等知识库内容时，\
-            必须先调用本工具获取依据再回答；检索不到相关信息时如实告知，不要编造。\
-            """;
-
-    /**
-     * query 参数缺失/非法时的错误回传文本（交 LLM 重试）
-     */
-    private static final String INVALID_QUERY_MESSAGE = "参数错误: query 不能为空，请提供检索问题或关键词";
-
-    private final AiVectorStoreManager vectorStoreManager;
     private final AiMcpConfigValidator configValidator;
+
     private final HttpClient aiHttpClient;
-    private final ObjectMapper objectMapper;
 
     /**
-     * 组装 bot 的聊天工具集合（MCP 工具 + 知识库检索工具）。
+     * 组装 bot 的聊天工具集合（MCP 工具）。
      *
-     * <p>单条工具构建失败（被删/配置失效/重名）跳过并 warn，其余照常注册；
-     * 全部不可用时返回空 List，不阻断聊天。
+     * <p>bot 未挂载/挂载失效时返回空 List；单条工具构建失败（被删/配置失效/重名）
+     * 跳过并 warn，其余照常注册；全部不可用时返回空 List，不阻断聊天。
      *
-     * @param botId bot id
+     * @param mcpToolList bot id
      * @return 注册给 LLM 的工具集合，无可用工具时为空 List
      */
-    public List<AiServiceTool> build(Long botId) {
+    public List<AiServiceTool> build(List<AiMcpTool> mcpToolList) {
         val tools = new ArrayList<AiServiceTool>();
-        appendMcpTools(botId, tools);
-        appendKnowledgeSearchTool(botId, tools);
-        return tools;
-    }
-
-    /**
-     * 追加 MCP 工具：bot 未挂载/挂载失效时跳过
-     */
-    private void appendMcpTools(Long botId, List<AiServiceTool> result) {
-        val toolIds = QueryChain.of(AiBotMcpTool.class)
-                .select(AiBotMcpTool::getToolId)
-                .eq(AiBotMcpTool::getBotId, botId)
-                .listAs(Long.class);
-        if (CollectionUtils.isEmpty(toolIds)) {
-            return;
-        }
-        val mcpToolList = QueryChain.of(AiMcpTool.class)
-                .in(AiMcpTool::getId, toolIds)
-                .list();
         if (CollectionUtils.isEmpty(mcpToolList)) {
-            return;
+            return tools;
         }
 
         val serverIds = mcpToolList.stream().map(AiMcpTool::getServerId).distinct().toList();
@@ -154,7 +105,7 @@ public class AiMcpToolManager {
             val configJson = configByServerId.get(tool.getServerId());
             if (!StringUtils.hasText(configJson)) {
                 log.warn("MCP工具所属服务配置缺失，跳过, botId: {}, toolId: {}, serverId: {}",
-                        botId, tool.getId(), tool.getServerId());
+                        mcpToolList, tool.getId(), tool.getServerId());
                 continue;
             }
 
@@ -164,135 +115,23 @@ public class AiMcpToolManager {
                 spec = ToolSpecification.fromJson(tool.getInputSchema());
             } catch (Exception e) {
                 log.warn("MCP工具input_schema解析失败，跳过, botId: {}, toolId: {}, name: {}",
-                        botId, tool.getId(), tool.getName(), e);
+                        mcpToolList, tool.getId(), tool.getName(), e);
                 continue;
             }
             if (!seenNames.add(spec.name())) {
-                log.warn("MCP工具重名，仅保留首个, botId: {}, name: {}", botId, spec.name());
+                log.warn("MCP工具重名，仅保留首个, botId: {}, name: {}", mcpToolList, spec.name());
                 continue;
             }
 
             val outputTemplate = tool.getOutputTemplate();
-            result.add(AiServiceTool.builder()
+            tools.add(AiServiceTool.builder()
                     .toolSpecification(spec)
                     .toolExecutor((ToolExecutionRequest request, Object memoryId) ->
                             executeMcpTool(configJson, outputTemplate, request))
                     .build());
         }
-    }
 
-    /**
-     * 追加知识库检索工具（绑定了知识库的 bot 才注册；工具名与已注册 MCP 工具重名时放弃注册）
-     */
-    private void appendKnowledgeSearchTool(Long botId, List<AiServiceTool> result) {
-        val knowledgeIds = QueryChain.of(AiBotKnowledge.class)
-                .select(AiBotKnowledge::getKnowledgeId)
-                .eq(AiBotKnowledge::getBotId, botId)
-                .listAs(Long.class);
-        if (CollectionUtils.isEmpty(knowledgeIds)) {
-            return;
-        }
-        val hasConflict = result.stream()
-                .anyMatch(tool -> KNOWLEDGE_TOOL_NAME.equals(tool.toolSpecification().name()));
-        if (hasConflict) {
-            log.warn("知识库检索工具名与MCP工具重名，放弃注册, botId: {}", botId);
-            return;
-        }
-
-        // 全局唯一模型/集合/检索参数（yaml 配置），不管挂载多少知识库都是一个检索器，
-        // 经 knowledge_id IsIn metadata 过滤限定召回范围
-        val retriever = vectorStoreManager.buildContentRetriever(knowledgeIds);
-
-        result.add(AiServiceTool.builder()
-                .toolSpecification(knowledgeToolSpec())
-                .toolExecutor((ToolExecutionRequest request, Object memoryId) ->
-                        executeKnowledgeSearch(request, retriever))
-                .build());
-    }
-
-    private ToolSpecification knowledgeToolSpec() {
-        return ToolSpecification.builder()
-                .name(KNOWLEDGE_TOOL_NAME)
-                .description(KNOWLEDGE_TOOL_DESCRIPTION)
-                .parameters(JsonObjectSchema.builder()
-                        .addStringProperty("query", "用于向量检索的问题或关键词")
-                        .required("query")
-                        .build())
-                .build();
-    }
-
-    /**
-     * 执行知识库检索：单检索器按 metadata IsIn 过滤召回（bot 挂载的全部知识库），
-     * 结果按 score 降序返回；异常兜底为错误文本回传 LLM
-     */
-    private String executeKnowledgeSearch(ToolExecutionRequest request,
-                                          EmbeddingStoreContentRetriever retriever) {
-        val query = extractQuery(request.arguments());
-        if (!StringUtils.hasText(query)) {
-            return INVALID_QUERY_MESSAGE;
-        }
-        try {
-            val contents = retriever.retrieve(Query.from(query));
-            return formatContents(rankContents(contents));
-        } catch (Exception e) {
-            log.warn("知识库检索失败, tool: {}, error: {}", KNOWLEDGE_TOOL_NAME, e.getMessage());
-            return "知识库检索失败: " + e.getMessage();
-        }
-    }
-
-    /**
-     * 结果排序：score 降序（各文档来自同一 Embedding 模型，score 量纲一致）。
-     * 单 score 缺失按 0 兜底排末尾（EmbeddingStoreContentRetriever 正常都会写入 SCORE）。
-     */
-    private List<Content> rankContents(List<Content> contents) {
-        return contents.stream()
-                .sorted(Comparator.comparingDouble(AiMcpToolManager::scoreOf).reversed())
-                .toList();
-    }
-
-    private static double scoreOf(Content content) {
-        val score = content.metadata().get(ContentMetadata.SCORE);
-        return score instanceof Number number ? number.doubleValue() : 0.0;
-    }
-
-    /**
-     * 从工具调用参数 JSON 中解析 query
-     */
-    private String extractQuery(String argumentsJson) {
-        if (!StringUtils.hasText(argumentsJson)) {
-            return null;
-        }
-        try {
-            val node = objectMapper.readTree(argumentsJson).get("query");
-            return node == null || node.isNull() ? null : node.asText();
-        } catch (Exception e) {
-            log.warn("检索工具参数解析失败, arguments: {}, cause: {}", argumentsJson, e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * 结果格式化：来源文档名与相似度分数随 metadata 固化在向量数据上（upsertChunk 写入），
-     * 直接读取即可，无需来源反查
-     */
-    private String formatContents(List<Content> contents) {
-        if (contents.isEmpty()) {
-            return "知识库中未检索到相关内容。";
-        }
-
-        val sb = new StringBuilder();
-        for (int i = 0; i < contents.size(); i++) {
-            val content = contents.get(i);
-            val segment = content.textSegment();
-            val fileName = segment.metadata().getString(AiVectorStoreManager.METADATA_DOCUMENT_NAME);
-            val score = content.metadata().get(ContentMetadata.SCORE);
-            sb.append("[来源").append(i + 1).append("] 文档: ").append(fileName);
-            if (score != null) {
-                sb.append(" (score=").append(score).append(")");
-            }
-            sb.append('\n').append(segment.text()).append("\n\n");
-        }
-        return sb.toString().strip();
+        return tools;
     }
 
     /**

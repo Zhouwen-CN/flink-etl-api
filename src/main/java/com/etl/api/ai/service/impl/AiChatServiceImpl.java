@@ -4,21 +4,27 @@ import com.etl.api.ai.config.AiAssistantService;
 import com.etl.api.ai.config.AiChatMemoryStore;
 import com.etl.api.ai.config.AiChatModelFactory;
 import com.etl.api.ai.domain.entity.AiBot;
+import com.etl.api.ai.domain.entity.AiBotKnowledge;
+import com.etl.api.ai.domain.entity.AiBotMcpTool;
+import com.etl.api.ai.domain.entity.AiMcpTool;
 import com.etl.api.ai.domain.entity.AiModel;
 import com.etl.api.ai.domain.form.AiChatForm;
 import com.etl.api.ai.exception.AiChatException;
 import com.etl.api.ai.service.AiBotService;
 import com.etl.api.ai.service.AiChatService;
 import com.etl.api.ai.service.AiModelService;
+import com.etl.api.ai.service.manager.AiContentRetrieverManager;
 import com.etl.api.ai.service.manager.AiMcpToolManager;
 import com.etl.api.ai.util.AiMessageUtil;
 import com.etl.api.ai.util.AiSseEmitterUtil;
 import com.etl.api.sys.util.LocalDateTimeUtil;
+import com.mybatisflex.core.query.QueryChain;
 import dev.langchain4j.data.message.Content;
 import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.chat.response.StreamingHandle;
+import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.service.tool.AiServiceTool;
@@ -26,8 +32,10 @@ import dev.langchain4j.service.tool.ToolArgumentsErrorHandler;
 import dev.langchain4j.service.tool.ToolExecutionErrorHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -56,13 +64,13 @@ public class AiChatServiceImpl implements AiChatService {
     private final AiBotService botService;
     private final AiModelService modelService;
     private final AiMcpToolManager mcpToolManager;
+    private final AiContentRetrieverManager contentRetrieverManager;
     @Value("${custom.ai.chat.max-memory-messages:100}")
     private Integer maxMemoryMessages;
 
     @Override
     public SseEmitter streamChat(AiChatForm form) {
-        Long conversationId = form.getConversationId();
-
+        // bot
         AiBot aiBot = botService.getById(form.getBotId());
         if (aiBot == null) {
             throw new AiChatException("Bot不存在: " + form.getBotId());
@@ -70,6 +78,7 @@ public class AiChatServiceImpl implements AiChatService {
         if (!Boolean.TRUE.equals(aiBot.getStatus())) {
             throw new AiChatException("Bot已停用: " + aiBot.getName());
         }
+        // model
         AiModel aiModel = modelService.getById(aiBot.getModelId());
         if (aiModel == null) {
             throw new AiChatException("模型不存在: " + aiBot.getModelId());
@@ -83,20 +92,17 @@ public class AiChatServiceImpl implements AiChatService {
 
         // 客户端断开/超时 → 取消模型生成，避免空跑浪费 token
         // 前端 abort 后服务端在下一次写入时感知断开，此处负责触发取消
+        Long conversationId = form.getConversationId();
         sse.onError(ex -> cancelQuietly(handleRef, conversationId));
         sse.onTimeout(() -> {
             log.warn("SSE timeout, conversationId={}", conversationId);
             cancelQuietly(handleRef, conversationId);
         });
 
-        // 聊天工具集合：MCP 工具（ToolSpecification 来自本地缓存 input_schema，执行时临时建连调用远端）
-        // + 知识库检索工具
-        List<AiServiceTool> chatTools = mcpToolManager.build(aiBot.getId());
-
         // 获取 ai service
-        AiAssistantService assistantService = AiServices.builder(AiAssistantService.class)
+        AiServices<AiAssistantService> aiServices = AiServices.builder(AiAssistantService.class)
                 .streamingChatModel(chatModelFactory.getStreamingChatModel(aiModel))
-                // 环境信息固定注入 provider（用户未配置系统提示词时也不丢环境信息）；
+                // 系统提示词
                 .systemMessageProvider(id -> {
                     String now = LocalDateTimeUtil.format(LocalDateTime.now());
                     String osInfo = System.getProperty("os.name") + " " + System.getProperty("os.version");
@@ -111,25 +117,29 @@ public class AiChatServiceImpl implements AiChatService {
                                 ? systemMessage + "\n\n" + aiBot.getSystemPrompt()
                                 : systemMessage
                 )
+                // 记忆
                 .chatMemoryProvider(id -> MessageWindowChatMemory.builder()
                         .id(id)
                         .maxMessages(maxMemoryMessages)
                         .chatMemoryStore(chatMemoryStore)
                         .build()
                 )
-                .tools(chatTools)
+                // 工具
+                .tools(this.getToolList(aiBot.getId()))
                 // 工具调用往返轮数
                 .maxToolCallingRoundTrips(aiBot.getMaxToolCalls())
                 // 把工具 参数错误信息 和 调用错误信息 发送给 LLM
                 .toolArgumentsErrorHandler(ToolArgumentsErrorHandler.sendExceptionMessageToLlm())
                 .toolExecutionErrorHandler(ToolExecutionErrorHandler.failInvocationUnlessVisibleToLlm())
-                .build();
+                // 控制存储在聊天记忆中的是 增强的 用户消息（注入了检索到的 Content）还是 原始的 用户消息
+                .storeRetrievedContentInChatMemory(false);
 
-        // 获取 chat 请求参数
-        ChatRequestParameters chatRequestParameters = ChatRequestParameters.builder()
-                .temperature(aiBot.getTemperature())
-                .topP(aiBot.getTopP())
-                .build();
+        // 内容检索
+        RetrievalAugmentor retrievalAugmentor = this.getRetrievalAugmentor(aiBot.getId(), aiModel);
+        if (retrievalAugmentor != null) {
+            aiServices.retrievalAugmentor(retrievalAugmentor);
+        }
+        AiAssistantService assistantService = aiServices.build();
 
         // 构建用户消息内容列表（文本 + 图片）
         List<Content> contents = new ArrayList<>();
@@ -140,9 +150,10 @@ public class AiChatServiceImpl implements AiChatService {
         TokenStream tokenStream = assistantService.streamingChat(
                 conversationId,
                 contents,
-                chatRequestParameters
+                this.getRequestParams(aiBot)
         );
 
+        // 回调
         tokenStream
                 .onPartialThinkingWithContext((partial, ctx) -> {
                     handleRef.set(ctx.streamingHandle());
@@ -176,5 +187,50 @@ public class AiChatServiceImpl implements AiChatService {
                 log.warn("cancel streaming failed, conversationId={}", conversationId, e);
             }
         }
+    }
+
+    /**
+     * 获取 内容检索
+     */
+    private RetrievalAugmentor getRetrievalAugmentor(Long botId, AiModel model) {
+        List<Long> knowledgeIds = QueryChain.of(AiBotKnowledge.class)
+                .select(AiBotKnowledge::getKnowledgeId)
+                .eq(AiBotKnowledge::getBotId, botId)
+                .listAs(Long.class);
+
+        return contentRetrieverManager.getRetrievalAugmentor(
+                chatModelFactory.getChatModel(model),
+                knowledgeIds
+        );
+    }
+
+    /**
+     * 获取 请求参数
+     */
+    private ChatRequestParameters getRequestParams(AiBot aiBot) {
+        return ChatRequestParameters.builder()
+                .temperature(aiBot.getTemperature())
+                .topP(aiBot.getTopP())
+                .build();
+    }
+
+    /**
+     * 获取 工具
+     */
+    private List<AiServiceTool> getToolList(Long botId) {
+        val toolIds = QueryChain.of(AiBotMcpTool.class)
+                .select(AiBotMcpTool::getToolId)
+                .eq(AiBotMcpTool::getBotId, botId)
+                .listAs(Long.class);
+
+        if (CollectionUtils.isEmpty(toolIds)) {
+            return List.of();
+        }
+
+        List<AiMcpTool> mcpToolList = QueryChain.of(AiMcpTool.class)
+                .in(AiMcpTool::getId, toolIds)
+                .list();
+
+        return mcpToolManager.build(mcpToolList);
     }
 }

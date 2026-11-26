@@ -1,15 +1,11 @@
 package com.etl.api.ai.service.manager;
 
-import com.etl.api.ai.config.AiContentRetrievalProperties;
 import com.etl.api.ai.domain.entity.AiKnowledgeDocChunk;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import dev.langchain4j.store.embedding.filter.Filter;
-import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -21,7 +17,7 @@ import java.util.List;
 /**
  * 向量库操作管理器：统一收口知识库向量库的读写。
  *
- * <p>EmbeddingStore / EmbeddingModel / 检索参数均为全局唯一配置（yaml 装配，直接注入），
+ * <p>EmbeddingStore / EmbeddingModel 均为全局唯一配置（yaml 装配，直接注入），
  * 所有知识库数据写入同一集合；向量 ID 由 {@code embeddingStore.generateIds(int)} 生成并
  * 固化在分块表 vector_id 列（DB 是 chunk ↔ vector 映射的唯一事实来源），编辑/删除按其直接操作；
  * segment metadata 携带 knowledge_id / document_id / document_name，
@@ -46,7 +42,6 @@ public class AiVectorStoreManager {
 
     private final EmbeddingModel embeddingModel;
     private final EmbeddingStore<TextSegment> embeddingStore;
-    private final AiContentRetrievalProperties retrievalProperties;
 
     /**
      * 构建 segment metadata（knowledge_id 检索隔离 / document_id 来源 / document_name 检索结果直接携带）
@@ -56,31 +51,6 @@ public class AiVectorStoreManager {
                 .put(METADATA_KNOWLEDGE_ID, String.valueOf(knowledgeId))
                 .put(METADATA_DOCUMENT_ID, String.valueOf(documentId))
                 .put(METADATA_DOCUMENT_NAME, fileName);
-    }
-
-    /**
-     * 知识库隔离过滤条件：metadata.knowledge_id 在给定知识库 id 集合内（共享集合下限定召回范围）
-     */
-    private static Filter knowledgeIdFilter(Collection<Long> knowledgeIds) {
-        return MetadataFilterBuilder.metadataKey(METADATA_KNOWLEDGE_ID)
-                .isIn(knowledgeIds.stream().map(String::valueOf).toList());
-    }
-
-    /**
-     * 构建知识库检索器：无论挂载多少知识库均返回一个 retriever，
-     * 经 knowledge_id IsIn metadata 过滤限定召回范围；
-     * maxResults/minScore 取全局检索配置（custom.ai.retrieval）。
-     *
-     * <p>retriever 为轻量对象，每次构建（store/model 均为共享实例），检索参数改动重启生效。
-     */
-    public EmbeddingStoreContentRetriever buildContentRetriever(Collection<Long> knowledgeIds) {
-        return EmbeddingStoreContentRetriever.builder()
-                .embeddingStore(embeddingStore)
-                .embeddingModel(embeddingModel)
-                .maxResults(retrievalProperties.getMaxResults())
-                .minScore(retrievalProperties.getMinScore())
-                .filter(knowledgeIdFilter(knowledgeIds))
-                .build();
     }
 
     /**
