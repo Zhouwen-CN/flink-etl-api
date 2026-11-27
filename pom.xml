@@ -95,6 +95,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <!-- onnxruntime 锁定版本，避免动态链接库(DLL)初始化例程失败错误 -->
+            <dependency>
+                <groupId>com.microsoft.onnxruntime</groupId>
+                <artifactId>onnxruntime</artifactId>
+                <version>1.20.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -205,13 +212,7 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-embeddings</artifactId>
-            <version>1.20.2-beta30</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>dev.langchain4j</groupId>
-                    <artifactId>langchain4j-core</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>${langchain4j.beta.version}</version>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
@@ -224,7 +225,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
 
         <!-- spring doc -->
         <dependency>

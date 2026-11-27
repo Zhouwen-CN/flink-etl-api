@@ -1,11 +1,9 @@
 package com.etl.api.ai.service.retriever;
 
 import com.etl.api.ai.config.AiContentRetrievalProperties;
-import com.etl.api.ai.service.manager.AiRetrievalContentCollector;
 import com.etl.api.ai.service.manager.AiVectorStoreManager;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
@@ -39,12 +37,7 @@ public class AiEmbeddingStoreContentRetriever implements AiContentRetriever {
     private final AiContentRetrievalProperties retrievalProperties;
 
     @Override
-    public String getName() {
-        return AiRetrievalContentCollector.SOURCE_KNOWLEDGE_BASE;
-    }
-
-    @Override
-    public String getDescription() {
+    public String description() {
         return """
                 检索该助手绑定的知识库文档内容（内部文档、制度、资料、数据说明等）。\
                 用户提问涉及知识库内容或需要文档依据时选择本源。\

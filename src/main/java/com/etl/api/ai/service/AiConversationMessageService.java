@@ -4,6 +4,7 @@ import com.etl.api.ai.domain.entity.AiConversationMessage;
 import com.mybatisflex.core.service.IService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * AI会话历史 服务层。
@@ -29,11 +30,11 @@ public interface AiConversationMessageService extends IService<AiConversationMes
     void deleteByConversationId(Long conversationId);
 
     /**
-     * 回写最新 assistant 消息行的 message（含 attributes：tokenUsage + getRetrievalContentList，
-     * 与 done 事件同一份 JSON；attributes 仅前端展示，不发给大模型）
+     * 回写最新 assistant 消息行的 toAttributes（tokenUsage + retrievalContent；
+     * toBuilder 保留 text/thinking/toolExecutionRequests，仅替换 toAttributes）
      *
      * @param conversationId 会话id
-     * @param messageJson    完整的 assistant 消息 JSON
+     * @param attributes     toAttributes（见 {@link com.etl.api.ai.util.AiMessageUtil#toAttributes}）
      */
-    void writeAssistantAttributes(Long conversationId, String messageJson);
+    void writeAssistantAttributes(Long conversationId, Map<String, Object> attributes);
 }

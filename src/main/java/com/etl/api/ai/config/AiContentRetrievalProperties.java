@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "custom.ai.retrieval")
+@ConfigurationProperties(prefix = "custom.ai.content-retrieval.embedding-store")
 public class AiContentRetrievalProperties implements InitializingBean {
 
     /**

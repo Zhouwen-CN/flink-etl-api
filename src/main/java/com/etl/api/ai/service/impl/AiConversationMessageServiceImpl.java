@@ -3,14 +3,17 @@ package com.etl.api.ai.service.impl;
 import com.etl.api.ai.domain.entity.AiConversationMessage;
 import com.etl.api.ai.mapper.AiConversationMessageMapper;
 import com.etl.api.ai.service.AiConversationMessageService;
+import com.etl.api.ai.util.AiMessageUtil;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ChatMessageDeserializer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * AI会话历史 服务层实现。
@@ -39,7 +42,7 @@ public class AiConversationMessageServiceImpl extends ServiceImpl<AiConversation
     }
 
     @Override
-    public void writeAssistantAttributes(Long conversationId, String messageJson) {
+    public void writeAssistantAttributes(Long conversationId, Map<String, Object> attributes) {
         // onCompleteResponse 时最终 assistant 行必已落库（LC4j addToMemory 先于回调），为最新行；
         // 仍按消息类型定位兜底，规避工具往返中间行的时序意外
         List<AiConversationMessage> records = this.queryChain()
@@ -47,9 +50,10 @@ public class AiConversationMessageServiceImpl extends ServiceImpl<AiConversation
                 .orderBy(AiConversationMessage::getId, false)
                 .list();
         for (AiConversationMessage record : records) {
-            if (ChatMessageDeserializer.messageFromJson(record.getMessage()) instanceof AiMessage) {
+            ChatMessage chatMessage = ChatMessageDeserializer.messageFromJson(record.getMessage());
+            if (chatMessage instanceof AiMessage aiMessage) {
                 this.updateChain()
-                        .set(AiConversationMessage::getMessage, messageJson)
+                        .set(AiConversationMessage::getMessage, AiMessageUtil.mergeAttributes(aiMessage, attributes))
                         .eq(AiConversationMessage::getId, record.getId())
                         .update();
                 return;

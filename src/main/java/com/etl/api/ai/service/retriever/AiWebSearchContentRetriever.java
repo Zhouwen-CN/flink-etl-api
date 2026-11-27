@@ -1,6 +1,5 @@
 package com.etl.api.ai.service.retriever;
 
-import com.etl.api.ai.service.manager.AiRetrievalContentCollector;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.WebSearchContentRetriever;
 import dev.langchain4j.web.search.WebSearchEngine;
@@ -26,13 +25,18 @@ import java.util.List;
 @Component
 public class AiWebSearchContentRetriever implements AiContentRetriever {
 
-    @Value("${custom.ai.web-search.tavily.api-key:}")
+    @Value("${custom.ai.content-retrieval.web-search.tavily.api-key:}")
     private String tavilyApiKey;
 
-    @Value("${custom.ai.retrieval.max-results:5}")
+    @Value("${custom.ai.content-retrieval.web-search.tavily.max-results:3}")
     private Integer maxResults;
 
     private volatile WebSearchContentRetriever delegate;
+
+    @Override
+    public String description() {
+        return "联网搜索实时信息与公开资料（新闻、时事、文档之外的公开内容）。";
+    }
 
     @Override
     public void afterPropertiesSet() {
@@ -47,16 +51,6 @@ public class AiWebSearchContentRetriever implements AiContentRetriever {
                 .webSearchEngine(webSearchEngine)
                 .maxResults(maxResults)
                 .build();
-    }
-
-    @Override
-    public String getName() {
-        return AiRetrievalContentCollector.SOURCE_WEB_SEARCH;
-    }
-
-    @Override
-    public String getDescription() {
-        return "联网搜索实时信息与公开资料（新闻、时事、文档之外的公开内容）。";
     }
 
     @Override

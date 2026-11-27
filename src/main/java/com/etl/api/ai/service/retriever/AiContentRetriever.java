@@ -16,14 +16,9 @@ import java.util.List;
 public interface AiContentRetriever extends InitializingBean {
 
     /**
-     * 名称
+     * 描述，用来让大模型判断路由
      */
-    String getName();
-
-    /**
-     * 描述
-     */
-    String getDescription();
+    String description();
 
     /**
      * 获取内容检索器

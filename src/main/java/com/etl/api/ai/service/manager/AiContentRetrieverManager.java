@@ -1,11 +1,12 @@
 package com.etl.api.ai.service.manager;
 
+import com.etl.api.ai.domain.dto.AiRetrievalContentDTO;
 import com.etl.api.ai.service.retriever.AiContentRetriever;
+import com.etl.api.ai.service.retriever.AiNumberedContentInjector;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
-import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.query.router.LanguageModelQueryRouter;
 import lombok.RequiredArgsConstructor;
@@ -48,15 +49,16 @@ public class AiContentRetrieverManager {
      * 源不可用/不适用（如未绑定知识库）时 getRetriever 返回 null，跳过该源；
      * 无可用源时返回 null，AiServices 不挂增强器，不阻断聊天。
      *
-     * <p>collector 非 null 时每个源包一层录制代理（retrieve 后记录引用，原样返回结果），
-     * 供引用展示；为 null 时不包装，行为与现状一致。
+     * <p>挂 Cherry Studio 风格注入器：注入阶段将资料转为 DTO 列表（含编号）写入
+     * retrievalContents 并序列化进提示词，编号与正文 [n] 下标对齐。
      */
-    public RetrievalAugmentor getRetrievalAugmentor(List<Long> knowledgeIds, AiRetrievalContentCollector collector) {
+    public RetrievalAugmentor getRetrievalAugmentor(List<Long> knowledgeIds,
+                                                    List<AiRetrievalContentDTO> retrievalContents) {
         Map<ContentRetriever, String> contentRetrieverMap = new LinkedHashMap<>();
         for (AiContentRetriever source : contentRetrieverList) {
             ContentRetriever retriever = source.getRetriever(knowledgeIds);
             if (retriever != null) {
-                contentRetrieverMap.put(wrap(source, retriever, collector), source.getDescription());
+                contentRetrieverMap.put(retriever, source.description());
             }
         }
         if (contentRetrieverMap.isEmpty()) {
@@ -72,23 +74,7 @@ public class AiContentRetrieverManager {
         return DefaultRetrievalAugmentor.builder()
                 // .queryTransformer() // 查询转换器
                 .queryRouter(queryRouter) // 查询路由器
-                // .contentAggregator() // 内容聚合器
-                // .contentInjector() // 内容注入器
+                .contentInjector(new AiNumberedContentInjector(retrievalContents))
                 .build();
-    }
-
-    /**
-     * 引用采集代理：retrieve 后经 collector 记录，再原样返回结果
-     */
-    private ContentRetriever wrap(AiContentRetriever source, ContentRetriever delegate,
-                                  AiRetrievalContentCollector collector) {
-        if (collector == null) {
-            return delegate;
-        }
-        return query -> {
-            List<Content> contents = delegate.retrieve(query);
-            collector.record(source.getName(), contents);
-            return contents;
-        };
     }
 }

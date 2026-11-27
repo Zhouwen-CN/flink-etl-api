@@ -263,11 +263,14 @@ custom:
       base-url: ${LITE_MODEL_BASE_URL}
       api-key: ${LITE_MODEL_API_KEY}
       model-name: ${LITE_MODEL_NAME}
-    # 知识库检索参数
-    retrieval:
-      max-results: 5 # 单次检索最大召回条数
-      min-score: 0.6 # 相似度下限，0~1
-    # 网络搜索
-    web-search:
-      tavily:
-        api-key: ${WEB_SEARCH_TAVILY_API_KEY}
+    # 内容检索
+    content-retrieval:
+      # 向量存储
+      embedding-store:
+        max-results: 5 # 单次检索最大召回条数
+        min-score: 0.6 # 相似度下限，0~1
+      # 网络搜索（key没有配置则不生效）
+      web-search:
+        tavily:
+          api-key: ${WEB_SEARCH_TAVILY_API_KEY}
+          max-results: 3
