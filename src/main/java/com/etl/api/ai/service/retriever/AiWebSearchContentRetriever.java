@@ -1,5 +1,6 @@
 package com.etl.api.ai.service.retriever;
 
+import com.etl.api.ai.service.manager.AiRetrievalContentCollector;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.WebSearchContentRetriever;
 import dev.langchain4j.web.search.WebSearchEngine;
@@ -50,7 +51,7 @@ public class AiWebSearchContentRetriever implements AiContentRetriever {
 
     @Override
     public String getName() {
-        return "web_search";
+        return AiRetrievalContentCollector.SOURCE_WEB_SEARCH;
     }
 
     @Override

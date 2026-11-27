@@ -1,6 +1,7 @@
 package com.etl.api.ai.service.retriever;
 
 import com.etl.api.ai.config.AiContentRetrievalProperties;
+import com.etl.api.ai.service.manager.AiRetrievalContentCollector;
 import com.etl.api.ai.service.manager.AiVectorStoreManager;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -39,7 +40,7 @@ public class AiEmbeddingStoreContentRetriever implements AiContentRetriever {
 
     @Override
     public String getName() {
-        return "knowledge_base";
+        return AiRetrievalContentCollector.SOURCE_KNOWLEDGE_BASE;
     }
 
     @Override

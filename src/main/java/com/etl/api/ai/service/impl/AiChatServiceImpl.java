@@ -12,9 +12,11 @@ import com.etl.api.ai.domain.form.AiChatForm;
 import com.etl.api.ai.exception.AiChatException;
 import com.etl.api.ai.service.AiBotService;
 import com.etl.api.ai.service.AiChatService;
+import com.etl.api.ai.service.AiConversationMessageService;
 import com.etl.api.ai.service.AiModelService;
 import com.etl.api.ai.service.manager.AiContentRetrieverManager;
 import com.etl.api.ai.service.manager.AiMcpToolManager;
+import com.etl.api.ai.service.manager.AiRetrievalContentCollector;
 import com.etl.api.ai.util.AiMessageUtil;
 import com.etl.api.ai.util.AiSseEmitterUtil;
 import com.etl.api.sys.util.LocalDateTimeUtil;
@@ -65,6 +67,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final AiModelService modelService;
     private final AiMcpToolManager mcpToolManager;
     private final AiContentRetrieverManager contentRetrieverManager;
+    private final AiConversationMessageService conversationMessageService;
     @Value("${custom.ai.chat.max-memory-messages:100}")
     private Integer maxMemoryMessages;
 
@@ -134,8 +137,9 @@ public class AiChatServiceImpl implements AiChatService {
                 // 控制存储在聊天记忆中的是 增强的 用户消息（注入了检索到的 Content）还是 原始的 用户消息
                 .storeRetrievedContentInChatMemory(false);
 
-        // 内容检索
-        RetrievalAugmentor retrievalAugmentor = this.getRetrievalAugmentor(aiBot.getId(), aiModel);
+        // 内容检索（collector 录制各源检索结果，供引用展示与落库）
+        AiRetrievalContentCollector collector = new AiRetrievalContentCollector();
+        RetrievalAugmentor retrievalAugmentor = this.getRetrievalAugmentor(aiBot.getId(), collector);
         if (retrievalAugmentor != null) {
             aiServices.retrievalAugmentor(retrievalAugmentor);
         }
@@ -168,7 +172,17 @@ public class AiChatServiceImpl implements AiChatService {
                 .beforeToolExecution(before -> sse.sendTool(AiMessageUtil.toolCall(before.request())))
                 // 工具执行后：推送执行结果
                 .onToolExecuted(execution -> sse.sendTool(AiMessageUtil.toolResult(execution)))
-                .onCompleteResponse(response -> sse.sendDone(AiMessageUtil.metadata(response, aiModel.getContextWindow())))
+                // 完成时：assistant 行已落库（LC4j addToMemory 先于本回调，已核实源码），
+                // 回写 attributes（tokenUsage + retrievalContent）后发送 done 事件（同一份 JSON）
+                .onCompleteResponse(response -> {
+                    String payload = AiMessageUtil.withAttributes(response, collector.getRetrievalContentList(), aiModel.getContextWindow());
+                    try {
+                        conversationMessageService.writeAssistantAttributes(conversationId, payload);
+                    } catch (Exception e) {
+                        log.warn("assistant attributes 回写失败, conversationId={}", conversationId, e);
+                    }
+                    sse.sendDone(payload);
+                })
                 .onError(ex -> sse.sendError(ex.getMessage()))
                 .start();
 
@@ -192,13 +206,13 @@ public class AiChatServiceImpl implements AiChatService {
     /**
      * 获取 内容检索
      */
-    private RetrievalAugmentor getRetrievalAugmentor(Long botId, AiModel model) {
+    private RetrievalAugmentor getRetrievalAugmentor(Long botId, AiRetrievalContentCollector collector) {
         List<Long> knowledgeIds = QueryChain.of(AiBotKnowledge.class)
                 .select(AiBotKnowledge::getKnowledgeId)
                 .eq(AiBotKnowledge::getBotId, botId)
                 .listAs(Long.class);
 
-        return contentRetrieverManager.getRetrievalAugmentor(knowledgeIds);
+        return contentRetrieverManager.getRetrievalAugmentor(knowledgeIds, collector);
     }
 
     /**

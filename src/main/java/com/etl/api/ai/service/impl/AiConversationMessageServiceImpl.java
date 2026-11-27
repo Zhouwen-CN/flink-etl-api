@@ -4,7 +4,10 @@ import com.etl.api.ai.domain.entity.AiConversationMessage;
 import com.etl.api.ai.mapper.AiConversationMessageMapper;
 import com.etl.api.ai.service.AiConversationMessageService;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessageDeserializer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,6 +18,7 @@ import java.util.List;
  * @author chen
  * @since 2026-11-11
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AiConversationMessageServiceImpl extends ServiceImpl<AiConversationMessageMapper, AiConversationMessage> implements AiConversationMessageService {
@@ -32,5 +36,25 @@ public class AiConversationMessageServiceImpl extends ServiceImpl<AiConversation
         this.updateChain()
                 .eq(AiConversationMessage::getConversationId, conversationId)
                 .remove();
+    }
+
+    @Override
+    public void writeAssistantAttributes(Long conversationId, String messageJson) {
+        // onCompleteResponse 时最终 assistant 行必已落库（LC4j addToMemory 先于回调），为最新行；
+        // 仍按消息类型定位兜底，规避工具往返中间行的时序意外
+        List<AiConversationMessage> records = this.queryChain()
+                .eq(AiConversationMessage::getConversationId, conversationId)
+                .orderBy(AiConversationMessage::getId, false)
+                .list();
+        for (AiConversationMessage record : records) {
+            if (ChatMessageDeserializer.messageFromJson(record.getMessage()) instanceof AiMessage) {
+                this.updateChain()
+                        .set(AiConversationMessage::getMessage, messageJson)
+                        .eq(AiConversationMessage::getId, record.getId())
+                        .update();
+                return;
+            }
+        }
+        log.warn("未定位到 assistant 消息行, conversationId={}", conversationId);
     }
 }

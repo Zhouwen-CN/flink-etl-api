@@ -50,6 +50,3 @@ custom:
         base-url: ${EMBEDDING_MODEL_BASE_URL}
         api-key: ${EMBEDDING_MODEL_API_KEY}
         model-name: ${EMBEDDING_MODEL_NAME}
-    web-search:
-      tavily:
-        api-key: ${WEB_SEARCH_TAVILY_API_KEY}

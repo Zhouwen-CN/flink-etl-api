@@ -27,4 +27,13 @@ public interface AiConversationMessageService extends IService<AiConversationMes
      * @param conversationId 会话id
      */
     void deleteByConversationId(Long conversationId);
+
+    /**
+     * 回写最新 assistant 消息行的 message（含 attributes：tokenUsage + getRetrievalContentList，
+     * 与 done 事件同一份 JSON；attributes 仅前端展示，不发给大模型）
+     *
+     * @param conversationId 会话id
+     * @param messageJson    完整的 assistant 消息 JSON
+     */
+    void writeAssistantAttributes(Long conversationId, String messageJson);
 }
