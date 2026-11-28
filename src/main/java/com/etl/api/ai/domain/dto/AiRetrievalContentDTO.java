@@ -34,4 +34,14 @@ public class AiRetrievalContentDTO {
      * 网页地址（仅 web 源）
      */
     private String url;
+
+    /**
+     * 向量数据库的 id（仅 知识库 源）
+     */
+    private String embeddingId;
+
+    /**
+     * 相关度分数
+     */
+    private Double score;
 }

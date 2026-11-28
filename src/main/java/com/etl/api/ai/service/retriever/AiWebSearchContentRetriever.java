@@ -25,7 +25,7 @@ import java.util.List;
 @Component
 public class AiWebSearchContentRetriever implements AiContentRetriever {
 
-    @Value("${custom.ai.content-retrieval.web-search.tavily.api-key:}")
+    @Value("${custom.ai.content-retrieval.web-search.tavily.api-key}")
     private String tavilyApiKey;
 
     @Value("${custom.ai.content-retrieval.web-search.tavily.max-results:3}")

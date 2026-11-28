@@ -22,7 +22,7 @@ spring:
   mail:
     #host: 没有配置host，自动配置类就不会加载，参考：org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
     port: ${MAIL_PORT}
-    username: ${MAIL_USERNAME}
+    username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD}
     protocol: smtps
     ssl:
@@ -272,5 +272,5 @@ custom:
       # 网络搜索（key没有配置则不生效）
       web-search:
         tavily:
-          api-key: ${WEB_SEARCH_TAVILY_API_KEY}
+          api-key: ${WEB_SEARCH_TAVILY_API_KEY:}
           max-results: 3

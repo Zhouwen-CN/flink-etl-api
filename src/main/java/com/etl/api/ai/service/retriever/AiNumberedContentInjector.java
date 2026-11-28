@@ -11,6 +11,7 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.content.Content;
+import dev.langchain4j.rag.content.ContentMetadata;
 import dev.langchain4j.rag.content.injector.ContentInjector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -104,18 +105,31 @@ public class AiNumberedContentInjector implements ContentInjector {
 
     private AiRetrievalContentDTO toDto(int number, Content content) {
         TextSegment segment = content.textSegment();
-        Metadata metadata = segment.metadata();
+        Metadata textSegmentMetadata = segment.metadata();
         String text = segment.text();
 
         AiRetrievalContentDTO dto = new AiRetrievalContentDTO();
         dto.setNumber(number);
-        if (metadata.containsKey(AiVectorStoreManager.METADATA_DOCUMENT_NAME)) {
+        if (textSegmentMetadata.containsKey(AiVectorStoreManager.METADATA_DOCUMENT_NAME)) {
             // 知识库源：文档名即标题
-            dto.setTitle(metadata.getString(AiVectorStoreManager.METADATA_DOCUMENT_NAME));
+            dto.setTitle(textSegmentMetadata.getString(AiVectorStoreManager.METADATA_DOCUMENT_NAME));
             dto.setContent(text);
-        } else if (metadata.containsKey("url")) {
+
+            // score
+            Map<ContentMetadata, Object> contentMetadata = content.metadata();
+            Object scoreObj = contentMetadata.get(ContentMetadata.SCORE);
+            if (scoreObj instanceof Double score) {
+                dto.setScore(score);
+            }
+
+            // embedding id
+            Object embeddingIdObj = contentMetadata.get(ContentMetadata.EMBEDDING_ID);
+            dto.setEmbeddingId(embeddingIdObj == null ? null : String.valueOf(embeddingIdObj));
+        } else if (textSegmentMetadata.containsKey("url")) {
             // web 源：标题为文本首行（单换行分隔），其余为内容
-            dto.setUrl(metadata.getString("url"));
+            dto.setUrl(textSegmentMetadata.getString("url"));
+            dto.setScore(textSegmentMetadata.getDouble("score"));
+
             int separator = text == null ? -1 : text.indexOf("\n");
             if (separator > 0) {
                 dto.setTitle(text.substring(0, separator));
